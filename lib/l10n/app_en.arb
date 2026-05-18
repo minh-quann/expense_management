@@ -1,0 +1,16 @@
+{
+    "@@locale": "en",
+    "login_dont_have_account": "Don't have an account?",
+    "login_get_started": "Get Started",
+    "login_app_name": "Expense App",
+    "login_welcome_back": "Welcome Back",
+    "login_enter_details": "Enter your details below",
+    "login_phone_label": "Phone Number",
+    "login_phone_hint": "+1 234 567 8900",
+    "login_sign_in_btn": "Sign in",
+    "login_or_sign_in_with": "Or sign in with",
+    "login_google": "Google",
+    "login_facebook": "Facebook",
+    "otp_title": "Enter OTP",
+    "otp_subtitle": "We have sent a 6-digit verification code to your phone."
+}

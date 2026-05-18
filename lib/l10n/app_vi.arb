@@ -1,0 +1,16 @@
+{
+    "@@locale": "vi",
+    "login_dont_have_account": "Bạn chưa có tài khoản?",
+    "login_get_started": "Bắt đầu",
+    "login_app_name": "Quản lý chi tiêu",
+    "login_welcome_back": "Chào mừng trở lại",
+    "login_enter_details": "Nhập thông tin của bạn bên dưới",
+    "login_phone_label": "Số điện thoại",
+    "login_phone_hint": "+84 123 456 789",
+    "login_sign_in_btn": "Đăng nhập",
+    "login_or_sign_in_with": "Hoặc đăng nhập bằng",
+    "login_google": "Google",
+    "login_facebook": "Facebook",
+    "otp_title": "Nhập mã OTP",
+    "otp_subtitle": "Chúng tôi đã gửi mã xác nhận 6 số đến điện thoại của bạn."
+}
