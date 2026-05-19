@@ -146,6 +146,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add_transaction_wallet => 'Wallet';
 
   @override
+  String get add_transaction_source_wallet => 'Source Wallet';
+
+  @override
+  String get add_transaction_destination_wallet => 'Destination Wallet';
+
+  @override
   String get add_transaction_date => 'Date';
 
   @override

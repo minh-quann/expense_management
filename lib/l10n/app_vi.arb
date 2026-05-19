@@ -52,6 +52,8 @@
     "add_transaction_amount": "Số tiền",
     "add_transaction_category": "Danh mục",
     "add_transaction_wallet": "Ví",
+    "add_transaction_source_wallet": "Ví nguồn",
+    "add_transaction_destination_wallet": "Ví đích",
     "add_transaction_date": "Ngày",
     "add_transaction_note_hint": "Thêm ghi chú...",
     "add_transaction_save": "Lưu giao dịch",

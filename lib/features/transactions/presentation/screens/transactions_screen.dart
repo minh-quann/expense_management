@@ -3,13 +3,12 @@ import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
+import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
-import 'package:expense_management/shared/utils/currency_formatter.dart';
-import 'package:expense_management/shared/utils/category_helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
@@ -46,7 +45,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    
+
     if (date == today) {
       return AppLocalizations.of(context)?.transactions_today ?? 'Hôm nay';
     } else if (date == yesterday) {
@@ -68,75 +67,58 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             const SizedBox(height: 16),
             _buildFilters(context),
             const SizedBox(height: 24),
-              Expanded(
-                child: BlocBuilder<TransactionBloc, TransactionState>(
-                  builder: (context, state) {
-                    if (state is TransactionLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is TransactionLoaded) {
-                      List<AppTransaction> filtered = state.transactions;
-                      if (_selectedFilterIndex == 1) {
-                        filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
-                      } else if (_selectedFilterIndex == 2) {
-                        filtered = filtered.where((t) => t.type == TransactionType.income).toList();
-                      } else if (_selectedFilterIndex == 3) {
-                        filtered = filtered.where((t) => t.type == TransactionType.transfer).toList();
-                      }
+            Expanded(
+              child: BlocBuilder<TransactionBloc, TransactionState>(
+                builder: (context, state) {
+                  if (state is TransactionLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is TransactionLoaded) {
+                    List<AppTransaction> filtered = state.transactions;
+                    if (_selectedFilterIndex == 1) {
+                      filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
+                    } else if (_selectedFilterIndex == 2) {
+                      filtered = filtered.where((t) => t.type == TransactionType.income).toList();
+                    } else if (_selectedFilterIndex == 3) {
+                      filtered = filtered.where((t) => t.type == TransactionType.transfer).toList();
+                    }
 
-                      if (filtered.isEmpty) {
-                        return const Center(child: AppText('Chưa có giao dịch nào'));
-                      }
+                    if (filtered.isEmpty) {
+                      return const Center(child: AppText('Chưa có giao dịch nào'));
+                    }
 
-                      final grouped = _groupTransactionsByDate(filtered);
-                      final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+                    final grouped = _groupTransactionsByDate(filtered);
+                    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (var date in sortedDates) ...[
-                              _buildDateGroup(
-                                context,
-                                _formatDateLabel(date),
-                                grouped[date]!.map((tx) {
-                                  return _buildTransactionItem(
-                                    context,
-                                    icon: tx.type == TransactionType.transfer 
-                                        ? Icons.swap_horiz 
-                                        : (tx.categoryIcon != null ? CategoryHelper.getIcon(tx.categoryIcon!) : Icons.category),
-                                    iconBgColor: tx.categoryColor != null 
-                                        ? CategoryHelper.getColor(tx.categoryColor!).withValues(alpha: 0.1) 
-                                        : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50),
-                                    iconColor: tx.categoryColor != null 
-                                        ? CategoryHelper.getColor(tx.categoryColor!) 
-                                        : (tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500)),
-                                    title: tx.note != null && tx.note!.isNotEmpty 
-                                        ? tx.note! 
-                                        : (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác')),
-                                    subtitle: tx.note != null && tx.note!.isNotEmpty 
-                                        ? (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'))
-                                        : null,
-                                    time: DateFormat('HH:mm').format(tx.date),
-                                    amount: '${tx.type == TransactionType.income ? '+' : '-'}${CurrencyFormatter.format(context, tx.amount)}',
-                                    amountColor: tx.type == TransactionType.income ? AppColors.transactionIncome : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 24),
-                            ],
-                            const SizedBox(height: 120), // Bottom nav space
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var date in sortedDates) ...[
+                            _buildDateGroup(
+                              context,
+                              _formatDateLabel(date),
+                              grouped[date]!.map((tx) {
+                                return TransactionItemBuilder.buildItem(
+                                  context: context,
+                                  tx: tx,
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 24),
                           ],
-                        ),
-                      );
-                    }
-                    if (state is TransactionError) {
-                      return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: AppText(state.message, color: Colors.red)));
-                    }
-                    return const Center(child: AppText('Lỗi tải giao dịch'));
-                  },
-                ),
+                          const SizedBox(height: 120),
+                        ],
+                      ),
+                    );
+                  }
+                  if (state is TransactionError) {
+                    return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: AppText(state.message, color: Colors.red)));
+                  }
+                  return const Center(child: AppText('Lỗi tải giao dịch'));
+                },
               ),
+            ),
           ],
         ),
       ),
@@ -149,7 +131,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const SizedBox(width: 44), // To balance the search icon
+          const SizedBox(width: 44),
           AppText(
             AppLocalizations.of(context)!.transactions_title,
             fontSize: 18,
@@ -201,73 +183,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         const SizedBox(height: 16),
         ...items.expand((item) => [item, const SizedBox(height: 20)]),
-      ],
-    );
-  }
-
-  Widget _buildTransactionItem(BuildContext context, {
-    required IconData icon,
-    required Color iconBgColor,
-    required Color iconColor,
-    required String title,
-    String? subtitle,
-    required String time,
-    required String amount,
-    required Color amountColor,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: iconBgColor,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(icon, color: iconColor, size: 24),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                title,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary(context),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
-                AppText(
-                  subtitle,
-                  fontSize: 13,
-                  color: Colors.grey[500],
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            AppText(
-              amount,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: amountColor,
-            ),
-            const SizedBox(height: 4),
-            AppText(
-              time,
-              fontSize: 13,
-              color: Colors.grey[500],
-            ),
-          ],
-        ),
       ],
     );
   }

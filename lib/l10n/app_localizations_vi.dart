@@ -146,6 +146,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get add_transaction_wallet => 'Ví';
 
   @override
+  String get add_transaction_source_wallet => 'Ví nguồn';
+
+  @override
+  String get add_transaction_destination_wallet => 'Ví đích';
+
+  @override
   String get add_transaction_date => 'Ngày';
 
   @override

@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
-import 'package:expense_management/shared/utils/category_helper.dart';
+import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_event.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_state.dart';
 import 'package:expense_management/features/wallets/domain/entities/wallet.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
-import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 
 class WalletsScreen extends StatefulWidget {
@@ -48,20 +46,6 @@ class _WalletsScreenState extends State<WalletsScreen> {
     super.dispose();
   }
 
-  String _formatDateLabel(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final dateToCheck = DateTime(date.year, date.month, date.day);
-
-    if (dateToCheck == today) {
-      return 'Hôm nay';
-    } else if (dateToCheck == yesterday) {
-      return 'Hôm qua';
-    } else {
-      return DateFormat('dd thg MM').format(date);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -213,67 +197,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
           return Column(
             children: recentTx.map((tx) {
-              final icon = tx.type == TransactionType.transfer
-                  ? Icons.swap_horiz
-                  : (tx.categoryIcon != null ? CategoryHelper.getIcon(tx.categoryIcon!) : Icons.category);
-              final iconColor = tx.categoryColor != null
-                  ? CategoryHelper.getColor(tx.categoryColor!)
-                  : (tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500));
-              final iconBgColor = tx.categoryColor != null
-                  ? CategoryHelper.getColor(tx.categoryColor!).withValues(alpha: 0.1)
-                  : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50);
-              
-              final title = tx.note != null && tx.note!.isNotEmpty
-                  ? tx.note!
-                  : (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'));
-              final subtitle = tx.note != null && tx.note!.isNotEmpty
-                  ? (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'))
-                  : null;
-              final amountStr = '${tx.type == TransactionType.income ? '+' : '-'}${CurrencyFormatter.format(context, tx.amount)}';
-              final amountColor = tx.type == TransactionType.income
-                  ? AppColors.transactionIncome
-                  : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500);
-
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
-                child: Row(
-                  children: [
-                    // Icon
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: iconBgColor,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(icon, color: iconColor, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    // Title & Subtitle
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AppText(title, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          if (subtitle != null) ...[
-                            const SizedBox(height: 4),
-                            AppText(subtitle, fontSize: 13, color: AppColors.textSecondary(context)),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Amount & Time
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        AppText(amountStr, fontSize: 16, fontWeight: FontWeight.w600, color: amountColor),
-                        const SizedBox(height: 4),
-                        AppText(_formatDateLabel(tx.date), fontSize: 13, color: AppColors.textSecondary(context)),
-                      ],
-                    ),
-                  ],
-                ),
+                child: TransactionItemBuilder.buildItem(context: context, tx: tx),
               );
             }).toList(),
           );

@@ -8,9 +8,8 @@ import 'package:expense_management/features/transactions/presentation/bloc/trans
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
-import 'package:intl/intl.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
-import 'package:expense_management/shared/utils/category_helper.dart';
+import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -254,31 +253,9 @@ class HomeScreen extends StatelessWidget {
 
           return Column(
             children: recentTx.map((tx) {
-              return Column(
-                children: [
-                  _buildTransactionItem(
-                    context, 
-                    icon: tx.type == TransactionType.transfer 
-                        ? Icons.swap_horiz 
-                        : (tx.categoryIcon != null ? CategoryHelper.getIcon(tx.categoryIcon!) : Icons.category),
-                    iconBgColor: tx.categoryColor != null 
-                        ? CategoryHelper.getColor(tx.categoryColor!).withValues(alpha: 0.1) 
-                        : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50),
-                    iconColor: tx.categoryColor != null 
-                        ? CategoryHelper.getColor(tx.categoryColor!) 
-                        : (tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500)),
-                    title: tx.note != null && tx.note!.isNotEmpty 
-                        ? tx.note! 
-                        : (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác')),
-                    subtitle: tx.note != null && tx.note!.isNotEmpty 
-                        ? (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'))
-                        : null,
-                    time: _formatDateLabel(tx.date),
-                    amount: '${tx.type == TransactionType.income ? '+' : '-'}${CurrencyFormatter.format(context, tx.amount)}',
-                    amountColor: tx.type == TransactionType.income ? AppColors.transactionIncome : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500),
-                  ),
-                  const SizedBox(height: 20),
-                ],
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: TransactionItemBuilder.buildItem(context: context, tx: tx),
               );
             }).toList(),
           );
@@ -286,87 +263,5 @@ class HomeScreen extends StatelessWidget {
         return const Center(child: AppText('Lỗi tải giao dịch'));
       },
     );
-  }
-
-  Widget _buildTransactionItem(BuildContext context, {
-    required IconData icon,
-    required Color iconBgColor,
-    required Color iconColor,
-    required String title,
-    String? subtitle,
-    required String time,
-    required String amount,
-    required Color amountColor,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: iconBgColor,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(icon, color: iconColor, size: 24),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AppText(
-                title,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary(context),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 4),
-                AppText(
-                  subtitle,
-                  fontSize: 13,
-                  color: Colors.grey[500],
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            AppText(
-              amount,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: amountColor,
-            ),
-            const SizedBox(height: 4),
-            AppText(
-              time,
-              fontSize: 13,
-              color: Colors.grey[500],
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  String _formatDateLabel(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final dateToCheck = DateTime(date.year, date.month, date.day);
-
-    if (dateToCheck == today) {
-      return 'Hôm nay';
-    } else if (dateToCheck == yesterday) {
-      return 'Hôm qua';
-    } else {
-      return DateFormat('dd thg MM', 'vi_VN').format(date);
-    }
   }
 }

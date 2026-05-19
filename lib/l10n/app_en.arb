@@ -52,6 +52,8 @@
     "add_transaction_amount": "How much?",
     "add_transaction_category": "Category",
     "add_transaction_wallet": "Wallet",
+    "add_transaction_source_wallet": "Source Wallet",
+    "add_transaction_destination_wallet": "Destination Wallet",
     "add_transaction_date": "Date",
     "add_transaction_note_hint": "Add a note...",
     "add_transaction_save": "Save Transaction",

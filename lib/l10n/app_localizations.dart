@@ -368,6 +368,18 @@ abstract class AppLocalizations {
   /// **'Ví'**
   String get add_transaction_wallet;
 
+  /// No description provided for @add_transaction_source_wallet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví nguồn'**
+  String get add_transaction_source_wallet;
+
+  /// No description provided for @add_transaction_destination_wallet.
+  ///
+  /// In vi, this message translates to:
+  /// **'Ví đích'**
+  String get add_transaction_destination_wallet;
+
   /// No description provided for @add_transaction_date.
   ///
   /// In vi, this message translates to:
