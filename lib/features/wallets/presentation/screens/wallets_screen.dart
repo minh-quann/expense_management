@@ -291,9 +291,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: AppColors.surface(context).withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(context)),
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.border(context), width: 1),
       ),
       child: Center(
         child: Column(
@@ -308,7 +308,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
               ),
               child: AppText(AppLocalizations.of(context)!.wallets_add),
             ),
@@ -324,9 +324,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: AppColors.surface(context).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border(context), style: BorderStyle.solid),
+          color: AppColors.surface(context),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border(context), width: 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -358,6 +358,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
           boxShadow: [
             BoxShadow(
               color: gradient.colors.last.withValues(alpha: 0.3),
@@ -564,7 +565,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                   ),

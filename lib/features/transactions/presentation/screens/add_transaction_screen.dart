@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -76,57 +78,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Widget _buildTypeToggle() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          _buildToggleOption('EXPENSE', AppLocalizations.of(context)!.add_transaction_expense),
-          _buildToggleOption('INCOME', AppLocalizations.of(context)!.add_transaction_income),
-          _buildToggleOption('TRANSFER', AppLocalizations.of(context)!.add_transaction_transfer),
-        ],
-      ),
-    );
-  }
+    int selectedIndex = 0;
+    if (_transactionType == 'INCOME') {
+      selectedIndex = 1;
+    } else if (_transactionType == 'TRANSFER') {
+      selectedIndex = 2;
+    }
 
-  Widget _buildToggleOption(String type, String label) {
-    final isSelected = _transactionType == type;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _transactionType = type),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected 
-              ? (AppColors.isDark(context) ? AppColors.surface(context) : Colors.white)
-              : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : [],
-          ),
-          child: Center(
-            child: AppText(
-              label,
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected 
-                ? AppColors.textPrimary(context) 
-                : AppColors.textSecondary(context),
-            ),
-          ),
-        ),
-      ),
+    return AnimatedToggleBar(
+      options: [
+        AppLocalizations.of(context)!.add_transaction_expense,
+        AppLocalizations.of(context)!.add_transaction_income,
+        AppLocalizations.of(context)!.add_transaction_transfer,
+      ],
+      selectedIndex: selectedIndex,
+      onChanged: (index) {
+        setState(() {
+          if (index == 0) {
+            _transactionType = 'EXPENSE';
+          } else if (index == 1) {
+            _transactionType = 'INCOME';
+          } else if (index == 2) {
+            _transactionType = 'TRANSFER';
+          }
+        });
+      },
     );
   }
 
@@ -180,6 +156,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 iconBgColor: AppColors.purple50,
                 title: AppLocalizations.of(context)!.add_transaction_category,
                 value: 'Ăn uống',
+                onTap: () => context.push('/categories'),
               ),
             ),
             const SizedBox(width: 16),
@@ -256,8 +233,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     required Color iconBgColor,
     required String title,
     required String value,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
@@ -281,6 +261,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           AppText(value, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
         ],
       ),
+    ),
     );
   }
 
@@ -295,7 +276,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(100),
           ),
         ),
         child: AppText(

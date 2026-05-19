@@ -5,11 +5,17 @@ import 'package:expense_management/features/home/presentation/home_screen.dart';
 import 'package:expense_management/features/auth/presentation/screens/login_screen.dart';
 import 'package:expense_management/features/auth/presentation/screens/otp_screen.dart';
 import 'package:expense_management/core/routing/app_shell.dart';
-import 'package:expense_management/shared/widgets/placeholder_screen.dart';
+import 'package:expense_management/features/stats/presentation/screens/stats_screen.dart';
 import 'package:expense_management/features/transactions/presentation/screens/transactions_screen.dart';
 import 'package:expense_management/features/settings/presentation/screens/profile_screen.dart';
 import 'package:expense_management/features/wallets/presentation/screens/wallets_screen.dart';
 import 'package:expense_management/features/transactions/presentation/screens/add_transaction_screen.dart';
+import 'package:expense_management/features/budgets/presentation/screens/budgets_screen.dart';
+import 'package:expense_management/features/goals/presentation/screens/goals_screen.dart';
+import 'package:expense_management/features/recurring/presentation/screens/recurring_screen.dart';
+import 'package:expense_management/features/categories/presentation/screens/categories_screen.dart';
+import 'package:expense_management/features/categories/presentation/screens/add_category_screen.dart';
+
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
@@ -41,7 +47,7 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/stats',
-              builder: (context, state) => const PlaceholderScreen(title: 'Thống kê'),
+              builder: (context, state) => const StatsScreen(),
             ),
           ],
         ),
@@ -64,6 +70,31 @@ final GoRouter appRouter = GoRouter(
       path: '/wallets',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const WalletsScreen(),
+    ),
+    GoRoute(
+      path: '/budgets',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const BudgetsScreen(),
+    ),
+    GoRoute(
+      path: '/goals',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const GoalsScreen(),
+    ),
+    GoRoute(
+      path: '/recurring',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const RecurringScreen(),
+    ),
+    GoRoute(
+      path: '/categories',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const CategoriesScreen(),
+    ),
+    GoRoute(
+      path: '/add_category',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddCategoryScreen(),
     ),
     GoRoute(
       path: '/login',

@@ -144,6 +144,30 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       _buildMenuItem(
                         context,
+                        iconPath: 'assets/icons/profile/shield.svg', // Will update icons later
+                        iconBgColor: AppColors.orange500,
+                        title: 'Ngân sách (Budgets)',
+                        textColor: textColor,
+                        onTap: () => context.push('/budgets'),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        iconPath: 'assets/icons/profile/shield.svg',
+                        iconBgColor: AppColors.pink500,
+                        title: 'Mục tiêu tiết kiệm (Goals)',
+                        textColor: textColor,
+                        onTap: () => context.push('/goals'),
+                      ),
+                      _buildMenuItem(
+                        context,
+                        iconPath: 'assets/icons/profile/shield.svg',
+                        iconBgColor: AppColors.blue500,
+                        title: 'Giao dịch định kỳ',
+                        textColor: textColor,
+                        onTap: () => context.push('/recurring'),
+                      ),
+                      _buildMenuItem(
+                        context,
                         iconPath: 'assets/icons/profile/shield.svg',
                         iconBgColor: const Color(0xFF4CD964),
                         title: l10n.profile_security_code,

@@ -24,7 +24,7 @@ class SocialButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14),
           side: BorderSide(color: AppColors.textSecondary(context).withValues(alpha: 0.2)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(100),
           ),
         ),
         icon: icon,

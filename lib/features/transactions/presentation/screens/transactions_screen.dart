@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 
-class TransactionsScreen extends StatelessWidget {
+class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
+
+  @override
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends State<TransactionsScreen> {
+  int _selectedFilterIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -112,38 +120,21 @@ class TransactionsScreen extends StatelessWidget {
   }
 
   Widget _buildFilters(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        children: [
-          _buildFilterChip(context, AppLocalizations.of(context)!.transactions_filter_all, isSelected: true),
-          const SizedBox(width: 12),
-          _buildFilterChip(context, AppLocalizations.of(context)!.transactions_filter_expense, isSelected: false),
-          const SizedBox(width: 12),
-          _buildFilterChip(context, AppLocalizations.of(context)!.transactions_filter_income, isSelected: false),
-          const SizedBox(width: 12),
-          _buildFilterChip(context, AppLocalizations.of(context)!.transactions_filter_transfer, isSelected: false),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: AnimatedToggleBar(
+        options: [
+          AppLocalizations.of(context)!.transactions_filter_all,
+          AppLocalizations.of(context)!.transactions_filter_expense,
+          AppLocalizations.of(context)!.transactions_filter_income,
+          AppLocalizations.of(context)!.transactions_filter_transfer,
         ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(BuildContext context, String label, {required bool isSelected}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.primary : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Center(
-        child: AppText(
-          label,
-          fontSize: 14,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected ? Colors.white : AppColors.textPrimary(context),
-        ),
+        selectedIndex: _selectedFilterIndex,
+        onChanged: (index) {
+          setState(() {
+            _selectedFilterIndex = index;
+          });
+        },
       ),
     );
   }

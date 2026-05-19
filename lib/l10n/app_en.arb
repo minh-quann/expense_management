@@ -62,5 +62,13 @@
     "wallets_cash": "Cash",
     "wallets_bank": "Bank",
     "wallets_ewallet": "E-Wallet",
-    "wallets_credit_card": "Credit Card"
+    "wallets_credit_card": "Credit Card",
+    
+    "stats_title": "Statistics",
+    "stats_overview": "Overview",
+    "stats_expense_chart": "Expense Chart",
+    "stats_income_chart": "Income Chart",
+    "stats_top_spending": "Top Spending",
+    "stats_this_month": "This Month",
+    "stats_last_month": "Last Month"
 }
