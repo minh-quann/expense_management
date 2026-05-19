@@ -46,12 +46,12 @@ import 'app_localizations_vi.dart';
 ///
 /// iOS applications define key application metadata, including supported
 /// locales, in an Info.plist file that is built into the application bundle.
-/// To configure the locales supported by your app, you’ll need to edit this
+/// To configure the locales supported by your app, you'll need to edit this
 /// file.
 ///
-/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// First, open your project's ios/Runner.xcworkspace Xcode workspace file.
 /// Then, in the Project Navigator, open the Info.plist file under the Runner
-/// project’s Runner folder.
+/// project's Runner folder.
 ///
 /// Next, select the Information Property List item, select Add Item from the
 /// Editor menu, then select Localizations from the pop-up menu.
@@ -98,83 +98,76 @@ abstract class AppLocalizations {
     Locale('vi'),
   ];
 
-  /// No description provided for @login_dont_have_account.
-  ///
-  /// In vi, this message translates to:
-  /// **'Bạn chưa có tài khoản?'**
+  // --- Login ---
   String get login_dont_have_account;
-
-  /// No description provided for @login_get_started.
-  ///
-  /// In vi, this message translates to:
-  /// **'Bắt đầu'**
   String get login_get_started;
-
-  /// No description provided for @login_app_name.
-  ///
-  /// In vi, this message translates to:
-  /// **'Quản lý chi tiêu'**
   String get login_app_name;
-
-  /// No description provided for @login_welcome_back.
-  ///
-  /// In vi, this message translates to:
-  /// **'Chào mừng trở lại'**
   String get login_welcome_back;
-
-  /// No description provided for @login_enter_details.
-  ///
-  /// In vi, this message translates to:
-  /// **'Nhập thông tin của bạn bên dưới'**
   String get login_enter_details;
-
-  /// No description provided for @login_phone_label.
-  ///
-  /// In vi, this message translates to:
-  /// **'Số điện thoại'**
   String get login_phone_label;
-
-  /// No description provided for @login_phone_hint.
-  ///
-  /// In vi, this message translates to:
-  /// **'+84 123 456 789'**
   String get login_phone_hint;
-
-  /// No description provided for @login_sign_in_btn.
-  ///
-  /// In vi, this message translates to:
-  /// **'Đăng nhập'**
   String get login_sign_in_btn;
-
-  /// No description provided for @login_or_sign_in_with.
-  ///
-  /// In vi, this message translates to:
-  /// **'Hoặc đăng nhập bằng'**
   String get login_or_sign_in_with;
-
-  /// No description provided for @login_google.
-  ///
-  /// In vi, this message translates to:
-  /// **'Google'**
   String get login_google;
-
-  /// No description provided for @login_facebook.
-  ///
-  /// In vi, this message translates to:
-  /// **'Facebook'**
   String get login_facebook;
 
-  /// No description provided for @otp_title.
-  ///
-  /// In vi, this message translates to:
-  /// **'Nhập mã OTP'**
+  // --- OTP ---
   String get otp_title;
-
-  /// No description provided for @otp_subtitle.
-  ///
-  /// In vi, this message translates to:
-  /// **'Chúng tôi đã gửi mã xác nhận 6 số đến điện thoại của bạn.'**
   String get otp_subtitle;
+
+  // --- Profile ---
+  String get profile_title;
+  String get profile_account_info;
+  String get profile_security_code;
+  String get profile_privacy_policy;
+  String get profile_settings;
+  String get profile_logout;
+  String get profile_logout_confirm;
+  String get profile_cancel;
+
+  // --- Bottom Navigation ---
+  String get nav_home;
+  String get nav_transactions;
+  String get nav_stats;
+  String get nav_account;
+
+  // --- Home Screen ---
+  String get home_title;
+  String get home_total_balance;
+  String get home_income;
+  String get home_expenses;
+  String get home_transactions;
+  String get home_see_all;
+
+  // --- Transactions Screen ---
+  String get transactions_title;
+  String get transactions_filter_all;
+  String get transactions_filter_expense;
+  String get transactions_filter_income;
+  String get transactions_filter_transfer;
+  String get transactions_today;
+  String get transactions_yesterday;
+
+  // --- Add Transaction Screen ---
+  String get add_transaction_title;
+  String get add_transaction_expense;
+  String get add_transaction_income;
+  String get add_transaction_transfer;
+  String get add_transaction_amount;
+  String get add_transaction_category;
+  String get add_transaction_wallet;
+  String get add_transaction_date;
+  String get add_transaction_note_hint;
+  String get add_transaction_save;
+
+  // --- Wallets Screen ---
+  String get wallets_title;
+  String get wallets_total_assets;
+  String get wallets_add;
+  String get wallets_cash;
+  String get wallets_bank;
+  String get wallets_ewallet;
+  String get wallets_credit_card;
 }
 
 class _AppLocalizationsDelegate

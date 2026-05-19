@@ -1,5 +1,6 @@
 {
     "@@locale": "en",
+
     "login_dont_have_account": "Don't have an account?",
     "login_get_started": "Get Started",
     "login_app_name": "Expense App",
@@ -11,6 +12,55 @@
     "login_or_sign_in_with": "Or sign in with",
     "login_google": "Google",
     "login_facebook": "Facebook",
+
     "otp_title": "Enter OTP",
-    "otp_subtitle": "We have sent a 6-digit verification code to your phone."
+    "otp_subtitle": "We have sent a 6-digit verification code to your phone.",
+
+    "profile_title": "Profile",
+    "profile_account_info": "Account Info",
+    "profile_security_code": "Security Code",
+    "profile_privacy_policy": "Privacy Policy",
+    "profile_settings": "Settings",
+    "profile_logout": "Logout",
+    "profile_logout_confirm": "Are you sure you want to log out of the application?",
+    "profile_cancel": "Cancel",
+
+    "nav_home": "Home",
+    "nav_transactions": "Transactions",
+    "nav_stats": "Statistics",
+    "nav_account": "Account",
+
+    "home_title": "Home",
+    "home_total_balance": "Total Balance",
+    "home_income": "Income",
+    "home_expenses": "Expenses",
+    "home_transactions": "Transactions",
+    "home_see_all": "See All",
+
+    "transactions_title": "Transactions",
+    "transactions_filter_all": "All",
+    "transactions_filter_expense": "Expense",
+    "transactions_filter_income": "Income",
+    "transactions_filter_transfer": "Transfer",
+    "transactions_today": "Today",
+    "transactions_yesterday": "Yesterday",
+
+    "add_transaction_title": "New Transaction",
+    "add_transaction_expense": "Expense",
+    "add_transaction_income": "Income",
+    "add_transaction_transfer": "Transfer",
+    "add_transaction_amount": "How much?",
+    "add_transaction_category": "Category",
+    "add_transaction_wallet": "Wallet",
+    "add_transaction_date": "Date",
+    "add_transaction_note_hint": "Add a note...",
+    "add_transaction_save": "Save Transaction",
+
+    "wallets_title": "My Wallets",
+    "wallets_total_assets": "Total Assets",
+    "wallets_add": "Add Wallet",
+    "wallets_cash": "Cash",
+    "wallets_bank": "Bank",
+    "wallets_ewallet": "E-Wallet",
+    "wallets_credit_card": "Credit Card"
 }

@@ -7,7 +7,7 @@ import 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  AuthBloc() : super(AuthInitial()) {
+  AuthBloc() : super(FirebaseAuth.instance.currentUser != null ? AuthSuccess() : AuthInitial()) {
     on<LoginWithEmailEvent>((event, emit) async {
       emit(AuthLoading());
       try {
@@ -103,6 +103,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthSuccess());
       } on FirebaseAuthException catch (e) {
         emit(AuthFailure(e.message ?? 'Invalid OTP code.'));
+      } catch (e) {
+        emit(AuthFailure(e.toString()));
+      }
+    });
+    on<LogoutEvent>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await Future.wait([
+          _auth.signOut(),
+          GoogleSignIn().signOut(),
+        ]);
+        emit(AuthInitial());
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }

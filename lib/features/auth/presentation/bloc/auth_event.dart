@@ -20,6 +20,8 @@ class LoginWithEmailEvent extends AuthEvent {
 
 class LoginWithGoogleEvent extends AuthEvent {}
 
+class LogoutEvent extends AuthEvent {}
+
 class LoginWithPhoneEvent extends AuthEvent {
   final String phoneNumber;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:expense_management/firebase_options.dart';
@@ -8,6 +9,8 @@ import 'package:expense_management/core/routing/app_router.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/core/localization/locale_cubit.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
+import 'package:expense_management/features/wallets/data/repositories/wallet_repository_impl.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 
 void main() async {
@@ -25,6 +28,11 @@ void main() async {
         ),
         BlocProvider<LocaleCubit>(
           create: (context) => LocaleCubit(),
+        ),
+        BlocProvider<WalletBloc>(
+          create: (context) => WalletBloc(
+            repository: WalletRepositoryImpl(FirebaseFirestore.instance),
+          ),
         ),
       ],
       child: const MyApp(),

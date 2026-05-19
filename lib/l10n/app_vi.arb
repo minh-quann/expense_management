@@ -1,5 +1,6 @@
 {
     "@@locale": "vi",
+
     "login_dont_have_account": "Bạn chưa có tài khoản?",
     "login_get_started": "Bắt đầu",
     "login_app_name": "Quản lý chi tiêu",
@@ -11,6 +12,55 @@
     "login_or_sign_in_with": "Hoặc đăng nhập bằng",
     "login_google": "Google",
     "login_facebook": "Facebook",
+
     "otp_title": "Nhập mã OTP",
-    "otp_subtitle": "Chúng tôi đã gửi mã xác nhận 6 số đến điện thoại của bạn."
+    "otp_subtitle": "Chúng tôi đã gửi mã xác nhận 6 số đến điện thoại của bạn.",
+
+    "profile_title": "Hồ sơ",
+    "profile_account_info": "Thông tin tài khoản",
+    "profile_security_code": "Mã bảo mật",
+    "profile_privacy_policy": "Chính sách bảo mật",
+    "profile_settings": "Cài đặt",
+    "profile_logout": "Đăng xuất",
+    "profile_logout_confirm": "Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?",
+    "profile_cancel": "Hủy",
+
+    "nav_home": "Trang chủ",
+    "nav_transactions": "Giao dịch",
+    "nav_stats": "Thống kê",
+    "nav_account": "Tài khoản",
+
+    "home_title": "Trang chủ",
+    "home_total_balance": "Tổng số dư",
+    "home_income": "Thu nhập",
+    "home_expenses": "Chi tiêu",
+    "home_transactions": "Giao dịch",
+    "home_see_all": "Tất cả",
+
+    "transactions_title": "Giao dịch",
+    "transactions_filter_all": "Tất cả",
+    "transactions_filter_expense": "Chi tiêu",
+    "transactions_filter_income": "Thu nhập",
+    "transactions_filter_transfer": "Chuyển khoản",
+    "transactions_today": "Hôm nay",
+    "transactions_yesterday": "Hôm qua",
+
+    "add_transaction_title": "Thêm giao dịch mới",
+    "add_transaction_expense": "Chi tiêu",
+    "add_transaction_income": "Thu nhập",
+    "add_transaction_transfer": "Chuyển khoản",
+    "add_transaction_amount": "Số tiền",
+    "add_transaction_category": "Danh mục",
+    "add_transaction_wallet": "Ví",
+    "add_transaction_date": "Ngày",
+    "add_transaction_note_hint": "Thêm ghi chú...",
+    "add_transaction_save": "Lưu giao dịch",
+
+    "wallets_title": "Ví của tôi",
+    "wallets_total_assets": "Tổng tài sản",
+    "wallets_add": "Thêm ví",
+    "wallets_cash": "Tiền mặt",
+    "wallets_bank": "Ngân hàng",
+    "wallets_ewallet": "Ví điện tử",
+    "wallets_credit_card": "Thẻ tín dụng"
 }
