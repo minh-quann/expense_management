@@ -4,10 +4,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/utils/currency_formatter.dart';
+import 'package:expense_management/shared/utils/category_helper.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_event.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_state.dart';
 import 'package:expense_management/features/wallets/domain/entities/wallet.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
+import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 
 class WalletsScreen extends StatefulWidget {
@@ -18,7 +23,6 @@ class WalletsScreen extends StatefulWidget {
 }
 
 class _WalletsScreenState extends State<WalletsScreen> {
-  final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
   final PageController _pageController = PageController(viewportFraction: 0.88);
   int _currentPage = 0;
 
@@ -44,11 +48,24 @@ class _WalletsScreenState extends State<WalletsScreen> {
     super.dispose();
   }
 
+  String _formatDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final dateToCheck = DateTime(date.year, date.month, date.day);
+
+    if (dateToCheck == today) {
+      return 'Hôm nay';
+    } else if (dateToCheck == yesterday) {
+      return 'Hôm qua';
+    } else {
+      return DateFormat('dd thg MM').format(date);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // The background should be a deep elegant matte black.
-    final bgColor = AppColors.isDark(context) ? const Color(0xFF161A23) : const Color(0xFFF0F2F5);
-    final isDark = AppColors.isDark(context);
+    final bgColor = AppColors.background(context);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -73,7 +90,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
           if (state is WalletLoading) {
             return const Center(child: CircularProgressIndicator(strokeWidth: 2));
           } else if (state is WalletLoaded) {
-            final double totalBalance = state.wallets.fold(0, (sum, w) => sum + w.balance);
+            final double totalBalance = state.wallets
+                .where((w) => !w.excludeFromTotal)
+                .fold(0, (sum, w) => sum + w.balance);
             
             return SingleChildScrollView(
               child: Column(
@@ -87,19 +106,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
                       children: [
                         AppText(AppLocalizations.of(context)!.wallets_total_assets, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
                         const SizedBox(height: 4),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            AppText(
-                              _currencyFormat.format(totalBalance),
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary(context),
-                            ),
-                            const SizedBox(width: 8),
-                            AppText('VND', fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textSecondary(context)),
-                            Icon(Icons.arrow_drop_down, color: AppColors.textSecondary(context)),
-                          ],
+                        AppText(
+                          CurrencyFormatter.format(context, totalBalance),
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary(context),
                         ),
                       ],
                     ),
@@ -118,7 +129,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                               _currentPage = page;
                             });
                           },
-                          itemCount: state.wallets.length + 1, // +1 for "Add Wallet" card
+                          itemCount: state.wallets.length + 1,
                           itemBuilder: (context, index) {
                             if (index == state.wallets.length) {
                               return _buildAddWalletCard(context);
@@ -168,60 +179,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  // Recent Transactions List (Dummy Data matching the mockup)
-                  _buildTransactionItem(
-                    context, 
-                    icon: Icons.shopping_cart_outlined, 
-                    title: 'Amazon Prime', 
-                    subtitle: 'Mua sắm', 
-                    amount: '-₫350.000', 
-                    time: 'Hôm nay',
-                    isPositive: false,
-                    isDark: isDark,
-                  ),
-                  _buildTransactionItem(
-                    context, 
-                    icon: Icons.arrow_downward, 
-                    title: 'Tiền lương', 
-                    subtitle: 'Hôm qua', 
-                    amount: '+₫38.500.000', 
-                    time: 'Hôm qua',
-                    isPositive: true,
-                    iconColor: AppColors.success,
-                    isDark: isDark,
-                  ),
-                  _buildTransactionItem(
-                    context, 
-                    icon: Icons.music_note, 
-                    title: 'Spotify', 
-                    subtitle: '24 thg 10', 
-                    amount: '-₫59.000', 
-                    time: '24 thg 10',
-                    isPositive: false,
-                    isDark: isDark,
-                    iconColor: const Color(0xFF1DB954),
-                  ),
-                  _buildTransactionItem(
-                    context, 
-                    icon: Icons.directions_car_outlined, 
-                    title: 'Uber Ride', 
-                    subtitle: '23 thg 10', 
-                    amount: '-₫120.000', 
-                    time: '23 thg 10',
-                    isPositive: false,
-                    isDark: isDark,
-                  ),
-                  _buildTransactionItem(
-                    context, 
-                    icon: Icons.local_cafe_outlined, 
-                    title: 'Starbucks Coffee', 
-                    subtitle: '22 thg 10', 
-                    amount: '-₫85.000', 
-                    time: '22 thg 10',
-                    isPositive: false,
-                    isDark: isDark,
-                    iconColor: const Color(0xFF00704A),
-                  ),
+                  // Real Transactions from Firebase
+                  _buildRealTransactionsList(context),
+                  
                   const SizedBox(height: 32),
                 ],
               ),
@@ -235,55 +195,91 @@ class _WalletsScreenState extends State<WalletsScreen> {
     );
   }
 
-  Widget _buildTransactionItem(BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String amount,
-    required String time,
-    required bool isPositive,
-    required bool isDark,
-    Color? iconColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2A2E39) : const Color(0xFFE2E4E9),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: iconColor ?? AppColors.textPrimary(context), size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(title, fontSize: 16, fontWeight: FontWeight.w600),
-                const SizedBox(height: 4),
-                AppText(subtitle, fontSize: 13, color: AppColors.textSecondary(context)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              AppText(
-                amount, 
-                fontSize: 16, 
-                fontWeight: FontWeight.w600, 
-                color: isPositive ? AppColors.success : AppColors.textPrimary(context),
+  /// Build real transactions list from TransactionBloc
+  Widget _buildRealTransactionsList(BuildContext context) {
+    return BlocBuilder<TransactionBloc, TransactionState>(
+      builder: (context, state) {
+        if (state is TransactionLoaded) {
+          final recentTx = state.transactions.take(5).toList();
+
+          if (recentTx.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: AppText('Chưa có giao dịch nào', color: AppColors.textSecondary(context)),
               ),
-              const SizedBox(height: 4),
-              AppText(time, fontSize: 13, color: AppColors.textSecondary(context)),
-            ],
-          ),
-        ],
-      ),
+            );
+          }
+
+          return Column(
+            children: recentTx.map((tx) {
+              final icon = tx.type == TransactionType.transfer
+                  ? Icons.swap_horiz
+                  : (tx.categoryIcon != null ? CategoryHelper.getIcon(tx.categoryIcon!) : Icons.category);
+              final iconColor = tx.categoryColor != null
+                  ? CategoryHelper.getColor(tx.categoryColor!)
+                  : (tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500));
+              final iconBgColor = tx.categoryColor != null
+                  ? CategoryHelper.getColor(tx.categoryColor!).withValues(alpha: 0.1)
+                  : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50);
+              
+              final title = tx.note != null && tx.note!.isNotEmpty
+                  ? tx.note!
+                  : (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'));
+              final subtitle = tx.note != null && tx.note!.isNotEmpty
+                  ? (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'))
+                  : null;
+              final amountStr = '${tx.type == TransactionType.income ? '+' : '-'}${CurrencyFormatter.format(context, tx.amount)}';
+              final amountColor = tx.type == TransactionType.income
+                  ? AppColors.transactionIncome
+                  : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
+                child: Row(
+                  children: [
+                    // Icon
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: iconBgColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    // Title & Subtitle
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppText(title, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: 4),
+                            AppText(subtitle, fontSize: 13, color: AppColors.textSecondary(context)),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Amount & Time
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        AppText(amountStr, fontSize: 16, fontWeight: FontWeight.w600, color: amountColor),
+                        const SizedBox(height: 4),
+                        AppText(_formatDateLabel(tx.date), fontSize: 13, color: AppColors.textSecondary(context)),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 
@@ -350,7 +346,10 @@ class _WalletsScreenState extends State<WalletsScreen> {
   Widget _buildWalletCard(BuildContext context, Wallet wallet, LinearGradient gradient) {
     return GestureDetector(
       onLongPress: () {
-        context.read<WalletBloc>().add(DeleteWalletEvent(wallet.id));
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          context.read<WalletBloc>().add(DeleteWalletEvent(user.uid, wallet.id));
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -452,7 +451,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                         AppText('SỐ DƯ', fontSize: 10, color: Colors.white.withValues(alpha: 0.8)),
                         const SizedBox(height: 2),
                         AppText(
-                          _currencyFormat.format(wallet.balance),
+                          CurrencyFormatter.format(context, wallet.balance),
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -483,15 +482,16 @@ class _WalletsScreenState extends State<WalletsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
+          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
             left: 24,
             right: 24,
-            top: 12,
+            top: 24, // increased top padding for better visual
           ),
           decoration: BoxDecoration(
             color: AppColors.surface(context),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            borderRadius: BorderRadius.circular(32),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

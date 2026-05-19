@@ -31,9 +31,15 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
     _expenseSubscription?.cancel();
     _incomeSubscription?.cancel();
 
+    bool hasSeeded = false;
+
     _expenseSubscription = repository.getCategories(event.userId, 'EXPENSE').listen(
-      (categories) {
+      (categories) async {
         _currentExpenses = categories;
+        if (categories.isEmpty && !hasSeeded) {
+          hasSeeded = true;
+          await repository.seedDefaultCategories(event.userId);
+        }
         if (!isClosed) {
           add(const _CategoriesUpdated());
         }

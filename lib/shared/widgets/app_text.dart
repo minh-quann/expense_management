@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 
 class AppText extends StatelessWidget {
@@ -29,8 +28,8 @@ class AppText extends StatelessWidget {
       textAlign: textAlign,
       maxLines: maxLines,
       overflow: overflow,
-      style: GoogleFonts.getFont(
-        'Inter',
+      style: TextStyle(
+        fontFamily: 'GoogleSansFlex',
         fontSize: fontSize,
         fontWeight: fontWeight,
         color: color ?? AppColors.textPrimary(context),

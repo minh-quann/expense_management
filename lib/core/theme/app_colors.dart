@@ -9,7 +9,7 @@ class AppColors {
   static const Color primaryDark = Color(0xFF004EE6);
 
   // Background colors - Pure Black/Clean White for OLED/Minimalist feel
-  static Color background(BuildContext context) => isDark(context) ? const Color(0xFF000000) : const Color(0xFFF7F7F9);
+  static Color background(BuildContext context) => isDark(context) ? const Color(0xFF000000) : gray50;
   static Color surface(BuildContext context) => isDark(context) ? const Color(0xFF1C1C1E) : Colors.white;
 
   // Text colors

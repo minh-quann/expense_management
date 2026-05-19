@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:expense_management/features/categories/domain/entities/category.dart';
 import 'package:expense_management/features/categories/domain/repositories/category_repository.dart';
 import 'package:expense_management/features/categories/data/models/category_model.dart';
+import 'package:expense_management/features/categories/data/datasources/default_categories.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final FirebaseFirestore _firestore;
@@ -68,5 +69,25 @@ class CategoryRepositoryImpl implements CategoryRepository {
         .collection('categories')
         .doc(categoryId);
     await ref.update({'isActive': false});
+  }
+
+  @override
+  Future<void> seedDefaultCategories(String userId) async {
+    final batch = _firestore.batch();
+    final categoriesRef = _firestore.collection('users').doc(userId).collection('categories');
+
+    for (final cat in defaultExpenseCategories) {
+      final docRef = categoriesRef.doc();
+      final model = CategoryModel.fromEntity(cat).copyWith(id: docRef.id);
+      batch.set(docRef, model.toFirestore());
+    }
+
+    for (final cat in defaultIncomeCategories) {
+      final docRef = categoriesRef.doc();
+      final model = CategoryModel.fromEntity(cat).copyWith(id: docRef.id);
+      batch.set(docRef, model.toFirestore());
+    }
+
+    await batch.commit();
   }
 }

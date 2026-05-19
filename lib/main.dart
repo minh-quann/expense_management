@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:expense_management/firebase_options.dart';
 import 'package:expense_management/core/routing/app_router.dart';
@@ -96,7 +95,7 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-            textTheme: GoogleFonts.interTextTheme(),
+            fontFamily: 'GoogleSansFlex',
           ),
           darkTheme: ThemeData(
             brightness: Brightness.dark,
@@ -106,7 +105,7 @@ class MyApp extends StatelessWidget {
             ),
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
-            textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+            fontFamily: 'GoogleSansFlex',
           ),
           themeMode: ThemeMode.system, // Always respect system for dark mode
           routerConfig: appRouter,

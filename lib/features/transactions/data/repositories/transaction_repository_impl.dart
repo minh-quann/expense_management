@@ -8,6 +8,11 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   TransactionRepositoryImpl(this._firestore);
 
+  /// Helper to get wallet doc ref under /users/{userId}/wallets/{walletId}
+  DocumentReference _walletRef(String userId, String walletId) {
+    return _firestore.collection('users').doc(userId).collection('wallets').doc(walletId);
+  }
+
   @override
   Stream<List<AppTransaction>> getTransactions(String userId) {
     return _firestore
@@ -23,7 +28,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   @override
   Stream<List<AppTransaction>> getTransactionsByWallet(String userId, String walletId) {
-    // Note: For transfers, it might be in walletId or toWalletId
     return _firestore
         .collection('users')
         .doc(userId)
@@ -48,7 +52,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
         .doc();
     
     final transactionModel = TransactionModel.fromEntity(transaction);
-    // Overwrite the id with the generated one
     final modelWithId = TransactionModel(
       id: transactionRef.id,
       amount: transactionModel.amount,
@@ -56,6 +59,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
       categoryId: transactionModel.categoryId,
       categoryName: transactionModel.categoryName,
       categoryIcon: transactionModel.categoryIcon,
+      categoryColor: transactionModel.categoryColor,
       walletId: transactionModel.walletId,
       walletName: transactionModel.walletName,
       toWalletId: transactionModel.toWalletId,
@@ -70,12 +74,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
     batch.set(transactionRef, modelWithId.toFirestore());
 
-    // 2. Update wallet(s) balance
-    final walletRef = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('wallets')
-        .doc(transaction.walletId);
+    // 2. Update wallet(s) balance — now using /users/{userId}/wallets/{walletId}
+    final walletRef = _walletRef(userId, transaction.walletId);
 
     if (transaction.type == TransactionType.expense) {
       batch.update(walletRef, {'balance': FieldValue.increment(-transaction.amount)});
@@ -83,12 +83,7 @@ class TransactionRepositoryImpl implements TransactionRepository {
       batch.update(walletRef, {'balance': FieldValue.increment(transaction.amount)});
     } else if (transaction.type == TransactionType.transfer && transaction.toWalletId != null) {
       batch.update(walletRef, {'balance': FieldValue.increment(-transaction.amount)});
-      
-      final toWalletRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('wallets')
-          .doc(transaction.toWalletId);
+      final toWalletRef = _walletRef(userId, transaction.toWalletId!);
       batch.update(toWalletRef, {'balance': FieldValue.increment(transaction.amount)});
     }
 
@@ -97,7 +92,6 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   @override
   Future<void> updateTransaction(String userId, AppTransaction transaction) async {
-    // Updating requires a Firestore Transaction to revert old balance and apply new one
     await _firestore.runTransaction((t) async {
       final transactionRef = _firestore
           .collection('users')
@@ -110,27 +104,27 @@ class TransactionRepositoryImpl implements TransactionRepository {
       
       final oldModel = TransactionModel.fromFirestore(doc);
       
-      // Revert old transaction logic
-      final oldWalletRef = _firestore.collection('users').doc(userId).collection('wallets').doc(oldModel.walletId);
+      // Revert old transaction balance
+      final oldWalletRef = _walletRef(userId, oldModel.walletId);
       if (oldModel.type == TransactionType.expense) {
         t.update(oldWalletRef, {'balance': FieldValue.increment(oldModel.amount)});
       } else if (oldModel.type == TransactionType.income) {
         t.update(oldWalletRef, {'balance': FieldValue.increment(-oldModel.amount)});
       } else if (oldModel.type == TransactionType.transfer && oldModel.toWalletId != null) {
         t.update(oldWalletRef, {'balance': FieldValue.increment(oldModel.amount)});
-        final oldToWalletRef = _firestore.collection('users').doc(userId).collection('wallets').doc(oldModel.toWalletId);
+        final oldToWalletRef = _walletRef(userId, oldModel.toWalletId!);
         t.update(oldToWalletRef, {'balance': FieldValue.increment(-oldModel.amount)});
       }
       
-      // Apply new transaction logic
-      final newWalletRef = _firestore.collection('users').doc(userId).collection('wallets').doc(transaction.walletId);
+      // Apply new transaction balance
+      final newWalletRef = _walletRef(userId, transaction.walletId);
       if (transaction.type == TransactionType.expense) {
         t.update(newWalletRef, {'balance': FieldValue.increment(-transaction.amount)});
       } else if (transaction.type == TransactionType.income) {
         t.update(newWalletRef, {'balance': FieldValue.increment(transaction.amount)});
       } else if (transaction.type == TransactionType.transfer && transaction.toWalletId != null) {
         t.update(newWalletRef, {'balance': FieldValue.increment(-transaction.amount)});
-        final newToWalletRef = _firestore.collection('users').doc(userId).collection('wallets').doc(transaction.toWalletId);
+        final newToWalletRef = _walletRef(userId, transaction.toWalletId!);
         t.update(newToWalletRef, {'balance': FieldValue.increment(transaction.amount)});
       }
       
@@ -158,14 +152,14 @@ class TransactionRepositoryImpl implements TransactionRepository {
       final model = TransactionModel.fromFirestore(doc);
       
       // Revert balance
-      final walletRef = _firestore.collection('users').doc(userId).collection('wallets').doc(model.walletId);
+      final walletRef = _walletRef(userId, model.walletId);
       if (model.type == TransactionType.expense) {
         t.update(walletRef, {'balance': FieldValue.increment(model.amount)});
       } else if (model.type == TransactionType.income) {
         t.update(walletRef, {'balance': FieldValue.increment(-model.amount)});
       } else if (model.type == TransactionType.transfer && model.toWalletId != null) {
         t.update(walletRef, {'balance': FieldValue.increment(model.amount)});
-        final toWalletRef = _firestore.collection('users').doc(userId).collection('wallets').doc(model.toWalletId);
+        final toWalletRef = _walletRef(userId, model.toWalletId!);
         t.update(toWalletRef, {'balance': FieldValue.increment(-model.amount)});
       }
       

@@ -59,4 +59,30 @@ class CategoryModel extends AppCategory {
       createdAt: entity.createdAt,
     );
   }
+
+  CategoryModel copyWith({
+    String? id,
+    String? name,
+    String? icon,
+    String? color,
+    String? type,
+    String? parentId,
+    bool? isSystem,
+    bool? isActive,
+    int? order,
+    DateTime? createdAt,
+  }) {
+    return CategoryModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      type: type ?? this.type,
+      parentId: parentId ?? this.parentId,
+      isSystem: isSystem ?? this.isSystem,
+      isActive: isActive ?? this.isActive,
+      order: order ?? this.order,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

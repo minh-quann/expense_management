@@ -40,7 +40,6 @@ dependencies:
   shared_preferences: ^2.5.5
   sqflite: ^2.4.2+1
   path_provider: ^2.1.5
-  google_fonts: ^8.1.0
   firebase_core: ^4.9.0
   firebase_auth: ^6.5.1
   cloud_firestore: ^6.4.1
@@ -99,7 +98,26 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
+  fonts:
+    - family: GoogleSansFlex
+      fonts:
+        - asset: assets/fonts/GoogleSansFlex120pt-Regular.ttf
+        - asset: assets/fonts/GoogleSansFlex120pt-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/GoogleSansFlex120pt-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/GoogleSansFlex120pt-Light.ttf
+          weight: 300
+        - asset: assets/fonts/GoogleSansFlex120pt-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/GoogleSansFlex120pt-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/GoogleSansFlex120pt-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/GoogleSansFlex120pt-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/GoogleSansFlex120pt-Black.ttf
+          weight: 900
   #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf

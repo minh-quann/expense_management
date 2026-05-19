@@ -8,6 +8,8 @@ import 'package:expense_management/features/transactions/presentation/bloc/trans
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
+import 'package:expense_management/shared/utils/currency_formatter.dart';
+import 'package:expense_management/shared/utils/category_helper.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 
@@ -100,12 +102,23 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 grouped[date]!.map((tx) {
                                   return _buildTransactionItem(
                                     context,
-                                    icon: tx.type == TransactionType.transfer ? Icons.swap_horiz : Icons.category,
-                                    iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50,
-                                    iconColor: tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500),
-                                    title: tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'),
+                                    icon: tx.type == TransactionType.transfer 
+                                        ? Icons.swap_horiz 
+                                        : (tx.categoryIcon != null ? CategoryHelper.getIcon(tx.categoryIcon!) : Icons.category),
+                                    iconBgColor: tx.categoryColor != null 
+                                        ? CategoryHelper.getColor(tx.categoryColor!).withValues(alpha: 0.1) 
+                                        : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50),
+                                    iconColor: tx.categoryColor != null 
+                                        ? CategoryHelper.getColor(tx.categoryColor!) 
+                                        : (tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500)),
+                                    title: tx.note != null && tx.note!.isNotEmpty 
+                                        ? tx.note! 
+                                        : (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác')),
+                                    subtitle: tx.note != null && tx.note!.isNotEmpty 
+                                        ? (tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'))
+                                        : null,
                                     time: DateFormat('HH:mm').format(tx.date),
-                                    amount: '${tx.type == TransactionType.income ? '+' : '-'}\$${tx.amount}',
+                                    amount: '${tx.type == TransactionType.income ? '+' : '-'}${CurrencyFormatter.format(context, tx.amount)}',
                                     amountColor: tx.type == TransactionType.income ? AppColors.transactionIncome : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500),
                                   );
                                 }).toList(),
@@ -116,6 +129,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           ],
                         ),
                       );
+                    }
+                    if (state is TransactionError) {
+                      return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: AppText(state.message, color: Colors.red)));
                     }
                     return const Center(child: AppText('Lỗi tải giao dịch'));
                   },
@@ -194,6 +210,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     required Color iconBgColor,
     required Color iconColor,
     required String title,
+    String? subtitle,
     required String time,
     required String amount,
     required Color amountColor,
@@ -219,21 +236,37 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary(context),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              AppText(
-                time,
-                fontSize: 13,
-                color: Colors.grey[500],
-              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                AppText(
+                  subtitle,
+                  fontSize: 13,
+                  color: Colors.grey[500],
+                ),
+              ],
             ],
           ),
         ),
-        AppText(
-          amount,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: amountColor,
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            AppText(
+              amount,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: amountColor,
+            ),
+            const SizedBox(height: 4),
+            AppText(
+              time,
+              fontSize: 13,
+              color: Colors.grey[500],
+            ),
+          ],
         ),
       ],
     );

@@ -3,6 +3,10 @@ import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/shared/utils/category_helper.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class CategoriesScreen extends StatefulWidget {
@@ -14,9 +18,6 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> {
   int _selectedTypeIndex = 0; // 0: EXPENSE, 1: INCOME
-  
-  final List<_CustomCategory> _customExpenseCategories = [];
-  final List<_CustomCategory> _customIncomeCategories = [];
 
   @override
   Widget build(BuildContext context) {
@@ -61,9 +62,54 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                children: _selectedTypeIndex == 0 ? _buildExpenseCategories() : _buildIncomeCategories(),
+              child: BlocBuilder<CategoryBloc, CategoryState>(
+                builder: (context, state) {
+                  if (state is CategoryLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (state is CategoryLoaded) {
+                    final categories = _selectedTypeIndex == 0 
+                        ? state.expenseCategories 
+                        : state.incomeCategories;
+                        
+                    if (categories.isEmpty) {
+                      return const Center(child: AppText('Chưa có danh mục nào'));
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final cat = categories[index];
+                        final color = CategoryHelper.getColor(cat.color);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface(context),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border(context), width: 1),
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            leading: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(CategoryHelper.getIcon(cat.icon), color: color, size: 24),
+                            ),
+                            title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w600),
+                            trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),
+                            onTap: () {
+                              // Action for category
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  }
+                  return const Center(child: AppText('Lỗi tải danh mục'));
+                },
               ),
             ),
           ],
@@ -71,191 +117,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final result = await context.push('/add_category');
-          if (result != null && result is Map<String, dynamic>) {
-            setState(() {
-              final newCat = _CustomCategory(
-                name: result['name'] as String,
-                icon: result['icon'] as IconData,
-                color: result['color'] as Color,
-              );
-              if (result['type'] == 'EXPENSE') {
-                _customExpenseCategories.add(newCat);
-                _selectedTypeIndex = 0;
-              } else {
-                _customIncomeCategories.add(newCat);
-                _selectedTypeIndex = 1;
-              }
-            });
-          }
+          context.push('/add_category');
         },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
-
-  List<Widget> _buildExpenseCategories() {
-    return [
-      _buildCategoryGroup(
-        title: 'Ăn uống',
-        icon: Icons.restaurant,
-        iconColor: AppColors.orange500,
-        subCategories: [
-          _CategoryItem('Đi chợ / Siêu thị', Icons.shopping_cart),
-          _CategoryItem('Ăn ngoài', Icons.local_dining),
-          _CategoryItem('Cà phê', Icons.local_cafe),
-        ],
-      ),
-      const SizedBox(height: 16),
-      _buildCategoryGroup(
-        title: 'Di chuyển',
-        icon: Icons.directions_car,
-        iconColor: AppColors.purple500,
-        subCategories: [
-          _CategoryItem('Xăng dầu', Icons.local_gas_station),
-          _CategoryItem('Grab / Taxi', Icons.local_taxi),
-          _CategoryItem('Gửi xe', Icons.local_parking),
-        ],
-      ),
-      const SizedBox(height: 16),
-      _buildCategoryGroup(
-        title: 'Nhà ở',
-        icon: Icons.home,
-        iconColor: AppColors.blue500,
-        subCategories: [
-          _CategoryItem('Tiền nhà', Icons.house),
-          _CategoryItem('Điện nước', Icons.water_drop),
-          _CategoryItem('Internet', Icons.wifi),
-        ],
-      ),
-      const SizedBox(height: 16),
-      if (_customExpenseCategories.isNotEmpty)
-        _buildCategoryGroup(
-          title: 'Khác (Tùy chỉnh)',
-          icon: Icons.category,
-          iconColor: AppColors.gray500,
-          subCategories: _customExpenseCategories.map((e) => _CategoryItem(e.name, e.icon, customColor: e.color)).toList(),
-        ),
-      const SizedBox(height: 80),
-    ];
-  }
-
-  List<Widget> _buildIncomeCategories() {
-    return [
-      _buildCategoryGroup(
-        title: 'Lương',
-        icon: Icons.work,
-        iconColor: AppColors.green500,
-        subCategories: [],
-      ),
-      const SizedBox(height: 16),
-      _buildCategoryGroup(
-        title: 'Thưởng',
-        icon: Icons.card_giftcard,
-        iconColor: AppColors.pink500,
-        subCategories: [],
-      ),
-      const SizedBox(height: 16),
-      _buildCategoryGroup(
-        title: 'Đầu tư',
-        icon: Icons.trending_up,
-        iconColor: AppColors.blue500,
-        subCategories: [],
-      ),
-      const SizedBox(height: 16),
-      if (_customIncomeCategories.isNotEmpty)
-        _buildCategoryGroup(
-          title: 'Khác (Tùy chỉnh)',
-          icon: Icons.category,
-          iconColor: AppColors.gray500,
-          subCategories: _customIncomeCategories.map((e) => _CategoryItem(e.name, e.icon, customColor: e.color)).toList(),
-        ),
-      const SizedBox(height: 80),
-    ];
-  }
-
-  Widget _buildCategoryGroup({
-    required String title,
-    required IconData icon,
-    required Color iconColor,
-    required List<_CategoryItem> subCategories,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border(context), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: iconColor, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppText(title, fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ),
-          if (subCategories.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.only(left: 56.0, right: 16.0, bottom: 8.0),
-              child: const Divider(height: 1),
-            ),
-            ...subCategories.map((sub) => InkWell(
-              onTap: () {
-                // Select category
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 56.0, right: 16.0, top: 12.0, bottom: 12.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: sub.customColor != null ? sub.customColor!.withValues(alpha: 0.1) : Colors.transparent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(sub.icon, size: 18, color: sub.customColor ?? AppColors.textSecondary(context)),
-                    ),
-                    const SizedBox(width: 12),
-                    AppText(sub.name, fontSize: 15, color: AppColors.textPrimary(context)),
-                  ],
-                ),
-              ),
-            )),
-            const SizedBox(height: 8),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoryItem {
-  final String name;
-  final IconData icon;
-  final Color? customColor;
-
-  _CategoryItem(this.name, this.icon, {this.customColor});
-}
-
-class _CustomCategory {
-  final String name;
-  final IconData icon;
-  final Color color;
-
-  _CustomCategory({required this.name, required this.icon, required this.color});
 }

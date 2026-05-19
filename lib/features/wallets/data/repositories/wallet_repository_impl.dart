@@ -8,11 +8,14 @@ class WalletRepositoryImpl implements WalletRepository {
 
   WalletRepositoryImpl(this._firestore);
 
+  /// Helper to get wallet collection ref under /users/{userId}/wallets
+  CollectionReference _walletsRef(String userId) {
+    return _firestore.collection('users').doc(userId).collection('wallets');
+  }
+
   @override
   Stream<List<Wallet>> getWallets(String userId) {
-    return _firestore
-        .collection('wallets')
-        .where('userId', isEqualTo: userId)
+    return _walletsRef(userId)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) => WalletModel.fromFirestore(doc)).toList();
@@ -32,7 +35,7 @@ class WalletRepositoryImpl implements WalletRepository {
       color: wallet.color,
       excludeFromTotal: wallet.excludeFromTotal,
     );
-    await _firestore.collection('wallets').add(model.toFirestore());
+    await _walletsRef(wallet.userId).add(model.toFirestore());
   }
 
   @override
@@ -48,11 +51,17 @@ class WalletRepositoryImpl implements WalletRepository {
       color: wallet.color,
       excludeFromTotal: wallet.excludeFromTotal,
     );
-    await _firestore.collection('wallets').doc(wallet.id).update(model.toFirestore());
+    await _walletsRef(wallet.userId).doc(wallet.id).update(model.toFirestore());
   }
 
   @override
   Future<void> deleteWallet(String id) async {
-    await _firestore.collection('wallets').doc(id).delete();
+    // deleteWallet needs userId - we'll handle this via the new signature
+    throw UnimplementedError('Use deleteWalletForUser instead');
+  }
+
+  @override
+  Future<void> deleteWalletForUser(String userId, String walletId) async {
+    await _walletsRef(userId).doc(walletId).delete();
   }
 }

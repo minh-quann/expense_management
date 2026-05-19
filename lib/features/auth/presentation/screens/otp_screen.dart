@@ -16,7 +16,7 @@ class OtpScreen extends StatefulWidget {
   @override
   State<OtpScreen> createState() => _OtpScreenState();
 }
-
+ 
 class _OtpScreenState extends State<OtpScreen> {
   final TextEditingController _otpController = TextEditingController();
   String _verificationId = "";

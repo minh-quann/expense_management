@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/widgets/custom_number_pad.dart';
+import 'package:expense_management/shared/utils/category_helper.dart';
+import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/features/budgets/domain/entities/budget.dart';
 import 'package:expense_management/features/budgets/presentation/bloc/budget_bloc.dart';
 import 'package:expense_management/features/budgets/presentation/bloc/budget_event.dart';
@@ -54,14 +56,16 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
   void _showCategoryPicker() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
+          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            borderRadius: BorderRadius.circular(32),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,15 +92,31 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
                           final cat = categories[index];
-                          return ListTile(
-                            title: AppText(cat.name, color: AppColors.textPrimary(context)),
-                            onTap: () {
-                              setState(() {
-                                _selectedCategoryId = cat.id;
-                                _selectedCategoryName = cat.name;
-                              });
-                              Navigator.pop(context);
-                            },
+                          return Column(
+                            children: [
+                              ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                leading: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: CategoryHelper.getColor(cat.color).withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(CategoryHelper.getIcon(cat.icon), color: CategoryHelper.getColor(cat.color), size: 24),
+                                ),
+                                title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+                                trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategoryId = cat.id;
+                                    _selectedCategoryName = cat.name;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              if (index < categories.length - 1)
+                                Divider(height: 1, indent: 64, color: AppColors.border(context)),
+                            ],
                           );
                         },
                       );
@@ -113,7 +133,10 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
   }
 
   void _saveBudget() {
-    if (_amount == '0' || _amount.isEmpty) return;
+    if (_amount == '0' || _amount.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền ngân sách')));
+      return;
+    }
 
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
     final now = DateTime.now();
@@ -160,7 +183,10 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                   children: [
                     AppText('Số tiền', fontSize: 16, color: AppColors.textSecondary(context)),
                     const SizedBox(height: 8),
-                    AppText('\$$_amount', fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    AppText(
+                      CurrencyFormatter.format(context, double.parse(_amount)),
+                      fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary
+                    ),
                   ],
                 ),
               ),

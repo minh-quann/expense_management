@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/widgets/custom_number_pad.dart';
+import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/features/goals/domain/entities/goal.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_event.dart';
@@ -49,8 +50,14 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
   }
 
   void _saveGoal() {
-    if (_amount == '0' || _amount.isEmpty) return;
-    if (_nameController.text.trim().isEmpty) return;
+    if (_amount == '0' || _amount.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền mục tiêu')));
+      return;
+    }
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên mục tiêu')));
+      return;
+    }
 
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
     final now = DateTime.now();
@@ -107,7 +114,10 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                   children: [
                     AppText('Số tiền mục tiêu', fontSize: 16, color: AppColors.textSecondary(context)),
                     const SizedBox(height: 8),
-                    AppText('\$$_amount', fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    AppText(
+                      CurrencyFormatter.format(context, double.parse(_amount)),
+                      fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary
+                    ),
                   ],
                 ),
               ),

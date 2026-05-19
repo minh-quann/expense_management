@@ -18,8 +18,9 @@ class UpdateWalletEvent extends WalletEvent {
 }
 
 class DeleteWalletEvent extends WalletEvent {
+  final String userId;
   final String walletId;
-  DeleteWalletEvent(this.walletId);
+  DeleteWalletEvent(this.userId, this.walletId);
 }
 
 class WalletsUpdatedInternalEvent extends WalletEvent {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/widgets/custom_number_pad.dart';
+import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/features/recurring/domain/entities/recurring.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_event.dart';
@@ -51,7 +52,10 @@ class _AddRecurringScreenState extends State<AddRecurringScreen> {
   }
 
   void _saveRecurring() {
-    if (_amount == '0' || _amount.isEmpty) return;
+    if (_amount == '0' || _amount.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền hợp lệ')));
+      return;
+    }
 
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
     final now = DateTime.now();
@@ -113,7 +117,10 @@ class _AddRecurringScreenState extends State<AddRecurringScreen> {
                   children: [
                     AppText('Số tiền', fontSize: 16, color: AppColors.textSecondary(context)),
                     const SizedBox(height: 8),
-                    AppText('\$$_amount', fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary),
+                    AppText(
+                      CurrencyFormatter.format(context, double.parse(_amount)),
+                      fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary
+                    ),
                   ],
                 ),
               ),

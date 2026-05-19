@@ -8,6 +8,7 @@ class AppTransaction {
   final String? categoryId;
   final String? categoryName;
   final String? categoryIcon;
+  final String? categoryColor;
   
   final String walletId;
   final String? walletName;
@@ -30,6 +31,7 @@ class AppTransaction {
     this.categoryId,
     this.categoryName,
     this.categoryIcon,
+    this.categoryColor,
     required this.walletId,
     this.walletName,
     this.toWalletId,

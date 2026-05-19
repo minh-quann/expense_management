@@ -45,7 +45,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   void _onDeleteWallet(DeleteWalletEvent event, Emitter<WalletState> emit) async {
     try {
-      await repository.deleteWallet(event.walletId);
+      await repository.deleteWalletForUser(event.userId, event.walletId);
     } catch (e) {
       add(WalletsErrorInternalEvent(e.toString()));
     }

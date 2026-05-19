@@ -3,12 +3,13 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
-import 'package:intl/intl.dart';
+
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
 
@@ -119,7 +120,7 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildChartSection(AppLocalizations l10n, double totalAmount, List<MapEntry<String, double>> categories) {
     final isExpense = _selectedType == 'EXPENSE';
     final chartTitle = isExpense ? l10n.stats_expense_chart : l10n.stats_income_chart;
-    final totalAmountStr = NumberFormat.currency(symbol: '\$').format(totalAmount);
+    final totalAmountStr = CurrencyFormatter.format(context, totalAmount);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -231,7 +232,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 color,
                 cat.key,
                 '${percentage.toStringAsFixed(1)}%',
-                NumberFormat.currency(symbol: '\$').format(cat.value),
+                CurrencyFormatter.format(context, cat.value),
               );
             }),
         ],

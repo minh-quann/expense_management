@@ -144,6 +144,14 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       _buildMenuItem(
                         context,
+                        iconPath: 'assets/icons/profile/user.svg', // Will update icons later
+                        iconBgColor: AppColors.cyan600,
+                        title: 'Quản lý ví (Wallets)',
+                        textColor: textColor,
+                        onTap: () => context.push('/wallets'),
+                      ),
+                      _buildMenuItem(
+                        context,
                         iconPath: 'assets/icons/profile/shield.svg', // Will update icons later
                         iconBgColor: AppColors.orange500,
                         title: 'Ngân sách (Budgets)',
