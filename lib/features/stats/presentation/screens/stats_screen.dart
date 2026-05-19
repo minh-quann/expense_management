@@ -4,7 +4,11 @@ import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
+import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
+import 'package:intl/intl.dart';
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
 
@@ -36,18 +40,49 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTypeToggle(l10n),
-              const SizedBox(height: 24),
-              _buildChartSection(l10n, isDark),
-              const SizedBox(height: 32),
-              _buildTopSpendingSection(l10n, isDark),
-              const SizedBox(height: 100), // Space for bottom nav
-            ],
-          ),
+        child: BlocBuilder<TransactionBloc, TransactionState>(
+          builder: (context, state) {
+            if (state is TransactionLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is TransactionLoaded) {
+              final now = DateTime.now();
+              final currentMonthTx = state.transactions.where((tx) {
+                return tx.date.month == now.month && tx.date.year == now.year;
+              }).toList();
+
+              final isExpense = _selectedType == 'EXPENSE';
+              final typeTx = currentMonthTx.where((tx) => tx.type == (isExpense ? TransactionType.expense : TransactionType.income)).toList();
+
+              double totalAmount = 0;
+              Map<String, double> categorySums = {};
+              for (var tx in typeTx) {
+                totalAmount += tx.amount;
+                final catName = tx.categoryName ?? 'Khác';
+                categorySums[catName] = (categorySums[catName] ?? 0) + tx.amount;
+              }
+
+              final sortedCategories = categorySums.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildTypeToggle(l10n),
+                    const SizedBox(height: 24),
+                    _buildChartSection(l10n, totalAmount, sortedCategories),
+                    const SizedBox(height: 32),
+                    _buildTopSpendingSection(l10n, totalAmount, sortedCategories),
+                    const SizedBox(height: 100), // Space for bottom nav
+                  ],
+                ),
+              );
+            }
+
+            return const Center(child: AppText('Lỗi tải dữ liệu'));
+          },
         ),
       ),
     );
@@ -65,16 +100,26 @@ class _StatsScreenState extends State<StatsScreen> {
         onChanged: (index) {
           setState(() {
             _selectedType = index == 0 ? 'EXPENSE' : 'INCOME';
+            _touchedIndex = -1; // Reset touched state
           });
         },
       ),
     );
   }
 
-  Widget _buildChartSection(AppLocalizations l10n, bool isDark) {
+  final List<Color> _chartColors = [
+    AppColors.red500,
+    AppColors.orange500,
+    AppColors.blue500,
+    AppColors.purple500,
+    AppColors.green500,
+    AppColors.pink500,
+  ];
+
+  Widget _buildChartSection(AppLocalizations l10n, double totalAmount, List<MapEntry<String, double>> categories) {
     final isExpense = _selectedType == 'EXPENSE';
     final chartTitle = isExpense ? l10n.stats_expense_chart : l10n.stats_income_chart;
-    final totalAmount = isExpense ? '₫12,500,000' : '₫35,000,000';
+    final totalAmountStr = NumberFormat.currency(symbol: '\$').format(totalAmount);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -95,54 +140,54 @@ class _StatsScreenState extends State<StatsScreen> {
         children: [
           AppText(chartTitle, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
           const SizedBox(height: 8),
-          AppText(totalAmount, fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+          AppText(totalAmountStr, fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
           const SizedBox(height: 32),
-          SizedBox(
-            height: 220,
-            child: PieChart(
-              PieChartData(
-                pieTouchData: PieTouchData(
-                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                    setState(() {
-                      if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
-                        _touchedIndex = -1;
-                        return;
-                      }
-                      _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                    });
-                  },
+          if (totalAmount > 0)
+            SizedBox(
+              height: 220,
+              child: PieChart(
+                PieChartData(
+                  pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions || pieTouchResponse == null || pieTouchResponse.touchedSection == null) {
+                          _touchedIndex = -1;
+                          return;
+                        }
+                        _touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                      });
+                    },
+                  ),
+                  borderData: FlBorderData(show: false),
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 60,
+                  sections: _showingSections(totalAmount, categories),
                 ),
-                borderData: FlBorderData(show: false),
-                sectionsSpace: 2,
-                centerSpaceRadius: 60,
-                sections: _showingSections(),
               ),
+            )
+          else
+            const SizedBox(
+              height: 220,
+              child: Center(child: AppText('Chưa có dữ liệu')),
             ),
-          ),
         ],
       ),
     );
   }
 
-  List<PieChartSectionData> _showingSections() {
-    final isExpense = _selectedType == 'EXPENSE';
-    // Dummy Data
-    if (isExpense) {
-      return [
-        _buildSection(0, 40, AppColors.red500, '40%', 'Ăn uống'),
-        _buildSection(1, 25, AppColors.orange500, '25%', 'Nhà ở'),
-        _buildSection(2, 20, AppColors.blue500, '20%', 'Di chuyển'),
-        _buildSection(3, 15, AppColors.purple500, '15%', 'Giải trí'),
-      ];
-    } else {
-      return [
-        _buildSection(0, 80, AppColors.green500, '80%', 'Lương'),
-        _buildSection(1, 20, AppColors.blue500, '20%', 'Đầu tư'),
-      ];
+  List<PieChartSectionData> _showingSections(double total, List<MapEntry<String, double>> categories) {
+    List<PieChartSectionData> sections = [];
+    for (int i = 0; i < categories.length; i++) {
+      final value = categories[i].value;
+      final percentage = (value / total * 100);
+      final color = _chartColors[i % _chartColors.length];
+      
+      sections.add(_buildSection(i, value, color, '${percentage.toStringAsFixed(1)}%'));
     }
+    return sections;
   }
 
-  PieChartSectionData _buildSection(int index, double value, Color color, String title, String badge) {
+  PieChartSectionData _buildSection(int index, double value, Color color, String title) {
     final isTouched = index == _touchedIndex;
     final fontSize = isTouched ? 16.0 : 12.0;
     final radius = isTouched ? 50.0 : 40.0;
@@ -160,7 +205,7 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _buildTopSpendingSection(AppLocalizations l10n, bool isDark) {
+  Widget _buildTopSpendingSection(AppLocalizations l10n, double total, List<MapEntry<String, double>> categories) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -173,14 +218,22 @@ class _StatsScreenState extends State<StatsScreen> {
             color: AppColors.textPrimary(context),
           ),
           const SizedBox(height: 16),
-          if (_selectedType == 'EXPENSE') ...[
-            _buildCategoryItem(Icons.restaurant, AppColors.orange500, 'Ăn uống', '40%', '₫5,000,000'),
-            _buildCategoryItem(Icons.home, AppColors.blue500, 'Nhà ở', '25%', '₫3,125,000'),
-            _buildCategoryItem(Icons.directions_car, AppColors.purple500, 'Di chuyển', '20%', '₫2,500,000'),
-          ] else ...[
-            _buildCategoryItem(Icons.work, AppColors.green500, 'Lương', '80%', '₫28,000,000'),
-            _buildCategoryItem(Icons.trending_up, AppColors.blue500, 'Đầu tư', '20%', '₫7,000,000'),
-          ]
+          if (categories.isEmpty)
+            const AppText('Không có dữ liệu')
+          else
+            ...categories.asMap().entries.map((entry) {
+              final index = entry.key;
+              final cat = entry.value;
+              final percentage = total > 0 ? (cat.value / total * 100) : 0;
+              final color = _chartColors[index % _chartColors.length];
+              return _buildCategoryItem(
+                Icons.category,
+                color,
+                cat.key,
+                '${percentage.toStringAsFixed(1)}%',
+                NumberFormat.currency(symbol: '\$').format(cat.value),
+              );
+            }),
         ],
       ),
     );

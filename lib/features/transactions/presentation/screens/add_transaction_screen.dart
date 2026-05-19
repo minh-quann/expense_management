@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
-import 'package:go_router/go_router.dart';
+import 'package:expense_management/shared/widgets/custom_number_pad.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_event.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_state.dart';
+import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
+import 'package:expense_management/features/wallets/presentation/bloc/wallet_event.dart';
+import 'package:expense_management/features/wallets/presentation/bloc/wallet_state.dart';
+import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -14,9 +25,217 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String _transactionType = 'EXPENSE'; // EXPENSE, INCOME, TRANSFER
-  // ignore: prefer_final_fields
   String _amount = '0';
-  
+  final TextEditingController _noteController = TextEditingController();
+
+  // Temporary selection state
+  String _selectedCategoryId = '';
+  String _selectedCategoryName = 'Chọn danh mục';
+  String _selectedWalletId = '';
+  String _selectedWalletName = 'Chọn ví';
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    context.read<WalletBloc>().add(LoadWalletsEvent(userId));
+    context.read<CategoryBloc>().add(LoadCategories(userId));
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  void _showNumberPad() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CustomNumberPad(
+        onNumberPressed: (number) {
+          setState(() {
+            if (_amount == '0' && number != '000') {
+              _amount = number;
+            } else if (_amount != '0') {
+              _amount += number;
+            }
+          });
+        },
+        onBackspacePressed: () {
+          setState(() {
+            if (_amount.length > 1) {
+              _amount = _amount.substring(0, _amount.length - 1);
+            } else {
+              _amount = '0';
+            }
+          });
+        },
+        onDonePressed: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  void _showCategoryPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText('Chọn danh mục', fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+              const SizedBox(height: 16),
+              Expanded(
+                child: BlocBuilder<CategoryBloc, CategoryState>(
+                  builder: (context, state) {
+                    if (state is CategoryLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is CategoryLoaded) {
+                      final categories = _transactionType == 'INCOME' 
+                          ? state.incomeCategories 
+                          : state.expenseCategories;
+                      if (categories.isEmpty) {
+                        return Center(child: AppText('Chưa có danh mục nào', color: AppColors.textSecondary(context)));
+                      }
+                      return ListView.builder(
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final cat = categories[index];
+                          return ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.category, color: AppColors.primary),
+                            ),
+                            title: AppText(cat.name, color: AppColors.textPrimary(context)),
+                            onTap: () {
+                              setState(() {
+                                _selectedCategoryId = cat.id;
+                                _selectedCategoryName = cat.name;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      );
+                    }
+                    return Center(child: AppText('Lỗi tải danh mục', color: AppColors.textSecondary(context)));
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showWalletPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppText('Chọn ví', fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+              const SizedBox(height: 16),
+              Flexible(
+                child: BlocBuilder<WalletBloc, WalletState>(
+                  builder: (context, state) {
+                    if (state is WalletLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is WalletLoaded) {
+                      if (state.wallets.isEmpty) {
+                        return Center(child: AppText('Chưa có ví nào', color: AppColors.textSecondary(context)));
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: state.wallets.length,
+                        itemBuilder: (context, index) {
+                          final wallet = state.wallets[index];
+                          return ListTile(
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.blue500.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.account_balance_wallet, color: AppColors.blue500),
+                            ),
+                            title: AppText(wallet.name, color: AppColors.textPrimary(context)),
+                            subtitle: AppText('${wallet.balance} \$', color: AppColors.textSecondary(context), fontSize: 13),
+                            onTap: () {
+                              setState(() {
+                                _selectedWalletId = wallet.id;
+                                _selectedWalletName = wallet.name;
+                              });
+                              Navigator.pop(context);
+                            },
+                          );
+                        },
+                      );
+                    }
+                    return Center(child: AppText('Lỗi tải ví', color: AppColors.textSecondary(context)));
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _saveTransaction() {
+    if (_amount == '0' || _amount.isEmpty) return;
+
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+
+    final type = _transactionType == 'EXPENSE'
+        ? TransactionType.expense
+        : (_transactionType == 'INCOME'
+            ? TransactionType.income
+            : TransactionType.transfer);
+
+    final transaction = AppTransaction(
+      id: '',
+      amount: double.parse(_amount),
+      type: type,
+      categoryId: type == TransactionType.transfer ? null : _selectedCategoryId,
+      categoryName: type == TransactionType.transfer ? null : _selectedCategoryName,
+      walletId: _selectedWalletId,
+      walletName: _selectedWalletName,
+      date: DateTime.now(),
+      note: _noteController.text.isNotEmpty ? _noteController.text : null,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    context.read<TransactionBloc>().add(AddTransactionEvent(userId, transaction));
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,11 +255,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     _buildAmountInput(),
                     const SizedBox(height: 40),
                     _buildDetailsGrid(),
-                    const SizedBox(height: 40),
-                    _buildSaveButton(),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: _buildSaveButton(),
             ),
           ],
         ),
@@ -66,12 +288,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             ),
           ),
           AppText(
-            AppLocalizations.of(context)!.add_transaction_title,
+            AppLocalizations.of(context)?.add_transaction_title ?? 'Thêm giao dịch',
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary(context),
           ),
-          const SizedBox(width: 40), // Balance the header
+          const SizedBox(width: 40),
         ],
       ),
     );
@@ -87,9 +309,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
     return AnimatedToggleBar(
       options: [
-        AppLocalizations.of(context)!.add_transaction_expense,
-        AppLocalizations.of(context)!.add_transaction_income,
-        AppLocalizations.of(context)!.add_transaction_transfer,
+        AppLocalizations.of(context)?.add_transaction_expense ?? 'Chi tiền',
+        AppLocalizations.of(context)?.add_transaction_income ?? 'Thu tiền',
+        AppLocalizations.of(context)?.add_transaction_transfer ?? 'Chuyển khoản',
       ],
       selectedIndex: selectedIndex,
       onChanged: (index) {
@@ -107,40 +329,44 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   Widget _buildAmountInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        AppText(
-          AppLocalizations.of(context)!.add_transaction_amount,
-          fontSize: 16,
-          color: AppColors.textSecondary(context),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: AppText(
-                '\$',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: _transactionType == 'EXPENSE' 
-                    ? AppColors.red500 
-                    : (_transactionType == 'INCOME' ? AppColors.green500 : AppColors.blue500),
+    return GestureDetector(
+      onTap: _showNumberPad,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          AppText(
+            AppLocalizations.of(context)?.add_transaction_amount ?? 'Số tiền',
+            fontSize: 16,
+            color: AppColors.textSecondary(context),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: AppText(
+                  '\$',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _transactionType == 'EXPENSE'
+                      ? AppColors.red500
+                      : (_transactionType == 'INCOME' ? AppColors.green500 : AppColors.blue500),
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            AppText(
-              _amount,
-              fontSize: 56,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary(context),
-            ),
-          ],
-        ),
-      ],
+              const SizedBox(width: 4),
+              AppText(
+                _amount,
+                fontSize: 56,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary(context),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -154,9 +380,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 icon: Icons.grid_view_rounded,
                 iconColor: AppColors.purple500,
                 iconBgColor: AppColors.purple50,
-                title: AppLocalizations.of(context)!.add_transaction_category,
-                value: 'Ăn uống',
-                onTap: () => context.push('/categories'),
+                title: AppLocalizations.of(context)?.add_transaction_category ?? 'Danh mục',
+                value: _selectedCategoryName,
+                onTap: _showCategoryPicker,
               ),
             ),
             const SizedBox(width: 16),
@@ -165,8 +391,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 icon: Icons.account_balance_wallet_rounded,
                 iconColor: AppColors.blue500,
                 iconBgColor: AppColors.blue50,
-                title: AppLocalizations.of(context)!.add_transaction_wallet,
-                value: AppLocalizations.of(context)!.wallets_cash,
+                title: AppLocalizations.of(context)?.add_transaction_wallet ?? 'Ví',
+                value: _selectedWalletName,
+                onTap: _showWalletPicker,
               ),
             ),
           ],
@@ -179,8 +406,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 icon: Icons.calendar_today_rounded,
                 iconColor: AppColors.orange500,
                 iconBgColor: AppColors.orange50,
-                title: AppLocalizations.of(context)!.add_transaction_date,
-                value: '${AppLocalizations.of(context)!.transactions_today}, 10:20',
+                title: AppLocalizations.of(context)?.add_transaction_date ?? 'Ngày',
+                value: '${AppLocalizations.of(context)?.transactions_today ?? 'Hôm nay'}, 10:20',
               ),
             ),
           ],
@@ -207,8 +434,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: TextField(
+                  controller: _noteController,
                   decoration: InputDecoration(
-                    hintText: AppLocalizations.of(context)!.add_transaction_note_hint,
+                    hintText: AppLocalizations.of(context)?.add_transaction_note_hint ?? 'Ghi chú',
                     hintStyle: TextStyle(color: AppColors.textSecondary(context), fontSize: 16),
                     border: InputBorder.none,
                     isDense: true,
@@ -238,30 +466,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border(context)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
             ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(height: 16),
-          AppText(title, fontSize: 13, color: AppColors.textSecondary(context)),
-          const SizedBox(height: 4),
-          AppText(value, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
-        ],
+            const SizedBox(height: 16),
+            AppText(title, fontSize: 13, color: AppColors.textSecondary(context)),
+            const SizedBox(height: 4),
+            AppText(value, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -270,7 +498,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       width: double.infinity,
       height: 60,
       child: ElevatedButton(
-        onPressed: () {},
+        onPressed: _saveTransaction,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -280,7 +508,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           ),
         ),
         child: AppText(
-          AppLocalizations.of(context)!.add_transaction_save,
+          AppLocalizations.of(context)?.add_transaction_save ?? 'Lưu',
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.white,

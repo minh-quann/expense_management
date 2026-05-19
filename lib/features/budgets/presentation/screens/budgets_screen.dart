@@ -2,8 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 
-class BudgetsScreen extends StatelessWidget {
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/features/budgets/presentation/bloc/budget_bloc.dart';
+import 'package:expense_management/features/budgets/presentation/bloc/budget_event.dart';
+import 'package:expense_management/features/budgets/presentation/bloc/budget_state.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
+import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/features/budgets/presentation/screens/add_budget_screen.dart';
+
+class BudgetsScreen extends StatefulWidget {
   const BudgetsScreen({super.key});
+
+  @override
+  State<BudgetsScreen> createState() => _BudgetsScreenState();
+}
+
+class _BudgetsScreenState extends State<BudgetsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    context.read<BudgetBloc>().add(LoadBudgets(userId));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,64 +50,111 @@ class BudgetsScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildBudgetCard(
-                context,
-                title: 'Tổng chi tiêu tháng này',
-                totalAmount: 15000000,
-                spentAmount: 12500000,
-                color: AppColors.primary,
-              ),
-              const SizedBox(height: 32),
-              AppText(
-                'Ngân sách danh mục',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary(context),
-              ),
-              const SizedBox(height: 16),
-              _buildBudgetCard(
-                context,
-                title: 'Ăn uống',
-                icon: Icons.restaurant,
-                iconColor: AppColors.orange500,
-                totalAmount: 5000000,
-                spentAmount: 4800000,
-                color: AppColors.orange500,
-              ),
-              const SizedBox(height: 16),
-              _buildBudgetCard(
-                context,
-                title: 'Di chuyển',
-                icon: Icons.directions_car,
-                iconColor: AppColors.purple500,
-                totalAmount: 2000000,
-                spentAmount: 800000,
-                color: AppColors.purple500,
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const AppText('Tạo ngân sách mới', fontWeight: FontWeight.bold),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
+        child: BlocBuilder<BudgetBloc, BudgetState>(
+          builder: (context, budgetState) {
+            if (budgetState is BudgetLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (budgetState is BudgetLoaded) {
+              return BlocBuilder<TransactionBloc, TransactionState>(
+                builder: (context, txState) {
+                  List<AppTransaction> currentMonthTx = [];
+                  if (txState is TransactionLoaded) {
+                    final now = DateTime.now();
+                    currentMonthTx = txState.transactions.where((tx) {
+                      return tx.date.month == now.month && tx.date.year == now.year && tx.type == TransactionType.expense;
+                    }).toList();
+                  }
+
+                  final budgets = budgetState.budgets;
+                  final totalBudget = budgets.where((b) => b.categoryId == null).firstOrNull;
+                  final categoryBudgets = budgets.where((b) => b.categoryId != null).toList();
+
+                  double totalSpent = 0;
+                  if (totalBudget != null) {
+                    totalSpent = currentMonthTx.fold(0, (sum, tx) => sum + tx.amount);
+                  }
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (totalBudget != null) ...[
+                          _buildBudgetCard(
+                            context,
+                            title: 'Tổng chi tiêu tháng này',
+                            totalAmount: totalBudget.amountLimit,
+                            spentAmount: totalSpent,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+                        
+                        if (categoryBudgets.isNotEmpty) ...[
+                          AppText(
+                            'Ngân sách danh mục',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary(context),
+                          ),
+                          const SizedBox(height: 16),
+                          ...categoryBudgets.map((b) {
+                            final spent = currentMonthTx
+                                .where((tx) => tx.categoryId == b.categoryId)
+                                .fold(0.0, (sum, tx) => sum + tx.amount);
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _buildBudgetCard(
+                                context,
+                                title: b.categoryName ?? 'Danh mục',
+                                icon: Icons.category,
+                                iconColor: AppColors.orange500,
+                                totalAmount: b.amountLimit,
+                                spentAmount: spent,
+                                color: AppColors.orange500,
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 16),
+                        ],
+
+                        if (budgets.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32.0),
+                              child: AppText('Bạn chưa có ngân sách nào'),
+                            ),
+                          ),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (_) => const AddBudgetScreen()));
+                            },
+                            icon: const Icon(Icons.add, size: 20),
+                            label: const AppText('Tạo ngân sách mới', fontWeight: FontWeight.bold),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+                  );
+                },
+              );
+            }
+
+            return const Center(child: AppText('Lỗi tải ngân sách'));
+          },
         ),
       ),
     );

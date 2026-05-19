@@ -3,6 +3,13 @@ import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
+import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -13,6 +20,39 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   int _selectedFilterIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    context.read<TransactionBloc>().add(LoadTransactions(userId));
+  }
+
+  Map<DateTime, List<AppTransaction>> _groupTransactionsByDate(List<AppTransaction> transactions) {
+    final Map<DateTime, List<AppTransaction>> grouped = {};
+    for (var tx in transactions) {
+      final date = DateTime(tx.date.year, tx.date.month, tx.date.day);
+      if (!grouped.containsKey(date)) {
+        grouped[date] = [];
+      }
+      grouped[date]!.add(tx);
+    }
+    return grouped;
+  }
+
+  String _formatDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    
+    if (date == today) {
+      return AppLocalizations.of(context)?.transactions_today ?? 'Hôm nay';
+    } else if (date == yesterday) {
+      return AppLocalizations.of(context)?.transactions_yesterday ?? 'Hôm qua';
+    } else {
+      return DateFormat('dd/MM/yyyy').format(date);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,67 +66,61 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             const SizedBox(height: 16),
             _buildFilters(context),
             const SizedBox(height: 24),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDateGroup(context, AppLocalizations.of(context)!.transactions_today, [
-                      _buildTransactionItem(context, 
-                        icon: Icons.directions_car,
-                        iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : Colors.black,
-                        iconColor: AppColors.isDark(context) ? Colors.white : Colors.white,
-                        title: 'Grab/Taxi',
-                        time: '08:40',
-                        amount: '-\$150',
-                        amountColor: AppColors.transactionExpense,
-                      ),
-                      _buildTransactionItem(context, 
-                        icon: Icons.person,
-                        iconBgColor: AppColors.iconBgPerson,
-                        iconColor: AppColors.iconColorPerson,
-                        title: 'Chuyển tiền',
-                        time: '12:35',
-                        amount: '-\$450',
-                        amountColor: AppColors.transactionExpense,
-                      ),
-                    ]),
-                    const SizedBox(height: 24),
-                    _buildDateGroup(context, AppLocalizations.of(context)!.transactions_yesterday, [
-                      _buildTransactionItem(context, 
-                        icon: Icons.storefront_rounded,
-                        iconBgColor: AppColors.iconBgStore,
-                        iconColor: AppColors.iconColorStore,
-                        title: 'Siêu thị',
-                        time: 'Hôm qua',
-                        amount: '-\$200',
-                        amountColor: AppColors.transactionExpense,
-                      ),
-                      _buildTransactionItem(context, 
-                        icon: Icons.paypal,
-                        iconBgColor: AppColors.iconBgPaypal,
-                        iconColor: AppColors.iconColorPaypal,
-                        title: 'Ví PayPal',
-                        time: '10:20',
-                        amount: '+\$1200',
-                        amountColor: AppColors.transactionIncome,
-                      ),
-                      _buildTransactionItem(context, 
-                        icon: Icons.account_balance,
-                        iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.iconBgLight,
-                        iconColor: AppColors.textPrimary(context),
-                        title: 'Chuyển khoản',
-                        time: 'Hôm qua',
-                        amount: '-\$600',
-                        amountColor: AppColors.transactionExpense,
-                      ),
-                    ]),
-                    const SizedBox(height: 120), // Bottom nav space
-                  ],
+              Expanded(
+                child: BlocBuilder<TransactionBloc, TransactionState>(
+                  builder: (context, state) {
+                    if (state is TransactionLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is TransactionLoaded) {
+                      List<AppTransaction> filtered = state.transactions;
+                      if (_selectedFilterIndex == 1) {
+                        filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
+                      } else if (_selectedFilterIndex == 2) {
+                        filtered = filtered.where((t) => t.type == TransactionType.income).toList();
+                      } else if (_selectedFilterIndex == 3) {
+                        filtered = filtered.where((t) => t.type == TransactionType.transfer).toList();
+                      }
+
+                      if (filtered.isEmpty) {
+                        return const Center(child: AppText('Chưa có giao dịch nào'));
+                      }
+
+                      final grouped = _groupTransactionsByDate(filtered);
+                      final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (var date in sortedDates) ...[
+                              _buildDateGroup(
+                                context,
+                                _formatDateLabel(date),
+                                grouped[date]!.map((tx) {
+                                  return _buildTransactionItem(
+                                    context,
+                                    icon: tx.type == TransactionType.transfer ? Icons.swap_horiz : Icons.category,
+                                    iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50,
+                                    iconColor: tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500),
+                                    title: tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'),
+                                    time: DateFormat('HH:mm').format(tx.date),
+                                    amount: '${tx.type == TransactionType.income ? '+' : '-'}\$${tx.amount}',
+                                    amountColor: tx.type == TransactionType.income ? AppColors.transactionIncome : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 24),
+                            ],
+                            const SizedBox(height: 120), // Bottom nav space
+                          ],
+                        ),
+                      );
+                    }
+                    return const Center(child: AppText('Lỗi tải giao dịch'));
+                  },
                 ),
               ),
-            ),
           ],
         ),
       ),

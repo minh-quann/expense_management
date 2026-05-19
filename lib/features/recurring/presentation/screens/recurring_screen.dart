@@ -2,8 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 
-class RecurringScreen extends StatelessWidget {
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
+import 'package:expense_management/features/recurring/presentation/bloc/recurring_event.dart';
+import 'package:expense_management/features/recurring/presentation/bloc/recurring_state.dart';
+import 'package:expense_management/features/recurring/domain/entities/recurring.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/features/recurring/presentation/screens/add_recurring_screen.dart';
+
+class RecurringScreen extends StatefulWidget {
   const RecurringScreen({super.key});
+
+  @override
+  State<RecurringScreen> createState() => _RecurringScreenState();
+}
+
+class _RecurringScreenState extends State<RecurringScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    context.read<RecurringBloc>().add(LoadRecurrings(userId));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,62 +48,66 @@ class RecurringScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildRecurringCard(
-                context,
-                title: 'Tiền thuê nhà',
-                amount: 5000000,
-                frequency: 'Hàng tháng (ngày 5)',
-                icon: Icons.home,
-                iconColor: AppColors.blue500,
-                isExpense: true,
-                isActive: true,
-              ),
-              const SizedBox(height: 16),
-              _buildRecurringCard(
-                context,
-                title: 'Lương công ty',
-                amount: 25000000,
-                frequency: 'Hàng tháng (ngày 10)',
-                icon: Icons.work,
-                iconColor: AppColors.green500,
-                isExpense: false,
-                isActive: true,
-              ),
-              const SizedBox(height: 16),
-              _buildRecurringCard(
-                context,
-                title: 'Spotify Premium',
-                amount: 59000,
-                frequency: 'Hàng tháng (ngày 15)',
-                icon: Icons.music_note,
-                iconColor: AppColors.purple500,
-                isExpense: true,
-                isActive: false, // Paused
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const AppText('Tạo giao dịch định kỳ', fontWeight: FontWeight.bold),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
+        child: BlocBuilder<RecurringBloc, RecurringState>(
+          builder: (context, state) {
+            if (state is RecurringLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state is RecurringLoaded) {
+              final recurrings = state.recurrings;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (recurrings.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: AppText('Chưa có giao dịch định kỳ nào'),
+                        ),
+                      )
+                    else
+                      ...recurrings.map((r) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildRecurringCard(
+                            context,
+                            title: r.note ?? 'Giao dịch',
+                            amount: r.amount,
+                            frequency: r.frequency.name.toUpperCase(),
+                            icon: r.type == RecurringType.income ? Icons.download : Icons.upload,
+                            iconColor: r.type == RecurringType.income ? AppColors.green500 : AppColors.blue500,
+                            isExpense: r.type == RecurringType.expense,
+                            isActive: r.isActive,
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddRecurringScreen()));
+                        },
+                        icon: const Icon(Icons.add, size: 20),
+                        label: const AppText('Tạo giao dịch định kỳ', fontWeight: FontWeight.bold),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+              );
+            }
+            return const Center(child: AppText('Lỗi tải giao dịch định kỳ'));
+          },
         ),
       ),
     );

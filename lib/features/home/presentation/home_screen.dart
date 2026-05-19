@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
+import 'package:expense_management/features/wallets/presentation/bloc/wallet_state.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
+import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -80,63 +87,94 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildBalanceCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.balanceGradientStart,
-            AppColors.balanceGradientMiddle,
-            AppColors.balanceGradientEnd,
-          ],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return BlocBuilder<WalletBloc, WalletState>(
+      builder: (context, state) {
+        double totalBalance = 0;
+        if (state is WalletLoaded) {
+          totalBalance = state.wallets
+              .where((w) => !w.excludeFromTotal)
+              .fold(0, (sum, w) => sum + w.balance);
+        }
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.balanceGradientStart,
+                AppColors.balanceGradientMiddle,
+                AppColors.balanceGradientEnd,
+              ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  AppText(AppLocalizations.of(context)!.home_total_balance, color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withValues(alpha: 0.9), size: 16),
+                  Row(
+                    children: [
+                      AppText(AppLocalizations.of(context)?.home_total_balance ?? 'Tổng số dư', color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
+                      const SizedBox(width: 4),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withValues(alpha: 0.9), size: 16),
+                    ],
+                  ),
+                  const Icon(Icons.more_horiz, color: Colors.white),
                 ],
               ),
-              const Icon(Icons.more_horiz, color: Colors.white),
+              const SizedBox(height: 12),
+              AppText(
+                NumberFormat.currency(symbol: '\$').format(totalBalance),
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(height: 32),
+              BlocBuilder<TransactionBloc, TransactionState>(
+                builder: (context, txState) {
+                  double totalIncome = 0;
+                  double totalExpense = 0;
+                  
+                  if (txState is TransactionLoaded) {
+                    final now = DateTime.now();
+                    for (var tx in txState.transactions) {
+                      if (tx.date.month == now.month && tx.date.year == now.year) {
+                        if (tx.type == TransactionType.income) {
+                          totalIncome += tx.amount;
+                        } else if (tx.type == TransactionType.expense) {
+                          totalExpense += tx.amount;
+                        }
+                      }
+                    }
+                  }
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildIncomeExpenseItem(
+                        icon: Icons.arrow_downward_rounded,
+                        label: AppLocalizations.of(context)?.home_income ?? 'Thu nhập',
+                        amount: NumberFormat.currency(symbol: '\$').format(totalIncome),
+                      ),
+                      _buildIncomeExpenseItem(
+                        icon: Icons.arrow_upward_rounded,
+                        label: AppLocalizations.of(context)?.home_expenses ?? 'Chi tiêu',
+                        amount: NumberFormat.currency(symbol: '\$').format(totalExpense),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          const AppText(
-            '\$3,257.00',
-            color: Colors.white,
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildIncomeExpenseItem(
-                icon: Icons.arrow_downward_rounded,
-                label: AppLocalizations.of(context)!.home_income,
-                amount: '\$2,350.00',
-              ),
-              _buildIncomeExpenseItem(
-                icon: Icons.arrow_upward_rounded,
-                label: AppLocalizations.of(context)!.home_expenses,
-                amount: '\$950.00',
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -193,58 +231,44 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildTransactionsList(BuildContext context) {
-    return Column(
-      children: [
-        _buildTransactionItem(context, 
-          icon: Icons.person,
-          iconBgColor: AppColors.iconBgPerson,
-          iconColor: AppColors.iconColorPerson,
-          title: 'Chuyển tiền',
-          time: '12:35',
-          amount: '-\$450',
-          amountColor: AppColors.transactionExpense,
-        ),
-        const SizedBox(height: 20),
-        _buildTransactionItem(context, 
-          icon: Icons.paypal,
-          iconBgColor: AppColors.iconBgPaypal,
-          iconColor: AppColors.iconColorPaypal,
-          title: 'Ví PayPal',
-          time: '10:20',
-          amount: '+\$1200',
-          amountColor: AppColors.transactionIncome,
-        ),
-        const SizedBox(height: 20),
-        _buildTransactionItem(context, 
-          icon: Icons.directions_car,
-          iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : Colors.black,
-          iconColor: AppColors.isDark(context) ? Colors.white : Colors.white,
-          title: 'Grab/Taxi',
-          time: '08:40',
-          amount: '-\$150',
-          amountColor: AppColors.transactionExpense,
-        ),
-        const SizedBox(height: 20),
-        _buildTransactionItem(context, 
-          icon: Icons.storefront_rounded,
-          iconBgColor: AppColors.iconBgStore,
-          iconColor: AppColors.iconColorStore,
-          title: 'Siêu thị',
-          time: 'Hôm qua',
-          amount: '-\$200',
-          amountColor: AppColors.transactionExpense,
-        ),
-        const SizedBox(height: 20),
-        _buildTransactionItem(context, 
-          icon: Icons.account_balance,
-          iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.iconBgLight,
-          iconColor: AppColors.textPrimary(context),
-          title: 'Chuyển khoản',
-          time: 'Hôm qua',
-          amount: '-\$600',
-          amountColor: AppColors.transactionExpense,
-        ),
-      ],
+    return BlocBuilder<TransactionBloc, TransactionState>(
+      builder: (context, state) {
+        if (state is TransactionLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is TransactionLoaded) {
+          final recentTx = state.transactions.take(5).toList();
+          
+          if (recentTx.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: AppText('Chưa có giao dịch nào', color: AppColors.textSecondary(context)),
+              ),
+            );
+          }
+
+          return Column(
+            children: recentTx.map((tx) {
+              return Column(
+                children: [
+                  _buildTransactionItem(
+                    context, 
+                    icon: tx.type == TransactionType.transfer ? Icons.swap_horiz : Icons.category,
+                    iconBgColor: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.1) : AppColors.gray50,
+                    iconColor: tx.type == TransactionType.income ? AppColors.green500 : (tx.type == TransactionType.expense ? AppColors.red500 : AppColors.blue500),
+                    title: tx.categoryName ?? (tx.type == TransactionType.transfer ? 'Chuyển khoản' : 'Khác'),
+                    time: DateFormat('dd/MM HH:mm').format(tx.date),
+                    amount: '${tx.type == TransactionType.income ? '+' : '-'}\$${tx.amount}',
+                    amountColor: tx.type == TransactionType.income ? AppColors.transactionIncome : (tx.type == TransactionType.expense ? AppColors.transactionExpense : AppColors.blue500),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              );
+            }).toList(),
+          );
+        }
+        return const Center(child: AppText('Lỗi tải giao dịch'));
+      },
     );
   }
 

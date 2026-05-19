@@ -11,6 +11,16 @@ import 'package:expense_management/core/localization/locale_cubit.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
 import 'package:expense_management/features/wallets/data/repositories/wallet_repository_impl.dart';
+import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
+import 'package:expense_management/features/transactions/data/repositories/transaction_repository_impl.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
+import 'package:expense_management/features/categories/data/repositories/category_repository_impl.dart';
+import 'package:expense_management/features/budgets/presentation/bloc/budget_bloc.dart';
+import 'package:expense_management/features/budgets/data/repositories/budget_repository_impl.dart';
+import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
+import 'package:expense_management/features/goals/data/repositories/goal_repository_impl.dart';
+import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
+import 'package:expense_management/features/recurring/data/repositories/recurring_repository_impl.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 
 void main() async {
@@ -32,6 +42,31 @@ void main() async {
         BlocProvider<WalletBloc>(
           create: (context) => WalletBloc(
             repository: WalletRepositoryImpl(FirebaseFirestore.instance),
+          ),
+        ),
+        BlocProvider<TransactionBloc>(
+          create: (context) => TransactionBloc(
+            repository: TransactionRepositoryImpl(FirebaseFirestore.instance),
+          ),
+        ),
+        BlocProvider<CategoryBloc>(
+          create: (context) => CategoryBloc(
+            repository: CategoryRepositoryImpl(FirebaseFirestore.instance),
+          ),
+        ),
+        BlocProvider<BudgetBloc>(
+          create: (context) => BudgetBloc(
+            repository: BudgetRepositoryImpl(FirebaseFirestore.instance),
+          ),
+        ),
+        BlocProvider<GoalBloc>(
+          create: (context) => GoalBloc(
+            repository: GoalRepositoryImpl(FirebaseFirestore.instance),
+          ),
+        ),
+        BlocProvider<RecurringBloc>(
+          create: (context) => RecurringBloc(
+            repository: RecurringRepositoryImpl(FirebaseFirestore.instance),
           ),
         ),
       ],

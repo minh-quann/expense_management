@@ -2,8 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 
-class GoalsScreen extends StatelessWidget {
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
+import 'package:expense_management/features/goals/presentation/bloc/goal_event.dart';
+import 'package:expense_management/features/goals/presentation/bloc/goal_state.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/features/goals/presentation/screens/add_goal_screen.dart';
+
+class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
+
+  @override
+  State<GoalsScreen> createState() => _GoalsScreenState();
+}
+
+class _GoalsScreenState extends State<GoalsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    context.read<GoalBloc>().add(LoadGoals(userId));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,56 +47,64 @@ class GoalsScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildGoalCard(
-                context,
-                title: 'Mua iPhone 16 Pro Max',
-                icon: Icons.phone_iphone,
-                iconColor: AppColors.blue500,
-                targetAmount: 35000000,
-                currentAmount: 15000000,
-              ),
-              const SizedBox(height: 16),
-              _buildGoalCard(
-                context,
-                title: 'Du lịch Nhật Bản',
-                icon: Icons.flight_takeoff,
-                iconColor: AppColors.pink500,
-                targetAmount: 50000000,
-                currentAmount: 10000000,
-              ),
-              const SizedBox(height: 16),
-              _buildGoalCard(
-                context,
-                title: 'Quỹ khẩn cấp',
-                icon: Icons.health_and_safety,
-                iconColor: AppColors.green500,
-                targetAmount: 100000000,
-                currentAmount: 85000000,
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const AppText('Tạo mục tiêu mới', fontWeight: FontWeight.bold),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
+        child: BlocBuilder<GoalBloc, GoalState>(
+          builder: (context, state) {
+            if (state is GoalLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state is GoalLoaded) {
+              final goals = state.goals;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (goals.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: AppText('Bạn chưa có mục tiêu nào'),
+                        ),
+                      )
+                    else
+                      ...goals.map((g) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildGoalCard(
+                            context,
+                            title: g.name,
+                            icon: Icons.track_changes,
+                            iconColor: AppColors.blue500,
+                            targetAmount: g.targetAmount,
+                            currentAmount: g.currentAmount,
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddGoalScreen()));
+                        },
+                        icon: const Icon(Icons.add, size: 20),
+                        label: const AppText('Tạo mục tiêu mới', fontWeight: FontWeight.bold),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+              );
+            }
+            return const Center(child: AppText('Lỗi tải mục tiêu'));
+          },
         ),
       ),
     );
