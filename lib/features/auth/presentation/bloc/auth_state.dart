@@ -30,3 +30,21 @@ class AuthOtpSent extends AuthState {
   @override
   List<Object?> get props => [verificationId];
 }
+
+class ForgotPasswordSuccess extends AuthState {
+  final String token; // We returned token on development for ease of testing!
+
+  const ForgotPasswordSuccess(this.token);
+
+  @override
+  List<Object?> get props => [token];
+}
+
+class ResetPasswordSuccess extends AuthState {
+  final String message;
+
+  const ResetPasswordSuccess(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

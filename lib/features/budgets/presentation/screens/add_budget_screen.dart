@@ -10,7 +10,7 @@ import 'package:expense_management/features/budgets/presentation/bloc/budget_blo
 import 'package:expense_management/features/budgets/presentation/bloc/budget_event.dart';
 import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
 import 'package:expense_management/features/categories/presentation/bloc/category_state.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 
 class AddBudgetScreen extends StatefulWidget {
   const AddBudgetScreen({super.key});
@@ -138,7 +138,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
       return;
     }
 
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     final now = DateTime.now();
     final budget = AppBudget(
       id: '',

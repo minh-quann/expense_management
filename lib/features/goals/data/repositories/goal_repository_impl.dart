@@ -1,86 +1,58 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import 'package:expense_management/features/goals/domain/entities/goal.dart';
 import 'package:expense_management/features/goals/domain/repositories/goal_repository.dart';
-import 'package:expense_management/features/goals/data/models/goal_model.dart';
 
 class GoalRepositoryImpl implements GoalRepository {
-  final FirebaseFirestore _firestore;
+  final List<AppGoal> _goals = [];
+  final _controller = StreamController<List<AppGoal>>.broadcast();
 
-  GoalRepositoryImpl(this._firestore);
+  GoalRepositoryImpl([dynamic _]);
 
   @override
   Stream<List<AppGoal>> getGoals(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('savingGoals')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map<AppGoal>((doc) => GoalModel.fromFirestore(doc)).toList();
-    });
+    _controller.add(List.unmodifiable(_goals));
+    return _controller.stream;
   }
 
   @override
   Future<void> addGoal(String userId, AppGoal goal) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('savingGoals')
-        .doc();
-    final model = GoalModel.fromEntity(goal);
-    final modelWithId = GoalModel(
-      id: ref.id,
-      name: model.name,
-      targetAmount: model.targetAmount,
-      currentAmount: model.currentAmount,
-      icon: model.icon,
-      color: model.color,
-      deadline: model.deadline,
-      linkedWalletId: model.linkedWalletId,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-    await ref.set(modelWithId.toFirestore());
+    _goals.add(goal);
+    _controller.add(List.unmodifiable(_goals));
   }
 
   @override
   Future<void> updateGoal(String userId, AppGoal goal) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('savingGoals')
-        .doc(goal.id);
-    final model = GoalModel.fromEntity(goal);
-    await ref.update(model.toFirestore());
+    final index = _goals.indexWhere((g) => g.id == goal.id);
+    if (index != -1) {
+      _goals[index] = goal;
+      _controller.add(List.unmodifiable(_goals));
+    }
   }
 
   @override
   Future<void> deleteGoal(String userId, String goalId) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('savingGoals')
-        .doc(goalId);
-    await ref.delete();
+    _goals.removeWhere((g) => g.id == goalId);
+    _controller.add(List.unmodifiable(_goals));
   }
 
   @override
   Future<void> addFundsToGoal(String userId, String goalId, double amount) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('savingGoals')
-        .doc(goalId);
-    await _firestore.runTransaction((transaction) async {
-      final snapshot = await transaction.get(ref);
-      if (!snapshot.exists) throw Exception("Goal does not exist!");
-      
-      final currentAmount = (snapshot.data()!['currentAmount'] as num).toDouble();
-      transaction.update(ref, {
-        'currentAmount': currentAmount + amount,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    });
+    final index = _goals.indexWhere((g) => g.id == goalId);
+    if (index != -1) {
+      final old = _goals[index];
+      _goals[index] = AppGoal(
+        id: old.id,
+        name: old.name,
+        targetAmount: old.targetAmount,
+        currentAmount: old.currentAmount + amount,
+        icon: old.icon,
+        color: old.color,
+        deadline: old.deadline,
+        linkedWalletId: old.linkedWalletId,
+        createdAt: old.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      _controller.add(List.unmodifiable(_goals));
+    }
   }
 }

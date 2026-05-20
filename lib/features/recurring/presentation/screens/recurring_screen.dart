@@ -7,7 +7,7 @@ import 'package:expense_management/features/recurring/presentation/bloc/recurrin
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_event.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_state.dart';
 import 'package:expense_management/features/recurring/domain/entities/recurring.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/recurring/presentation/screens/add_recurring_screen.dart';
 
 class RecurringScreen extends StatefulWidget {
@@ -21,7 +21,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     context.read<RecurringBloc>().add(LoadRecurrings(userId));
   }
 

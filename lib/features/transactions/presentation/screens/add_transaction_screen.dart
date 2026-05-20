@@ -19,7 +19,7 @@ import 'package:expense_management/features/wallets/presentation/bloc/wallet_blo
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_event.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:intl/intl.dart';
 
 class AddTransactionScreen extends StatefulWidget {
@@ -48,7 +48,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     context.read<WalletBloc>().add(LoadWalletsEvent(userId));
     context.read<CategoryBloc>().add(LoadCategories(userId));
   }
@@ -257,7 +257,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       return;
     }
 
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     final type = _transactionType == 'EXPENSE'
         ? TransactionType.expense
         : (_transactionType == 'INCOME' ? TransactionType.income : TransactionType.transfer);

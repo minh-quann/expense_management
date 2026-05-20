@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
@@ -9,19 +8,22 @@ import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
     final isDark = AppColors.isDark(context);
     final bgColor = isDark ? const Color(0xFF161A23) : Colors.white;
     final surfaceColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF7F7F9);
     final textColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
     final greyText = isDark ? Colors.grey[400] : const Color(0xFFA0A0A0);
     final l10n = AppLocalizations.of(context)!;
+
+    final displayName = AuthTokenManager.getName();
+    final email = AuthTokenManager.getEmail();
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
@@ -89,10 +91,7 @@ class ProfileScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 54,
                       backgroundColor: surfaceColor,
-                      backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
-                      child: user?.photoURL == null
-                          ? Icon(Icons.person, size: 54, color: greyText)
-                          : null,
+                      child: Icon(Icons.person, size: 54, color: greyText),
                     ),
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -115,14 +114,14 @@ class ProfileScreen extends StatelessWidget {
                 
                 // Name & Email
                 AppText(
-                  user?.displayName ?? 'Leslie Alexander', // Default if null to match mockup
+                  displayName.isNotEmpty ? displayName : 'Leslie Alexander',
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                 ),
                 const SizedBox(height: 4),
                 AppText(
-                  user?.email ?? 'leslie@gmail.com', // Default if null to match mockup
+                  email.isNotEmpty ? email : 'leslie@gmail.com',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: greyText,

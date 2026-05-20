@@ -1,169 +1,133 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/features/transactions/domain/repositories/transaction_repository.dart';
 import 'package:expense_management/features/transactions/data/models/transaction_model.dart';
 
 class TransactionRepositoryImpl implements TransactionRepository {
-  final FirebaseFirestore _firestore;
+  final ApiClient _apiClient = ApiClient();
+  final _transactionsController = StreamController<List<AppTransaction>>.broadcast();
 
-  TransactionRepositoryImpl(this._firestore);
+  // Accept optional firestore parameter to maintain backwards compatibility during migration
+  TransactionRepositoryImpl([dynamic _]);
 
-  /// Helper to get wallet doc ref under /users/{userId}/wallets/{walletId}
-  DocumentReference _walletRef(String userId, String walletId) {
-    return _firestore.collection('users').doc(userId).collection('wallets').doc(walletId);
+  // Helper method to fetch from backend and update stream
+  Future<void> _fetchAndEmit(String userId, [String? walletId]) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (walletId != null && walletId.isNotEmpty) {
+        queryParams['wallet_id'] = walletId;
+      }
+
+      final response = await _apiClient.dio.get('/transactions', queryParameters: queryParams);
+      final list = (response.data as List).map((json) {
+        final categoryMap = json['category'] as Map<String, dynamic>?;
+        final walletMap = json['wallet'] as Map<String, dynamic>?;
+        final toWalletMap = json['to_wallet'] as Map<String, dynamic>?;
+
+        return TransactionModel(
+          id: json['id'],
+          amount: (json['amount'] ?? 0.0).toDouble(),
+          type: _parseTransactionType(json['type']),
+          categoryId: json['category_id'],
+          categoryName: categoryMap?['name'],
+          categoryIcon: categoryMap?['icon'],
+          categoryColor: categoryMap?['color'],
+          walletId: json['wallet_id'] ?? '',
+          walletName: walletMap?['name'],
+          toWalletId: json['to_wallet_id'],
+          toWalletName: toWalletMap?['name'],
+          date: DateTime.parse(json['date']),
+          note: json['note'] ?? '',
+          imageUrl: json['image_url'] ?? '',
+          recurringId: json['recurring_id'],
+          createdAt: json['created_at'] != null 
+              ? DateTime.parse(json['created_at']) 
+              : DateTime.now(),
+          updatedAt: json['updated_at'] != null 
+              ? DateTime.parse(json['updated_at']) 
+              : DateTime.now(),
+        );
+      }).toList();
+      _transactionsController.add(list);
+    } catch (e) {
+      _transactionsController.addError(e);
+    }
+  }
+
+  static TransactionType _parseTransactionType(String typeStr) {
+    switch (typeStr) {
+      case 'INCOME':
+        return TransactionType.income;
+      case 'TRANSFER':
+        return TransactionType.transfer;
+      case 'EXPENSE':
+      default:
+        return TransactionType.expense;
+    }
+  }
+
+  static String _transactionTypeToString(TransactionType type) {
+    switch (type) {
+      case TransactionType.income:
+        return 'INCOME';
+      case TransactionType.transfer:
+        return 'TRANSFER';
+      case TransactionType.expense:
+        return 'EXPENSE';
+    }
   }
 
   @override
   Stream<List<AppTransaction>> getTransactions(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('transactions')
-        .orderBy('date', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => TransactionModel.fromFirestore(doc)).toList();
-    });
+    _fetchAndEmit(userId);
+    return _transactionsController.stream;
   }
 
   @override
   Stream<List<AppTransaction>> getTransactionsByWallet(String userId, String walletId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('transactions')
-        .where('walletId', isEqualTo: walletId)
-        .orderBy('date', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => TransactionModel.fromFirestore(doc)).toList();
-    });
+    _fetchAndEmit(userId, walletId);
+    return _transactionsController.stream;
   }
 
   @override
   Future<void> addTransaction(String userId, AppTransaction transaction) async {
-    final batch = _firestore.batch();
-    
-    // 1. Create transaction doc
-    final transactionRef = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('transactions')
-        .doc();
-    
-    final transactionModel = TransactionModel.fromEntity(transaction);
-    final modelWithId = TransactionModel(
-      id: transactionRef.id,
-      amount: transactionModel.amount,
-      type: transactionModel.type,
-      categoryId: transactionModel.categoryId,
-      categoryName: transactionModel.categoryName,
-      categoryIcon: transactionModel.categoryIcon,
-      categoryColor: transactionModel.categoryColor,
-      walletId: transactionModel.walletId,
-      walletName: transactionModel.walletName,
-      toWalletId: transactionModel.toWalletId,
-      toWalletName: transactionModel.toWalletName,
-      date: transactionModel.date,
-      note: transactionModel.note,
-      imageUrl: transactionModel.imageUrl,
-      recurringId: transactionModel.recurringId,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    batch.set(transactionRef, modelWithId.toFirestore());
-
-    // 2. Update wallet(s) balance — now using /users/{userId}/wallets/{walletId}
-    final walletRef = _walletRef(userId, transaction.walletId);
-
-    if (transaction.type == TransactionType.expense) {
-      batch.update(walletRef, {'balance': FieldValue.increment(-transaction.amount)});
-    } else if (transaction.type == TransactionType.income) {
-      batch.update(walletRef, {'balance': FieldValue.increment(transaction.amount)});
-    } else if (transaction.type == TransactionType.transfer && transaction.toWalletId != null) {
-      batch.update(walletRef, {'balance': FieldValue.increment(-transaction.amount)});
-      final toWalletRef = _walletRef(userId, transaction.toWalletId!);
-      batch.update(toWalletRef, {'balance': FieldValue.increment(transaction.amount)});
-    }
-
-    await batch.commit();
+    await _apiClient.dio.post('/transactions', data: {
+      'amount': transaction.amount,
+      'type': _transactionTypeToString(transaction.type),
+      'category_id': transaction.categoryId,
+      'wallet_id': transaction.walletId,
+      'to_wallet_id': transaction.toWalletId,
+      'date': transaction.date.toUtc().toIso8601String(),
+      'note': transaction.note ?? '',
+      'image_url': transaction.imageUrl ?? '',
+      'recurring_id': transaction.recurringId,
+    });
+    // Trigger reload
+    await _fetchAndEmit(userId);
   }
 
   @override
   Future<void> updateTransaction(String userId, AppTransaction transaction) async {
-    await _firestore.runTransaction((t) async {
-      final transactionRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('transactions')
-          .doc(transaction.id);
-          
-      final doc = await t.get(transactionRef);
-      if (!doc.exists) return;
-      
-      final oldModel = TransactionModel.fromFirestore(doc);
-      
-      // Revert old transaction balance
-      final oldWalletRef = _walletRef(userId, oldModel.walletId);
-      if (oldModel.type == TransactionType.expense) {
-        t.update(oldWalletRef, {'balance': FieldValue.increment(oldModel.amount)});
-      } else if (oldModel.type == TransactionType.income) {
-        t.update(oldWalletRef, {'balance': FieldValue.increment(-oldModel.amount)});
-      } else if (oldModel.type == TransactionType.transfer && oldModel.toWalletId != null) {
-        t.update(oldWalletRef, {'balance': FieldValue.increment(oldModel.amount)});
-        final oldToWalletRef = _walletRef(userId, oldModel.toWalletId!);
-        t.update(oldToWalletRef, {'balance': FieldValue.increment(-oldModel.amount)});
-      }
-      
-      // Apply new transaction balance
-      final newWalletRef = _walletRef(userId, transaction.walletId);
-      if (transaction.type == TransactionType.expense) {
-        t.update(newWalletRef, {'balance': FieldValue.increment(-transaction.amount)});
-      } else if (transaction.type == TransactionType.income) {
-        t.update(newWalletRef, {'balance': FieldValue.increment(transaction.amount)});
-      } else if (transaction.type == TransactionType.transfer && transaction.toWalletId != null) {
-        t.update(newWalletRef, {'balance': FieldValue.increment(-transaction.amount)});
-        final newToWalletRef = _walletRef(userId, transaction.toWalletId!);
-        t.update(newToWalletRef, {'balance': FieldValue.increment(transaction.amount)});
-      }
-      
-      // Update transaction doc
-      final newModel = TransactionModel.fromEntity(transaction);
-      final modelMap = newModel.toFirestore();
-      modelMap['updatedAt'] = FieldValue.serverTimestamp();
-      
-      t.update(transactionRef, modelMap);
+    await _apiClient.dio.put('/transactions/${transaction.id}', data: {
+      'amount': transaction.amount,
+      'type': _transactionTypeToString(transaction.type),
+      'category_id': transaction.categoryId,
+      'wallet_id': transaction.walletId,
+      'to_wallet_id': transaction.toWalletId,
+      'date': transaction.date.toUtc().toIso8601String(),
+      'note': transaction.note ?? '',
+      'image_url': transaction.imageUrl ?? '',
+      'recurring_id': transaction.recurringId,
     });
+    // Trigger reload
+    await _fetchAndEmit(userId);
   }
 
   @override
   Future<void> deleteTransaction(String userId, String transactionId) async {
-    await _firestore.runTransaction((t) async {
-      final transactionRef = _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('transactions')
-          .doc(transactionId);
-          
-      final doc = await t.get(transactionRef);
-      if (!doc.exists) return;
-      
-      final model = TransactionModel.fromFirestore(doc);
-      
-      // Revert balance
-      final walletRef = _walletRef(userId, model.walletId);
-      if (model.type == TransactionType.expense) {
-        t.update(walletRef, {'balance': FieldValue.increment(model.amount)});
-      } else if (model.type == TransactionType.income) {
-        t.update(walletRef, {'balance': FieldValue.increment(-model.amount)});
-      } else if (model.type == TransactionType.transfer && model.toWalletId != null) {
-        t.update(walletRef, {'balance': FieldValue.increment(model.amount)});
-        final toWalletRef = _walletRef(userId, model.toWalletId!);
-        t.update(toWalletRef, {'balance': FieldValue.increment(-model.amount)});
-      }
-      
-      t.delete(transactionRef);
-    });
+    await _apiClient.dio.delete('/transactions/$transactionId');
+    // Trigger reload
+    await _fetchAndEmit(userId);
   }
 }

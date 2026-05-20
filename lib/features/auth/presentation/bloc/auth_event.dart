@@ -18,6 +18,21 @@ class LoginWithEmailEvent extends AuthEvent {
   List<Object?> get props => [email, password];
 }
 
+class RegisterWithEmailEvent extends AuthEvent {
+  final String email;
+  final String password;
+  final String displayName;
+
+  const RegisterWithEmailEvent({
+    required this.email,
+    required this.password,
+    required this.displayName,
+  });
+
+  @override
+  List<Object?> get props => [email, password, displayName];
+}
+
 class LoginWithGoogleEvent extends AuthEvent {}
 
 class LogoutEvent extends AuthEvent {}
@@ -68,4 +83,28 @@ class PhoneAuthVerificationCompletedEvent extends AuthEvent {
 
   @override
   List<Object?> get props => [credential];
+}
+
+class ForgotPasswordEvent extends AuthEvent {
+  final String email;
+
+  const ForgotPasswordEvent(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class ResetPasswordEvent extends AuthEvent {
+  final String email;
+  final String token;
+  final String newPassword;
+
+  const ResetPasswordEvent({
+    required this.email,
+    required this.token,
+    required this.newPassword,
+  });
+
+  @override
+  List<Object?> get props => [email, token, newPassword];
 }

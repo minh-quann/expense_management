@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
@@ -34,10 +34,8 @@ class _WalletsScreenState extends State<WalletsScreen> {
   @override
   void initState() {
     super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      context.read<WalletBloc>().add(LoadWalletsEvent(user.uid));
-    }
+    final userId = AuthTokenManager.getUserId();
+    context.read<WalletBloc>().add(LoadWalletsEvent(userId));
   }
 
   @override
@@ -272,10 +270,8 @@ class _WalletsScreenState extends State<WalletsScreen> {
   Widget _buildWalletCard(BuildContext context, Wallet wallet, LinearGradient gradient) {
     return GestureDetector(
       onLongPress: () {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          context.read<WalletBloc>().add(DeleteWalletEvent(user.uid, wallet.id));
-        }
+        final userId = AuthTokenManager.getUserId();
+        context.read<WalletBloc>().add(DeleteWalletEvent(userId, wallet.id));
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -396,12 +392,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
   }
 
   void _showAddWalletSheet(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final userId = AuthTokenManager.getUserId();
     
     String name = '';
     double balance = 0;
-
+ 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -475,7 +470,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                     if (name.isNotEmpty) {
                       final newWallet = Wallet(
                         id: '', 
-                        userId: user.uid,
+                        userId: userId,
                         name: name,
                         type: WalletType.cash, 
                         balance: balance,

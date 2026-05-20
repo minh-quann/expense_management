@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_event.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_state.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/goals/presentation/screens/add_goal_screen.dart';
 
 class GoalsScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     context.read<GoalBloc>().add(LoadGoals(userId));
   }
 

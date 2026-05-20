@@ -9,7 +9,7 @@ import 'package:expense_management/features/budgets/presentation/bloc/budget_sta
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/budgets/presentation/screens/add_budget_screen.dart';
 
 class BudgetsScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     context.read<BudgetBloc>().add(LoadBudgets(userId));
   }
 

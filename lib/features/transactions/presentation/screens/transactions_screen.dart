@@ -9,7 +9,7 @@ import 'package:expense_management/features/transactions/presentation/bloc/trans
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:intl/intl.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -25,7 +25,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     context.read<TransactionBloc>().add(LoadTransactions(userId));
   }
 

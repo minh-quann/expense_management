@@ -7,7 +7,7 @@ import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/features/goals/domain/entities/goal.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_event.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 
 class AddGoalScreen extends StatefulWidget {
   const AddGoalScreen({super.key});
@@ -59,7 +59,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
       return;
     }
 
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     final now = DateTime.now();
     final goal = AppGoal(
       id: '',

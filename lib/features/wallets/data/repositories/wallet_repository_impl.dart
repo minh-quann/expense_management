@@ -1,67 +1,109 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/features/wallets/data/models/wallet_model.dart';
 import 'package:expense_management/features/wallets/domain/entities/wallet.dart';
 import 'package:expense_management/features/wallets/domain/repositories/wallet_repository.dart';
 
 class WalletRepositoryImpl implements WalletRepository {
-  final FirebaseFirestore _firestore;
+  final ApiClient _apiClient = ApiClient();
+  final _walletsController = StreamController<List<Wallet>>.broadcast();
 
-  WalletRepositoryImpl(this._firestore);
+  // Accept optional firestore parameter to maintain backwards compatibility during migration
+  WalletRepositoryImpl([dynamic _]);
 
-  /// Helper to get wallet collection ref under /users/{userId}/wallets
-  CollectionReference _walletsRef(String userId) {
-    return _firestore.collection('users').doc(userId).collection('wallets');
+  // Helper method to fetch from backend and update stream
+  Future<void> _fetchAndEmit(String userId) async {
+    try {
+      final response = await _apiClient.dio.get('/wallets');
+      final list = (response.data as List).map((json) {
+        return WalletModel(
+          id: json['id'],
+          userId: json['user_id'],
+          name: json['name'],
+          type: _parseWalletType(json['type']),
+          balance: (json['balance'] ?? 0.0).toDouble(),
+          currency: json['currency'] ?? 'VND',
+          icon: json['icon'],
+          color: json['color'],
+          excludeFromTotal: json['exclude_from_total'] ?? false,
+        );
+      }).toList();
+      _walletsController.add(list);
+    } catch (e) {
+      _walletsController.addError(e);
+    }
+  }
+
+  static WalletType _parseWalletType(String typeStr) {
+    switch (typeStr) {
+      case 'CASH':
+        return WalletType.cash;
+      case 'BANK':
+        return WalletType.bank;
+      case 'CREDIT_CARD':
+        return WalletType.credit;
+      case 'E_WALLET':
+        return WalletType.eWallet;
+      default:
+        return WalletType.cash;
+    }
+  }
+
+  static String _walletTypeToString(WalletType type) {
+    switch (type) {
+      case WalletType.cash:
+        return 'CASH';
+      case WalletType.bank:
+        return 'BANK';
+      case WalletType.credit:
+        return 'CREDIT_CARD';
+      case WalletType.eWallet:
+        return 'E_WALLET';
+    }
   }
 
   @override
   Stream<List<Wallet>> getWallets(String userId) {
-    return _walletsRef(userId)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => WalletModel.fromFirestore(doc)).toList();
-    });
+    _fetchAndEmit(userId);
+    return _walletsController.stream;
   }
 
   @override
   Future<void> addWallet(Wallet wallet) async {
-    final model = WalletModel(
-      id: wallet.id,
-      userId: wallet.userId,
-      name: wallet.name,
-      type: wallet.type,
-      balance: wallet.balance,
-      currency: wallet.currency,
-      icon: wallet.icon,
-      color: wallet.color,
-      excludeFromTotal: wallet.excludeFromTotal,
-    );
-    await _walletsRef(wallet.userId).add(model.toFirestore());
+    await _apiClient.dio.post('/wallets', data: {
+      'name': wallet.name,
+      'type': _walletTypeToString(wallet.type),
+      'balance': wallet.balance,
+      'currency': wallet.currency,
+      'icon': wallet.icon,
+      'color': wallet.color,
+      'exclude_from_total': wallet.excludeFromTotal,
+    });
+    await _fetchAndEmit(wallet.userId);
   }
 
   @override
   Future<void> updateWallet(Wallet wallet) async {
-    final model = WalletModel(
-      id: wallet.id,
-      userId: wallet.userId,
-      name: wallet.name,
-      type: wallet.type,
-      balance: wallet.balance,
-      currency: wallet.currency,
-      icon: wallet.icon,
-      color: wallet.color,
-      excludeFromTotal: wallet.excludeFromTotal,
-    );
-    await _walletsRef(wallet.userId).doc(wallet.id).update(model.toFirestore());
+    await _apiClient.dio.put('/wallets/${wallet.id}', data: {
+      'name': wallet.name,
+      'type': _walletTypeToString(wallet.type),
+      'balance': wallet.balance,
+      'currency': wallet.currency,
+      'icon': wallet.icon,
+      'color': wallet.color,
+      'exclude_from_total': wallet.excludeFromTotal,
+    });
+    await _fetchAndEmit(wallet.userId);
   }
 
   @override
   Future<void> deleteWallet(String id) async {
-    // deleteWallet needs userId - we'll handle this via the new signature
     throw UnimplementedError('Use deleteWalletForUser instead');
   }
 
   @override
   Future<void> deleteWalletForUser(String userId, String walletId) async {
-    await _walletsRef(userId).doc(walletId).delete();
+    await _apiClient.dio.delete('/wallets/$walletId');
+    await _fetchAndEmit(userId);
   }
 }

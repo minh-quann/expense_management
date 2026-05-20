@@ -1,67 +1,37 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import 'package:expense_management/features/budgets/domain/entities/budget.dart';
 import 'package:expense_management/features/budgets/domain/repositories/budget_repository.dart';
-import 'package:expense_management/features/budgets/data/models/budget_model.dart';
 
 class BudgetRepositoryImpl implements BudgetRepository {
-  final FirebaseFirestore _firestore;
+  final List<AppBudget> _budgets = [];
+  final _controller = StreamController<List<AppBudget>>.broadcast();
 
-  BudgetRepositoryImpl(this._firestore);
+  BudgetRepositoryImpl([dynamic _]);
 
   @override
   Stream<List<AppBudget>> getBudgets(String userId) {
-    return _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('budgets')
-        .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map<AppBudget>((doc) => BudgetModel.fromFirestore(doc)).toList();
-    });
+    _controller.add(List.unmodifiable(_budgets));
+    return _controller.stream;
   }
 
   @override
   Future<void> addBudget(String userId, AppBudget budget) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('budgets')
-        .doc();
-    final model = BudgetModel.fromEntity(budget);
-    final modelWithId = BudgetModel(
-      id: ref.id,
-      categoryId: model.categoryId,
-      categoryName: model.categoryName,
-      amountLimit: model.amountLimit,
-      period: model.period,
-      startDate: model.startDate,
-      endDate: model.endDate,
-      isActive: model.isActive,
-      createdAt: DateTime.now(),
-    );
-    await ref.set(modelWithId.toFirestore());
+    _budgets.add(budget);
+    _controller.add(List.unmodifiable(_budgets));
   }
 
   @override
   Future<void> updateBudget(String userId, AppBudget budget) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('budgets')
-        .doc(budget.id);
-    final model = BudgetModel.fromEntity(budget);
-    await ref.update(model.toFirestore());
+    final index = _budgets.indexWhere((b) => b.id == budget.id);
+    if (index != -1) {
+      _budgets[index] = budget;
+      _controller.add(List.unmodifiable(_budgets));
+    }
   }
 
   @override
   Future<void> deleteBudget(String userId, String budgetId) async {
-    final ref = _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('budgets')
-        .doc(budgetId);
-    await ref.update({'isActive': false});
+    _budgets.removeWhere((b) => b.id == budgetId);
+    _controller.add(List.unmodifiable(_budgets));
   }
 }

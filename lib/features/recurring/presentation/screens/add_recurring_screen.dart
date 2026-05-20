@@ -7,7 +7,7 @@ import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/features/recurring/domain/entities/recurring.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_event.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 
 class AddRecurringScreen extends StatefulWidget {
   const AddRecurringScreen({super.key});
@@ -57,7 +57,7 @@ class _AddRecurringScreenState extends State<AddRecurringScreen> {
       return;
     }
 
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'test_user';
+    final userId = AuthTokenManager.getUserId();
     final now = DateTime.now();
     final recurring = AppRecurring(
       id: '',

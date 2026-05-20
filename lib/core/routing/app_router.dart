@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/home/presentation/home_screen.dart';
 import 'package:expense_management/features/auth/presentation/screens/login_screen.dart';
 import 'package:expense_management/features/auth/presentation/screens/otp_screen.dart';
+import 'package:expense_management/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:expense_management/core/routing/app_shell.dart';
 import 'package:expense_management/features/stats/presentation/screens/stats_screen.dart';
 import 'package:expense_management/features/transactions/presentation/screens/transactions_screen.dart';
@@ -19,7 +20,7 @@ import 'package:expense_management/features/categories/presentation/screens/add_
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: FirebaseAuth.instance.currentUser != null ? '/' : '/login',
+  initialLocation: AuthTokenManager.isLoggedIn() ? '/' : '/login',
   navigatorKey: _rootNavigatorKey,
   routes: [
     StatefulShellRoute.indexedStack(
@@ -111,6 +112,13 @@ final GoRouter appRouter = GoRouter(
           },
         ),
       ],
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        return const ForgotPasswordScreen();
+      },
     ),
   ],
 );
