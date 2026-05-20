@@ -6,6 +6,7 @@ class AuthTokenManager {
   static const String _userIdKey = 'user_id';
   static const String _userEmailKey = 'user_email';
   static const String _userNameKey = 'user_name';
+  static const String _userPhotoKey = 'user_photo_url';
 
   static SharedPreferences? _prefs;
 
@@ -21,6 +22,7 @@ class AuthTokenManager {
     required String userId,
     required String email,
     required String name,
+    String photoUrl = '',
   }) async {
     await init();
     await _prefs!.setString(_tokenKey, token);
@@ -28,6 +30,7 @@ class AuthTokenManager {
     await _prefs!.setString(_userIdKey, userId);
     await _prefs!.setString(_userEmailKey, email);
     await _prefs!.setString(_userNameKey, name);
+    await _prefs!.setString(_userPhotoKey, photoUrl);
   }
 
   // Save updated tokens (used for rotation)
@@ -65,6 +68,23 @@ class AuthTokenManager {
     return _prefs?.getString(_userNameKey) ?? '';
   }
 
+  // Get photo URL
+  static String getPhotoUrl() {
+    return _prefs?.getString(_userPhotoKey) ?? '';
+  }
+
+  // Save updated name
+  static Future<void> saveName(String name) async {
+    await init();
+    await _prefs!.setString(_userNameKey, name);
+  }
+
+  // Save updated photo URL
+  static Future<void> savePhotoUrl(String photoUrl) async {
+    await init();
+    await _prefs!.setString(_userPhotoKey, photoUrl);
+  }
+
   // Check if user is logged in
   static bool isLoggedIn() {
     final token = getToken();
@@ -79,5 +99,6 @@ class AuthTokenManager {
     await _prefs!.remove(_userIdKey);
     await _prefs!.remove(_userEmailKey);
     await _prefs!.remove(_userNameKey);
+    await _prefs!.remove(_userPhotoKey);
   }
 }

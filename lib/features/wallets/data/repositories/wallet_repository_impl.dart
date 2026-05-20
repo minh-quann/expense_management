@@ -26,6 +26,7 @@ class WalletRepositoryImpl implements WalletRepository {
           icon: json['icon'],
           color: json['color'],
           excludeFromTotal: json['exclude_from_total'] ?? false,
+          isFavorite: json['is_favorite'] ?? false,
         );
       }).toList();
       _walletsController.add(list);
@@ -78,6 +79,7 @@ class WalletRepositoryImpl implements WalletRepository {
       'icon': wallet.icon,
       'color': wallet.color,
       'exclude_from_total': wallet.excludeFromTotal,
+      'is_favorite': wallet.isFavorite,
     });
     await _fetchAndEmit(wallet.userId);
   }
@@ -92,6 +94,7 @@ class WalletRepositoryImpl implements WalletRepository {
       'icon': wallet.icon,
       'color': wallet.color,
       'exclude_from_total': wallet.excludeFromTotal,
+      'is_favorite': wallet.isFavorite,
     });
     await _fetchAndEmit(wallet.userId);
   }
@@ -104,6 +107,12 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<void> deleteWalletForUser(String userId, String walletId) async {
     await _apiClient.dio.delete('/wallets/$walletId');
+    await _fetchAndEmit(userId);
+  }
+
+  @override
+  Future<void> toggleFavoriteWallet(String userId, String walletId) async {
+    await _apiClient.dio.patch('/wallets/$walletId/favorite');
     await _fetchAndEmit(userId);
   }
 }

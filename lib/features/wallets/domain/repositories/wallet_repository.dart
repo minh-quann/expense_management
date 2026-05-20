@@ -6,4 +6,5 @@ abstract class WalletRepository {
   Future<void> updateWallet(Wallet wallet);
   Future<void> deleteWallet(String id);
   Future<void> deleteWalletForUser(String userId, String walletId);
+  Future<void> toggleFavoriteWallet(String userId, String walletId);
 }

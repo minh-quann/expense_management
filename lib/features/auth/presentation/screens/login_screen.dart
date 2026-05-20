@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/core/localization/locale_cubit.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
@@ -240,32 +241,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 16),
 
                               // Submit button
-                              ElevatedButton(
-                                onPressed: authState is AuthLoading ? null : () => _onSubmitPressed(context),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: authState is AuthLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.5,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      )
-                                    : AppText(
-                                        _isRegistering ? 'ĐĂNG KÝ' : 'ĐĂNG NHẬP',
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                              AppButton(
+                                label: _isRegistering ? 'ĐĂNG KÝ' : 'ĐĂNG NHẬP',
+                                onPressed: () => _onSubmitPressed(context),
+                                isLoading: authState is AuthLoading,
                               ),
                               const SizedBox(height: 16),
 

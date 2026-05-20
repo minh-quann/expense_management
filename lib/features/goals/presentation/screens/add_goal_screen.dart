@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/shared/widgets/custom_number_pad.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/features/goals/domain/entities/goal.dart';
@@ -122,17 +123,9 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                 ),
               ),
               const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveGoal,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                  ),
-                  child: const AppText('Lưu mục tiêu', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+              AppButton(
+                label: 'Lưu mục tiêu',
+                onPressed: _saveGoal,
               ),
             ],
           ),

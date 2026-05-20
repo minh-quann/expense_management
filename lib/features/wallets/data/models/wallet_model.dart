@@ -12,6 +12,7 @@ class WalletModel extends Wallet {
     required super.icon,
     required super.color,
     required super.excludeFromTotal,
+    super.isFavorite = false,
   });
 
   factory WalletModel.fromFirestore(DocumentSnapshot doc) {
@@ -29,6 +30,7 @@ class WalletModel extends Wallet {
       icon: data['icon'] ?? '',
       color: data['color'] ?? '',
       excludeFromTotal: data['excludeFromTotal'] ?? false,
+      isFavorite: data['isFavorite'] ?? false,
     );
   }
 
@@ -42,6 +44,7 @@ class WalletModel extends Wallet {
       'icon': icon,
       'color': color,
       'excludeFromTotal': excludeFromTotal,
+      'isFavorite': isFavorite,
     };
   }
 }

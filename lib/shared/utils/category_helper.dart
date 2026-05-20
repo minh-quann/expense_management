@@ -39,4 +39,32 @@ class CategoryHelper {
       return Colors.blue;
     }
   }
+
+  static String getIconName(IconData icon) {
+    if (icon == Icons.restaurant || icon == Icons.fastfood || icon == Icons.local_cafe) return 'restaurant';
+    if (icon == Icons.directions_car) return 'directions_car';
+    if (icon == Icons.home) return 'home';
+    if (icon == Icons.shopping_cart || icon == Icons.shopping_bag) return 'shopping_cart';
+    if (icon == Icons.sports_esports) return 'sports_esports';
+    if (icon == Icons.favorite || icon == Icons.health_and_safety) return 'favorite';
+    if (icon == Icons.menu_book || icon == Icons.school) return 'menu_book';
+    if (icon == Icons.card_giftcard) return 'card_giftcard';
+    if (icon == Icons.family_restroom || icon == Icons.pets) return 'family_restroom';
+    if (icon == Icons.account_balance) return 'account_balance';
+    if (icon == Icons.more_horiz) return 'more_horiz';
+    if (icon == Icons.work) return 'work';
+    if (icon == Icons.emoji_events || icon == Icons.flight) return 'emoji_events';
+    if (icon == Icons.trending_up) return 'trending_up';
+    if (icon == Icons.real_estate_agent) return 'real_estate_agent';
+    if (icon == Icons.computer) return 'computer';
+    if (icon == Icons.account_balance_wallet) return 'wallet';
+    if (icon == Icons.credit_card) return 'credit_card';
+    if (icon == Icons.savings) return 'savings';
+    if (icon == Icons.attach_money) return 'money';
+    return 'more_horiz';
+  }
+
+  static String getColorHex(Color color) {
+    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+  }
 }

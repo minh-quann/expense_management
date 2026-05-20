@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:expense_management/core/constants/app_constants.dart';
 import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'auth_event.dart';
@@ -73,7 +74,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginWithGoogleEvent>((event, emit) async {
       emit(AuthLoading());
       try {
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          serverClientId: AppConstants.googleWebClientId.isNotEmpty
+              ? AppConstants.googleWebClientId
+              : null,
+        );
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
         
         // Canceled sign in
         if (googleUser == null) {
@@ -211,10 +217,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutEvent>((event, emit) async {
       emit(AuthLoading());
       try {
+        final refreshToken = AuthTokenManager.getRefreshToken();
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          try {
+            await ApiClient().dio.post('/auth/logout', data: {
+              'refresh_token': refreshToken,
+            });
+          } catch (e) {
+            // Ignore API logout failures so that offline users can still logout locally
+          }
+        }
         await AuthTokenManager.clearAuthData();
         await Future.wait([
           _auth.signOut(),
-          GoogleSignIn().signOut(),
+          GoogleSignIn(
+            serverClientId: AppConstants.googleWebClientId.isNotEmpty
+                ? AppConstants.googleWebClientId
+                : null,
+          ).signOut(),
         ]);
         emit(AuthInitial());
       } catch (e) {

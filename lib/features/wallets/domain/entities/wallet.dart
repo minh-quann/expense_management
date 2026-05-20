@@ -15,6 +15,7 @@ class Wallet {
   final String icon;
   final String color;
   final bool excludeFromTotal;
+  final bool isFavorite;
 
   const Wallet({
     required this.id,
@@ -26,5 +27,6 @@ class Wallet {
     required this.icon,
     required this.color,
     required this.excludeFromTotal,
+    this.isFavorite = false,
   });
 }

@@ -2,16 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
-import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/features/settings/data/repositories/profile_repository.dart';
+import 'package:expense_management/features/settings/presentation/bloc/profile_bloc.dart';
+import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
+import 'package:expense_management/features/settings/presentation/bloc/profile_state.dart';
+import 'package:expense_management/features/settings/presentation/screens/edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<ProfileBloc>(
+      create: (context) => ProfileBloc(ProfileRepository())..add(FetchProfileEvent()),
+      child: const ProfileView(),
+    );
+  }
+}
+
+class ProfileView extends StatelessWidget {
+  const ProfileView({super.key});
+
+  String _getFullPhotoUrl(String photoUrl) {
+    if (photoUrl.isEmpty) return '';
+    if (photoUrl.startsWith('http')) return photoUrl;
+    final baseUrl = ApiClient().dio.options.baseUrl;
+    final host = baseUrl.replaceAll('/api/v1', '');
+    return '$host$photoUrl';
+  }
+
+  Future<void> _pickAndUploadImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (image != null && context.mounted) {
+      context.read<ProfileBloc>().add(UploadAvatarEvent(localFilePath: image.path));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +56,6 @@ class ProfileScreen extends StatelessWidget {
     final greyText = isDark ? Colors.grey[400] : const Color(0xFFA0A0A0);
     final l10n = AppLocalizations.of(context)!;
 
-    final displayName = AuthTokenManager.getName();
-    final email = AuthTokenManager.getEmail();
-
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthInitial) {
@@ -34,182 +65,255 @@ class ProfileScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: bgColor,
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // Custom App Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Top Left Icon (Grid)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: surfaceColor,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/icons/profile/grid.svg',
-                          width: 20,
-                          height: 20,
-                          colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
-                        ),
+          child: BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, state) {
+              if (state is ProfileLoading && state is! ProfileLoaded) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              // Retrieve profile details
+              final profile = (state is ProfileLoaded) ? state.profile : null;
+              final displayName = profile?.displayName ?? '';
+              final email = profile?.email ?? '';
+              final photoUrl = profile?.photoUrl ?? '';
+              final currency = profile?.currencyCode ?? 'VND';
+
+              return SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Custom App Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Top Left Icon (Grid)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: surfaceColor,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: SvgPicture.asset(
+                              'assets/icons/profile/grid.svg',
+                              width: 20,
+                              height: 20,
+                              colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                            ),
+                          ),
+                          // Title
+                          AppText(
+                            l10n.profile_title,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                          // Top Right Icon (Edit)
+                          GestureDetector(
+                            onTap: () {
+                              if (profile != null) {
+                                Navigator.of(context, rootNavigator: true).push(
+                                  MaterialPageRoute(
+                                    builder: (ctx) => BlocProvider.value(
+                                      value: context.read<ProfileBloc>(),
+                                      child: EditProfileScreen(profile: profile),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: surfaceColor,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/icons/profile/edit.svg',
+                                width: 20,
+                                height: 20,
+                                colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      // Title
-                      AppText(
-                        l10n.profile_title,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: textColor,
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Avatar with Edit Badge
+                    GestureDetector(
+                      onTap: () => _pickAndUploadImage(context),
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 4),
+                            ),
+                            child: CircleAvatar(
+                              radius: 54,
+                              backgroundColor: surfaceColor,
+                              backgroundImage: photoUrl.isNotEmpty
+                                  ? NetworkImage(_getFullPhotoUrl(photoUrl))
+                                  : null,
+                              child: photoUrl.isEmpty
+                                  ? Icon(Icons.person, size: 54, color: greyText)
+                                  : null,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE9E5FF),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: bgColor, width: 3),
+                            ),
+                            child: SvgPicture.asset(
+                              'assets/icons/profile/edit.svg',
+                              width: 14,
+                              height: 14,
+                              colorFilter: const ColorFilter.mode(Color(0xFF5A45FE), BlendMode.srcIn),
+                            ),
+                          ),
+                        ],
                       ),
-                      // Top Right Icon (Edit)
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Name
+                    AppText(
+                      displayName.isNotEmpty ? displayName : 'Tải thông tin...',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                    const SizedBox(height: 4),
+                    // Email
+                    AppText(
+                      email.isNotEmpty ? email : '...',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: greyText,
+                    ),
+
+                    if (currency.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: surfaceColor,
-                          borderRadius: BorderRadius.circular(16),
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(100),
                         ),
-                        child: SvgPicture.asset(
-                          'assets/icons/profile/edit.svg',
-                          width: 20,
-                          height: 20,
-                          colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                        child: AppText(
+                          'Đồng tiền: $currency',
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
                       ),
                     ],
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Avatar with Edit Badge
-                Stack(
-                  alignment: Alignment.bottomRight,
-                  children: [
-                    CircleAvatar(
-                      radius: 54,
-                      backgroundColor: surfaceColor,
-                      child: Icon(Icons.person, size: 54, color: greyText),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE9E5FF),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: bgColor, width: 3),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Menu List
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        children: [
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/user.svg',
+                            iconBgColor: const Color(0xFF5A45FE),
+                            title: l10n.profile_account_info,
+                            textColor: textColor,
+                            onTap: () {
+                              if (profile != null) {
+                                Navigator.of(context, rootNavigator: true).push(
+                                  MaterialPageRoute(
+                                    builder: (ctx) => BlocProvider.value(
+                                      value: context.read<ProfileBloc>(),
+                                      child: EditProfileScreen(profile: profile),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/user.svg',
+                            iconBgColor: AppColors.cyan600,
+                            title: 'Quản lý ví (Wallets)',
+                            textColor: textColor,
+                            onTap: () => context.push('/wallets'),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/shield.svg',
+                            iconBgColor: AppColors.orange500,
+                            title: 'Ngân sách (Budgets)',
+                            textColor: textColor,
+                            onTap: () => context.push('/budgets'),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/shield.svg',
+                            iconBgColor: AppColors.pink500,
+                            title: 'Mục tiêu tiết kiệm (Goals)',
+                            textColor: textColor,
+                            onTap: () => context.push('/goals'),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/shield.svg',
+                            iconBgColor: AppColors.blue500,
+                            title: 'Giao dịch định kỳ',
+                            textColor: textColor,
+                            onTap: () => context.push('/recurring'),
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/shield.svg',
+                            iconBgColor: const Color(0xFF4CD964),
+                            title: l10n.profile_security_code,
+                            textColor: textColor,
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/lock.svg',
+                            iconBgColor: const Color(0xFF344356),
+                            title: l10n.profile_privacy_policy,
+                            textColor: textColor,
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/settings.svg',
+                            iconBgColor: const Color(0xFF249689),
+                            title: l10n.profile_settings,
+                            textColor: textColor,
+                          ),
+                          _buildMenuItem(
+                            context,
+                            iconPath: 'assets/icons/profile/logout.svg',
+                            iconBgColor: const Color(0xFFFF3B30),
+                            title: l10n.profile_logout,
+                            textColor: textColor,
+                            onTap: () => _showLogoutConfirmation(context),
+                            isLast: true,
+                          ),
+                        ],
                       ),
-                      child: SvgPicture.asset(
-                        'assets/icons/profile/edit.svg',
-                        width: 14,
-                        height: 14,
-                        colorFilter: const ColorFilter.mode(Color(0xFF5A45FE), BlendMode.srcIn),
-                      ),
                     ),
+                    
+                    const SizedBox(height: 100), // Extra space for floating bottom nav
                   ],
                 ),
-                
-                const SizedBox(height: 16),
-                
-                // Name & Email
-                AppText(
-                  displayName.isNotEmpty ? displayName : 'Leslie Alexander',
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-                const SizedBox(height: 4),
-                AppText(
-                  email.isNotEmpty ? email : 'leslie@gmail.com',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: greyText,
-                ),
-                
-                const SizedBox(height: 40),
-                
-                // Menu List
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
-                    children: [
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/user.svg',
-                        iconBgColor: const Color(0xFF5A45FE),
-                        title: l10n.profile_account_info,
-                        textColor: textColor,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/user.svg', // Will update icons later
-                        iconBgColor: AppColors.cyan600,
-                        title: 'Quản lý ví (Wallets)',
-                        textColor: textColor,
-                        onTap: () => context.push('/wallets'),
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/shield.svg', // Will update icons later
-                        iconBgColor: AppColors.orange500,
-                        title: 'Ngân sách (Budgets)',
-                        textColor: textColor,
-                        onTap: () => context.push('/budgets'),
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/shield.svg',
-                        iconBgColor: AppColors.pink500,
-                        title: 'Mục tiêu tiết kiệm (Goals)',
-                        textColor: textColor,
-                        onTap: () => context.push('/goals'),
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/shield.svg',
-                        iconBgColor: AppColors.blue500,
-                        title: 'Giao dịch định kỳ',
-                        textColor: textColor,
-                        onTap: () => context.push('/recurring'),
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/shield.svg',
-                        iconBgColor: const Color(0xFF4CD964),
-                        title: l10n.profile_security_code,
-                        textColor: textColor,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/lock.svg',
-                        iconBgColor: const Color(0xFF344356),
-                        title: l10n.profile_privacy_policy,
-                        textColor: textColor,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/settings.svg',
-                        iconBgColor: const Color(0xFF249689),
-                        title: l10n.profile_settings,
-                        textColor: textColor,
-                      ),
-                      _buildMenuItem(
-                        context,
-                        iconPath: 'assets/icons/profile/logout.svg',
-                        iconBgColor: const Color(0xFFFF3B30),
-                        title: l10n.profile_logout,
-                        textColor: textColor,
-                        onTap: () => _showLogoutConfirmation(context),
-                        isLast: true,
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 100), // Extra space for floating bottom nav
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),

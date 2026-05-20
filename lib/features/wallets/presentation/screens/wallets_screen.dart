@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
@@ -223,14 +224,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
             const SizedBox(height: 16),
             AppText(AppLocalizations.of(context)!.wallets_add, color: AppColors.textSecondary(context)),
             const SizedBox(height: 16),
-            ElevatedButton(
+            AppButton(
+              label: AppLocalizations.of(context)!.wallets_add,
               onPressed: () => _showAddWalletSheet(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-              ),
-              child: AppText(AppLocalizations.of(context)!.wallets_add),
             ),
           ],
         ),
@@ -269,10 +265,8 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
   Widget _buildWalletCard(BuildContext context, Wallet wallet, LinearGradient gradient) {
     return GestureDetector(
-      onLongPress: () {
-        final userId = AuthTokenManager.getUserId();
-        context.read<WalletBloc>().add(DeleteWalletEvent(userId, wallet.id));
-      },
+      onTap: () => _showEditWalletSheet(context, wallet),
+      onLongPress: () => _showDeleteWalletConfirmation(context, wallet),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.all(20),
@@ -317,7 +311,36 @@ class _WalletsScreenState extends State<WalletsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppText(wallet.name, fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: AppText(
+                              wallet.name,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              context.read<WalletBloc>().add(
+                                ToggleFavoriteWalletEvent(wallet.userId, wallet.id),
+                              );
+                            },
+                            child: Icon(
+                              wallet.isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+                              color: wallet.isFavorite ? const Color(0xFFFF5252) : Colors.white70,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     // Fake Mastercard Logo
                     SizedBox(
                       width: 40,
@@ -463,40 +486,155 @@ class _WalletsScreenState extends State<WalletsScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (name.isNotEmpty) {
-                      final newWallet = Wallet(
-                        id: '', 
-                        userId: userId,
-                        name: name,
-                        type: WalletType.cash, 
-                        balance: balance,
-                        currency: 'VND',
-                        icon: '',
-                        color: '',
-                        excludeFromTotal: false,
-                      );
-                      context.read<WalletBloc>().add(AddWalletEvent(newWallet));
-                      Navigator.pop(ctx);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: AppText(AppLocalizations.of(context)!.wallets_add, fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+              AppButton(
+                label: AppLocalizations.of(context)!.wallets_add,
+                onPressed: () {
+                  if (name.isNotEmpty) {
+                    final newWallet = Wallet(
+                      id: '', 
+                      userId: userId,
+                      name: name,
+                      type: WalletType.cash, 
+                      balance: balance,
+                      currency: 'VND',
+                      icon: '',
+                      color: '',
+                      excludeFromTotal: false,
+                    );
+                    context.read<WalletBloc>().add(AddWalletEvent(newWallet));
+                    Navigator.pop(ctx);
+                  }
+                },
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  void _showEditWalletSheet(BuildContext context, Wallet wallet) {
+    final userId = AuthTokenManager.getUserId();
+    final nameController = TextEditingController(text: wallet.name);
+    final balanceController = TextEditingController(text: wallet.balance.toStringAsFixed(0));
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
+            left: 24,
+            right: 24,
+            top: 24,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.surface(context),
+            borderRadius: BorderRadius.circular(32),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: const AppText('Chỉnh sửa ví', fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.background(context),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    hintText: 'Tên ví (vd: Tiền mặt, Techcombank)',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.background(context),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: TextField(
+                  controller: balanceController,
+                  decoration: const InputDecoration(
+                    hintText: 'Số dư (₫)',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+              ),
+              const SizedBox(height: 32),
+              AppButton(
+                label: 'Lưu thay đổi',
+                onPressed: () {
+                  final name = nameController.text.trim();
+                  final balance = double.tryParse(balanceController.text) ?? 0.0;
+                  if (name.isNotEmpty) {
+                    final updatedWallet = Wallet(
+                      id: wallet.id,
+                      userId: userId,
+                      name: name,
+                      type: wallet.type,
+                      balance: balance,
+                      currency: wallet.currency,
+                      icon: wallet.icon,
+                      color: wallet.color,
+                      excludeFromTotal: wallet.excludeFromTotal,
+                      isFavorite: wallet.isFavorite,
+                    );
+                    context.read<WalletBloc>().add(UpdateWalletEvent(updatedWallet));
+                    Navigator.pop(ctx);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showDeleteWalletConfirmation(BuildContext context, Wallet wallet) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const AppText('Xóa ví', fontWeight: FontWeight.bold),
+        content: AppText('Bạn có chắc chắn muốn xóa ví "${wallet.name}"? Hành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: AppText('Hủy', color: AppColors.textSecondary(context)),
+          ),
+          TextButton(
+            onPressed: () {
+              final userId = AuthTokenManager.getUserId();
+              context.read<WalletBloc>().add(DeleteWalletEvent(userId, wallet.id));
+              Navigator.pop(ctx);
+            },
+            child: const AppText('Xóa', color: AppColors.error),
+          ),
+        ],
+      ),
     );
   }
 }

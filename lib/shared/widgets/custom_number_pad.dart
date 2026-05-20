@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'app_text.dart';
 
 class CustomNumberPad extends StatelessWidget {
@@ -71,26 +72,9 @@ class CustomNumberPad extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: onDonePressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              ),
-              child: const AppText(
-                'Xong',
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+          AppButton(
+            label: 'Xong',
+            onPressed: onDonePressed,
           ),
           const SizedBox(height: 8),
         ],

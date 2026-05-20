@@ -6,6 +6,9 @@ import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/utils/category_helper.dart';
 import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
 import 'package:expense_management/features/categories/presentation/bloc/category_state.dart';
+import 'package:expense_management/features/categories/presentation/bloc/category_event.dart';
+import 'package:expense_management/features/categories/domain/entities/category.dart';
+import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -99,9 +102,35 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               child: Icon(CategoryHelper.getIcon(cat.icon), color: color, size: 24),
                             ),
                             title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w600),
-                            trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),
-                            onTap: () {
-                              // Action for category
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (!cat.isSystem)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                                    onPressed: () => _showDeleteConfirmation(context, cat.id, cat.name),
+                                  ),
+                                Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),
+                              ],
+                            ),
+                            onTap: () async {
+                              final result = await context.push('/add_category', extra: cat);
+                              if (result != null && result is Map<String, dynamic> && context.mounted) {
+                                final userId = AuthTokenManager.getUserId();
+                                final updatedCategory = AppCategory(
+                                  id: cat.id,
+                                  name: result['name'] as String,
+                                  icon: CategoryHelper.getIconName(result['icon'] as IconData),
+                                  color: CategoryHelper.getColorHex(result['color'] as Color),
+                                  type: result['type'] as String,
+                                  parentId: cat.parentId,
+                                  isSystem: cat.isSystem,
+                                  isActive: cat.isActive,
+                                  order: cat.order,
+                                  createdAt: cat.createdAt,
+                                );
+                                context.read<CategoryBloc>().add(UpdateCategoryEvent(userId, updatedCategory));
+                              }
                             },
                           ),
                         );
@@ -117,10 +146,50 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          context.push('/add_category');
+          final result = await context.push('/add_category');
+          if (result != null && result is Map<String, dynamic> && context.mounted) {
+            final userId = AuthTokenManager.getUserId();
+            final newCategory = AppCategory(
+              id: '',
+              name: result['name'] as String,
+              icon: CategoryHelper.getIconName(result['icon'] as IconData),
+              color: CategoryHelper.getColorHex(result['color'] as Color),
+              type: result['type'] as String,
+              parentId: null,
+              isSystem: false,
+              isActive: true,
+              order: 0,
+              createdAt: DateTime.now(),
+            );
+            context.read<CategoryBloc>().add(AddCategoryEvent(userId, newCategory));
+          }
         },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, String categoryId, String name) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const AppText('Xóa danh mục', fontWeight: FontWeight.bold),
+        content: AppText('Bạn có chắc chắn muốn xóa danh mục "$name"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: AppText('Hủy', color: AppColors.textSecondary(context)),
+          ),
+          TextButton(
+            onPressed: () {
+              final userId = AuthTokenManager.getUserId();
+              context.read<CategoryBloc>().add(DeleteCategoryEvent(userId, categoryId));
+              Navigator.pop(ctx);
+            },
+            child: const AppText('Xóa', color: AppColors.error),
+          ),
+        ],
       ),
     );
   }

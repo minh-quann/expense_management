@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
@@ -197,32 +198,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                       },
                                     ),
                                     const SizedBox(height: 32),
-                                    ElevatedButton(
-                                      onPressed: authState is AuthLoading ? null : _onRequestCodePressed,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        elevation: 0,
-                                      ),
-                                      child: authState is AuthLoading
-                                          ? const SizedBox(
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2.5,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                              ),
-                                            )
-                                          : const AppText(
-                                              'GỬI MÃ KHÔI PHỤC',
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
+                                    AppButton(
+                                      label: 'GỬI MÃ KHÔI PHỤC',
+                                      onPressed: _onRequestCodePressed,
+                                      isLoading: authState is AuthLoading,
                                     ),
                                   ],
                                 ),
@@ -269,32 +248,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                       },
                                     ),
                                     const SizedBox(height: 32),
-                                    ElevatedButton(
-                                      onPressed: authState is AuthLoading ? null : _onResetPasswordPressed,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                        elevation: 0,
-                                      ),
-                                      child: authState is AuthLoading
-                                          ? const SizedBox(
-                                              height: 20,
-                                              width: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2.5,
-                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                              ),
-                                            )
-                                          : const AppText(
-                                              'ĐẶT LẠI MẬT KHẨU',
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
+                                    AppButton(
+                                      label: 'ĐẶT LẠI MẬT KHẨU',
+                                      onPressed: _onResetPasswordPressed,
+                                      isLoading: authState is AuthLoading,
                                     ),
                                   ],
                                 ),

@@ -16,6 +16,7 @@ import 'package:expense_management/features/goals/presentation/screens/goals_scr
 import 'package:expense_management/features/recurring/presentation/screens/recurring_screen.dart';
 import 'package:expense_management/features/categories/presentation/screens/categories_screen.dart';
 import 'package:expense_management/features/categories/presentation/screens/add_category_screen.dart';
+import 'package:expense_management/features/categories/domain/entities/category.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -95,7 +96,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/add_category',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const AddCategoryScreen(),
+      builder: (context, state) {
+        final category = state.extra as AppCategory?;
+        return AddCategoryScreen(category: category);
+      },
     ),
     GoRoute(
       path: '/login',

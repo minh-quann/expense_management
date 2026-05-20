@@ -23,6 +23,12 @@ class DeleteWalletEvent extends WalletEvent {
   DeleteWalletEvent(this.userId, this.walletId);
 }
 
+class ToggleFavoriteWalletEvent extends WalletEvent {
+  final String userId;
+  final String walletId;
+  ToggleFavoriteWalletEvent(this.userId, this.walletId);
+}
+
 class WalletsUpdatedInternalEvent extends WalletEvent {
   final List<Wallet> wallets;
   WalletsUpdatedInternalEvent(this.wallets);

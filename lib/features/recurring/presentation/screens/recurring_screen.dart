@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
@@ -84,23 +85,12 @@ class _RecurringScreenState extends State<RecurringScreen> {
                         );
                       }),
                     const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const AddRecurringScreen()));
-                        },
-                        icon: const Icon(Icons.add, size: 20),
-                        label: const AppText('Tạo giao dịch định kỳ', fontWeight: FontWeight.bold),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                        ),
-                      ),
+                    AppButton(
+                      label: 'Tạo giao dịch định kỳ',
+                      icon: Icons.add,
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (_) => const AddRecurringScreen()));
+                      },
                     ),
                   ],
                 ),

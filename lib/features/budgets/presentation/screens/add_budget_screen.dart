@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/shared/widgets/custom_number_pad.dart';
 import 'package:expense_management/shared/utils/category_helper.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
@@ -217,17 +218,9 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                 ),
               ),
               const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveBudget,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-                  ),
-                  child: const AppText('Lưu ngân sách', fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
+              AppButton(
+                label: 'Lưu ngân sách',
+                onPressed: _saveBudget,
               ),
             ],
           ),

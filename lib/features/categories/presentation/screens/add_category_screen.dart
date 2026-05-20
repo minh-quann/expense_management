@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:expense_management/features/categories/domain/entities/category.dart';
+import 'package:expense_management/shared/utils/category_helper.dart';
+
 class AddCategoryScreen extends StatefulWidget {
-  const AddCategoryScreen({super.key});
+  final AppCategory? category;
+  const AddCategoryScreen({super.key, this.category});
 
   @override
   State<AddCategoryScreen> createState() => _AddCategoryScreenState();
@@ -31,6 +36,17 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.category != null) {
+      _nameController.text = widget.category!.name;
+      _selectedTypeIndex = widget.category!.type == 'EXPENSE' ? 0 : 1;
+      _selectedIcon = CategoryHelper.getIcon(widget.category!.icon);
+      _selectedColor = CategoryHelper.getColor(widget.category!.color);
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
@@ -48,7 +64,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         elevation: 0,
         centerTitle: true,
         title: AppText(
-          'Thêm danh mục',
+          widget.category != null ? 'Chỉnh sửa danh mục' : 'Thêm danh mục',
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary(context),
@@ -156,32 +172,19 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 ),
               ),
             ),
-            // Save Button
             Padding(
               padding: const EdgeInsets.all(24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_nameController.text.trim().isEmpty) return;
-                    context.pop({
-                      'name': _nameController.text.trim(),
-                      'type': _selectedTypeIndex == 0 ? 'EXPENSE' : 'INCOME',
-                      'icon': _selectedIcon,
-                      'color': _selectedColor,
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const AppText('Lưu danh mục', fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+              child: AppButton(
+                label: 'Lưu danh mục',
+                onPressed: () {
+                  if (_nameController.text.trim().isEmpty) return;
+                  context.pop({
+                    'name': _nameController.text.trim(),
+                    'type': _selectedTypeIndex == 0 ? 'EXPENSE' : 'INCOME',
+                    'icon': _selectedIcon,
+                    'color': _selectedColor,
+                  });
+                },
               ),
             ),
           ],

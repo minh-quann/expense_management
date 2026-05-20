@@ -13,6 +13,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
     on<AddWalletEvent>(_onAddWallet);
     on<UpdateWalletEvent>(_onUpdateWallet);
     on<DeleteWalletEvent>(_onDeleteWallet);
+    on<ToggleFavoriteWalletEvent>(_onToggleFavoriteWallet);
     on<WalletsUpdatedInternalEvent>((event, emit) => emit(WalletLoaded(event.wallets)));
     on<WalletsErrorInternalEvent>((event, emit) => emit(WalletError(event.error)));
   }
@@ -46,6 +47,14 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
   void _onDeleteWallet(DeleteWalletEvent event, Emitter<WalletState> emit) async {
     try {
       await repository.deleteWalletForUser(event.userId, event.walletId);
+    } catch (e) {
+      add(WalletsErrorInternalEvent(e.toString()));
+    }
+  }
+
+  void _onToggleFavoriteWallet(ToggleFavoriteWalletEvent event, Emitter<WalletState> emit) async {
+    try {
+      await repository.toggleFavoriteWallet(event.userId, event.walletId);
     } catch (e) {
       add(WalletsErrorInternalEvent(e.toString()));
     }
