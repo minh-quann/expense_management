@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:expense_management/core/constants/app_constants.dart';
 import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -31,6 +32,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           email: userData['email'],
           name: userData['display_name'] ?? '',
         );
+
+        await AppLockService().syncLockState(userData['has_pin'] ?? false);
 
         emit(AuthSuccess());
       } on DioException catch (e) {
@@ -61,6 +64,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           email: userData['email'],
           name: userData['display_name'] ?? '',
         );
+
+        await AppLockService().syncLockState(userData['has_pin'] ?? false);
 
         emit(AuthSuccess());
       } on DioException catch (e) {
@@ -111,6 +116,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           email: userData['email'],
           name: userData['display_name'] ?? '',
         );
+
+        await AppLockService().syncLockState(userData['has_pin'] ?? false);
 
         emit(AuthSuccess());
       } on DioException catch (e) {

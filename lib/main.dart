@@ -23,6 +23,8 @@ import 'package:expense_management/features/recurring/presentation/bloc/recurrin
 import 'package:expense_management/features/recurring/data/repositories/recurring_repository_impl.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
+import 'package:expense_management/features/app_lock/presentation/widgets/app_lock_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +41,9 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
+        BlocProvider<AppLockBloc>(
+          create: (context) => AppLockBloc(),
+        ),
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(),
         ),
@@ -141,7 +146,9 @@ class MyApp extends StatelessWidget {
                 systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
                 systemNavigationBarDividerColor: Colors.transparent,
               ),
-              child: child ?? const SizedBox(),
+              child: AppLockWrapper(
+                child: child ?? const SizedBox(),
+              ),
             );
           },
         );

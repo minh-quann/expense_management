@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:flutter/services.dart';
+
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/core/localization/locale_cubit.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
@@ -61,8 +63,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final screenHeight = MediaQuery.of(context).size.height;
+    final isDark = AppColors.isDark(context);
 
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: AppColors.surface(context),
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      ),
+      child: Scaffold(
+      backgroundColor: AppColors.surface(context),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
@@ -77,17 +86,22 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         },
         builder: (context, authState) {
+          final bottomPadding = MediaQuery.of(context).padding.bottom;
           return Stack(
             children: [
-              // Full-screen gradient background
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF3B5998), Color(0xFF8B5CF6)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              // Gradient background - exclude bottom nav bar area
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: bottomPadding,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF3B5998), Color(0xFF8B5CF6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                 ),
               ),
@@ -301,6 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }

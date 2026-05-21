@@ -17,6 +17,7 @@ import 'package:expense_management/features/recurring/presentation/screens/recur
 import 'package:expense_management/features/categories/presentation/screens/categories_screen.dart';
 import 'package:expense_management/features/categories/presentation/screens/add_category_screen.dart';
 import 'package:expense_management/features/categories/domain/entities/category.dart';
+import 'package:expense_management/features/app_lock/presentation/screens/security_settings_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -122,6 +123,13 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         return const ForgotPasswordScreen();
+      },
+    ),
+    GoRoute(
+      path: '/security',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        return const SecuritySettingsScreen();
       },
     ),
   ],

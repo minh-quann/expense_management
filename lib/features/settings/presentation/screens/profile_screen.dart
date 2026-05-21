@@ -15,6 +15,10 @@ import 'package:expense_management/features/settings/presentation/bloc/profile_b
 import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_state.dart';
 import 'package:expense_management/features/settings/presentation/screens/edit_profile_screen.dart';
+import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
+import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
+import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
+import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_event.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -59,6 +63,8 @@ class ProfileView extends StatelessWidget {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthInitial) {
+          // Reset app lock state on logout so it doesn't display overlay on login screen
+          context.read<AppLockBloc>().add(CheckAppLockStatus());
           context.go('/login');
         }
       },
@@ -277,10 +283,19 @@ class ProfileView extends StatelessWidget {
                           ),
                           _buildMenuItem(
                             context,
+                            iconPath: 'assets/icons/profile/settings.svg',
+                            iconBgColor: AppColors.purple500,
+                            title: 'Quản lý danh mục',
+                            textColor: textColor,
+                            onTap: () => context.push('/categories'),
+                          ),
+                          _buildMenuItem(
+                            context,
                             iconPath: 'assets/icons/profile/shield.svg',
                             iconBgColor: const Color(0xFF4CD964),
                             title: l10n.profile_security_code,
                             textColor: textColor,
+                            onTap: () => context.push('/security'),
                           ),
                           _buildMenuItem(
                             context,
@@ -391,9 +406,37 @@ class ProfileView extends StatelessWidget {
             child: AppText(l10n.profile_cancel, color: Colors.grey[600]),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              context.read<AuthBloc>().add(LogoutEvent());
+              
+              final appLockService = AppLockService();
+              final isPinEnabled = await appLockService.isLockEnabled();
+              
+              if (isPinEnabled && context.mounted) {
+                // Open LockScreen with local bloc provider to verify PIN
+                final verified = await Navigator.of(context, rootNavigator: true).push<bool>(
+                  MaterialPageRoute(
+                    builder: (ctx2) => BlocProvider<AppLockBloc>(
+                      create: (context) => AppLockBloc()..add(LockApp()),
+                      child: LockScreen(
+                        title: 'Xác nhận mã PIN',
+                        subtitle: 'Nhập mã PIN của bạn để đăng xuất',
+                        onVerified: (pin) {
+                          Navigator.pop(ctx2, true);
+                        },
+                      ),
+                    ),
+                  ),
+                );
+                
+                if (verified == true && context.mounted) {
+                  context.read<AuthBloc>().add(LogoutEvent());
+                }
+              } else {
+                if (context.mounted) {
+                  context.read<AuthBloc>().add(LogoutEvent());
+                }
+              }
             },
             child: AppText(l10n.profile_logout, color: const Color(0xFFFF3B30), fontWeight: FontWeight.bold),
           ),

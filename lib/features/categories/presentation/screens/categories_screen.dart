@@ -23,6 +23,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   int _selectedTypeIndex = 0; // 0: EXPENSE, 1: INCOME
 
   @override
+  void initState() {
+    super.initState();
+    final userId = AuthTokenManager.getUserId();
+    context.read<CategoryBloc>().add(LoadCategories(userId));
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = AppColors.isDark(context);
