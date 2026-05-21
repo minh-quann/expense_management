@@ -47,3 +47,5 @@ app.*.map.json
 # Personal files
 business_logic.md
 
+# Environment Configuration
+config.json

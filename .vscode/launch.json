@@ -7,19 +7,31 @@
         {
             "name": "expense_management",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": [
+                "--dart-define-from-file",
+                "config.json"
+            ]
         },
         {
             "name": "expense_management (profile mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "args": [
+                "--dart-define-from-file",
+                "config.json"
+            ]
         },
         {
             "name": "expense_management (release mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "args": [
+                "--dart-define-from-file",
+                "config.json"
+            ]
         }
     ]
 } 

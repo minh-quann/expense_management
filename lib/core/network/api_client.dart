@@ -11,15 +11,18 @@ class ApiClient {
   }
 
   ApiClient._internal() {
-    // Determine the base URL (10.0.2.2 is the host address in Android emulators)
-    String baseUrl = 'http://localhost:8080/api/v1';
-    try {
-      if (Platform.isAndroid) {
-        baseUrl = 'http://10.0.2.2:8080/api/v1';
-      }
-    } catch (_) {
-      // Platform check can fail on Web platform
+    // Determine the base URL (uses API_BASE_URL env if provided, otherwise falls back to localhost/10.0.2.2)
+    String baseUrl = const String.fromEnvironment('API_BASE_URL', defaultValue: '');
+    if (baseUrl.isEmpty) {
       baseUrl = 'http://localhost:8080/api/v1';
+      try {
+        if (Platform.isAndroid) {
+          baseUrl = 'http://10.0.2.2:8080/api/v1';
+        }
+      } catch (_) {
+        // Platform check can fail on Web platform
+        baseUrl = 'http://localhost:8080/api/v1';
+      }
     }
 
     dio = Dio(

@@ -78,14 +78,19 @@ lib/
    flutter pub get
    ```
 
-2. **Cấu hình API Endpoint**:
-   Mở file [app_constants.dart](file:///home/quan/Documents/expense_management/lib/core/constants/app_constants.dart) hoặc file cấu hình mạng của bạn để trỏ đường dẫn API (`baseUrl`) về địa chỉ Backend Go của bạn (ví dụ: `http://localhost:8080/api/v1` hoặc IP LAN của máy host).
+2. **Cấu hình Biến môi trường**:
+   - Copy file mẫu [config.json.example](file:///home/quan/Documents/expense_management/config.json.example) thành `config.json`:
+     ```bash
+     cp config.json.example config.json
+     ```
+   - Chỉnh sửa `API_BASE_URL` và `GOOGLE_WEB_CLIENT_ID` theo môi trường của bạn. File `config.json` đã được thêm vào `.gitignore` để bảo vệ thông tin bảo mật.
 
 3. **Chạy ứng dụng**:
-   ```bash
-   # Chạy ở chế độ debug
-   flutter run
-   ```
+   * **Qua VS Code (F5)**: Dự án đã được cấu hình sẵn trong file [.vscode/launch.json](file:///home/quan/Documents/expense_management/.vscode/launch.json) để tự động nạp `config.json`. Bạn chỉ cần nhấn phím **F5** để Debug/Run bình thường.
+   * **Qua Terminal**:
+     ```bash
+     flutter run --dart-define-from-file=config.json
+     ```
 
 ---
 
