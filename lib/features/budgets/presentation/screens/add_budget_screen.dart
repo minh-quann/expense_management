@@ -12,6 +12,7 @@ import 'package:expense_management/features/budgets/presentation/bloc/budget_eve
 import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
 import 'package:expense_management/features/categories/presentation/bloc/category_state.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 class AddBudgetScreen extends StatefulWidget {
   const AddBudgetScreen({super.key});
@@ -135,7 +136,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
 
   void _saveBudget() {
     if (_amount == '0' || _amount.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền ngân sách')));
+      AppToast.warning(context, 'Vui lòng nhập số tiền ngân sách');
       return;
     }
 

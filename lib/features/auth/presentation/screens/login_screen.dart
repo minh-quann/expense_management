@@ -12,6 +12,7 @@ import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 import 'package:expense_management/features/auth/presentation/widgets/social_button.dart';
 import 'package:expense_management/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
@@ -75,14 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
+            AppToast.success(context, 'Đăng nhập thành công!');
             context.go('/');
           } else if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            AppToast.error(context, state.message);
           }
         },
         builder: (context, authState) {

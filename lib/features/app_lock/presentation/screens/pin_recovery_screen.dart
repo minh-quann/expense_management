@@ -3,6 +3,7 @@ import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
 import 'package:expense_management/shared/widgets/app_button.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 /// Screen displayed when user forgets PIN code.
 /// Loads the security question from backend and allows resetting PIN.
@@ -73,12 +74,7 @@ class _PinRecoveryScreenState extends State<PinRecoveryScreen> {
       await _service.resetPin(answer, newPin);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: AppText('Khôi phục mã PIN thành công!', color: Colors.white),
-            backgroundColor: AppColors.green600,
-          ),
-        );
+        AppToast.success(context, 'Khôi phục mã PIN thành công!');
         // Pop and return true to indicate success
         Navigator.pop(context, true);
       }

@@ -9,6 +9,7 @@ import 'package:expense_management/features/recurring/domain/entities/recurring.
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_event.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 class AddRecurringScreen extends StatefulWidget {
   const AddRecurringScreen({super.key});
@@ -54,7 +55,7 @@ class _AddRecurringScreenState extends State<AddRecurringScreen> {
 
   void _saveRecurring() {
     if (_amount == '0' || _amount.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền hợp lệ')));
+      AppToast.warning(context, 'Vui lòng nhập số tiền hợp lệ');
       return;
     }
 

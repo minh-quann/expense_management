@@ -9,6 +9,7 @@ import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dar
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
 import 'package:expense_management/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -59,31 +60,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is ForgotPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Mã khôi phục đã được gửi! Vui lòng kiểm tra email.'),
-                backgroundColor: AppColors.success,
-              ),
-            );
+            AppToast.success(context, 'Mã khôi phục đã được gửi! Vui lòng kiểm tra email.');
             setState(() {
               _tokenController.text = state.token; // Pre-fill token for easy dev testing
               _currentStep = 1;
             });
           } else if (state is ResetPasswordSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.success,
-              ),
-            );
+            AppToast.success(context, state.message);
             context.go('/login');
           } else if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
-            );
+            AppToast.error(context, state.message);
           }
         },
         builder: (context, authState) {

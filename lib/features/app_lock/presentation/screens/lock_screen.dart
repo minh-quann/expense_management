@@ -10,6 +10,7 @@ import 'package:expense_management/features/app_lock/presentation/widgets/pin_do
 import 'package:expense_management/features/app_lock/presentation/widgets/lock_number_pad.dart';
 import 'package:expense_management/features/app_lock/presentation/screens/pin_recovery_screen.dart';
 import 'package:expense_management/shared/widgets/app_button.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 /// Lock screen displayed when the app is locked.
 /// Supports PIN entry and biometric authentication.
@@ -96,20 +97,10 @@ class _LockScreenState extends State<LockScreen> with SingleTickerProviderStateM
           _showSecurityQuestionSetup(context, state.pin);
         }
         if (state is AppLockActionFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: AppText(state.error, color: Colors.white),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          AppToast.error(context, state.error);
         }
         if (state is AppLockActionSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: AppText(state.message, color: Colors.white),
-              backgroundColor: AppColors.green600,
-            ),
-          );
+          AppToast.success(context, state.message);
         }
       },
       builder: (context, state) {

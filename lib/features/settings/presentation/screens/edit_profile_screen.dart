@@ -7,6 +7,7 @@ import 'package:expense_management/features/settings/presentation/bloc/profile_b
 import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_state.dart';
 import 'package:expense_management/features/settings/domain/entities/user_profile.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -75,14 +76,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is ProfileLoaded) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: AppText('Cập nhật hồ sơ thành công!', color: Colors.white)),
-            );
+            AppToast.success(context, 'Cập nhật hồ sơ thành công!');
             Navigator.pop(context, state.profile);
           } else if (state is ProfileFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: AppText('Lỗi: ${state.message}', color: Colors.white)),
-            );
+            AppToast.error(context, 'Lỗi: ${state.message}');
           }
         },
         child: BlocBuilder<ProfileBloc, ProfileState>(

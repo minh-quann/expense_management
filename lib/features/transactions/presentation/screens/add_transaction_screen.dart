@@ -19,6 +19,7 @@ import 'package:expense_management/features/wallets/presentation/bloc/wallet_eve
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_state.dart';
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 import 'package:expense_management/features/transactions/presentation/widgets/category_picker_sheet.dart';
 import 'package:expense_management/features/transactions/presentation/widgets/wallet_picker_sheet.dart';
 import 'package:intl/intl.dart';
@@ -152,23 +153,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   void _saveTransaction() {
     if (_amount == '0' || _amount.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền hợp lệ')));
+      AppToast.warning(context, 'Vui lòng nhập số tiền hợp lệ');
       return;
     }
     if (_selectedWalletId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn ví giao dịch')));
+      AppToast.warning(context, 'Vui lòng chọn ví giao dịch');
       return;
     }
     if (_transactionType != 'TRANSFER' && _selectedCategoryId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn danh mục')));
+      AppToast.warning(context, 'Vui lòng chọn danh mục');
       return;
     }
     if (_transactionType == 'TRANSFER' && _selectedToWalletId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn ví đích')));
+      AppToast.warning(context, 'Vui lòng chọn ví đích');
       return;
     }
     if (_transactionType == 'TRANSFER' && _selectedWalletId == _selectedToWalletId) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ví nguồn và ví đích không được trùng nhau')));
+      AppToast.warning(context, 'Ví nguồn và ví đích không được trùng nhau');
       return;
     }
 

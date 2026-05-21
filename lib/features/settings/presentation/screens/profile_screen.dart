@@ -19,6 +19,8 @@ import 'package:expense_management/features/app_lock/data/services/app_lock_serv
 import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_event.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
+import 'package:expense_management/shared/widgets/app_confirm_modal.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -66,6 +68,8 @@ class ProfileView extends StatelessWidget {
           // Reset app lock state on logout so it doesn't display overlay on login screen
           context.read<AppLockBloc>().add(CheckAppLockStatus());
           context.go('/login');
+          // Show toast after navigation — pass null since ProfileScreen context is disposed
+          AppToast.success(null, 'Đăng xuất thành công!');
         }
       },
       child: Scaffold(
@@ -390,58 +394,48 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  void _showLogoutConfirmation(BuildContext context) {
+  void _showLogoutConfirmation(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
-    
-    showDialog(
+
+    final confirmed = await AppConfirmModal.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: AppText(l10n.profile_logout, fontSize: 20, fontWeight: FontWeight.bold),
-        content: AppText(l10n.profile_logout_confirm),
-        backgroundColor: AppColors.isDark(context) ? const Color(0xFF1C1C1E) : Colors.white,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: AppText(l10n.profile_cancel, color: Colors.grey[600]),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              
-              final appLockService = AppLockService();
-              final isPinEnabled = await appLockService.isLockEnabled();
-              
-              if (isPinEnabled && context.mounted) {
-                // Open LockScreen with local bloc provider to verify PIN
-                final verified = await Navigator.of(context, rootNavigator: true).push<bool>(
-                  MaterialPageRoute(
-                    builder: (ctx2) => BlocProvider<AppLockBloc>(
-                      create: (context) => AppLockBloc()..add(LockApp()),
-                      child: LockScreen(
-                        title: 'Xác nhận mã PIN',
-                        subtitle: 'Nhập mã PIN của bạn để đăng xuất',
-                        onVerified: (pin) {
-                          Navigator.pop(ctx2, true);
-                        },
-                      ),
-                    ),
-                  ),
-                );
-                
-                if (verified == true && context.mounted) {
-                  context.read<AuthBloc>().add(LogoutEvent());
-                }
-              } else {
-                if (context.mounted) {
-                  context.read<AuthBloc>().add(LogoutEvent());
-                }
-              }
-            },
-            child: AppText(l10n.profile_logout, color: const Color(0xFFFF3B30), fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
+      icon: Icons.logout_rounded,
+      title: l10n.profile_logout,
+      message: l10n.profile_logout_confirm,
+      cancelLabel: l10n.profile_cancel,
+      confirmLabel: l10n.profile_logout,
+      isDestructive: true,
     );
+
+    if (!confirmed || !context.mounted) return;
+
+    final appLockService = AppLockService();
+    final isPinEnabled = await appLockService.isLockEnabled();
+
+    if (isPinEnabled && context.mounted) {
+      // Open LockScreen with local bloc provider to verify PIN
+      final verified = await Navigator.of(context, rootNavigator: true).push<bool>(
+        MaterialPageRoute(
+          builder: (ctx2) => BlocProvider<AppLockBloc>(
+            create: (context) => AppLockBloc()..add(LockApp()),
+            child: LockScreen(
+              title: 'Xác nhận mã PIN',
+              subtitle: 'Nhập mã PIN của bạn để đăng xuất',
+              onVerified: (pin) {
+                Navigator.pop(ctx2, true);
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (verified == true && context.mounted) {
+        context.read<AuthBloc>().add(LogoutEvent());
+      }
+    } else {
+      if (context.mounted) {
+        context.read<AuthBloc>().add(LogoutEvent());
+      }
+    }
   }
 }

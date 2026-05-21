@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:toastification/toastification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -93,66 +94,69 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<LocaleCubit, Locale>(
       builder: (context, locale) {
-        return MaterialApp.router(
-          title: 'Expense Management',
-          debugShowCheckedModeBanner: false,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: locale,
-          theme: ThemeData(
-            brightness: Brightness.light,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primary,
+        return ToastificationWrapper(
+          child: MaterialApp.router(
+            title: 'Expense Management',
+            debugShowCheckedModeBanner: false,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: locale,
+            theme: ThemeData(
               brightness: Brightness.light,
-            ),
-            useMaterial3: true,
-            scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-            fontFamily: 'GoogleSansFlex',
-            appBarTheme: const AppBarTheme(
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.dark, // Black status bar icons for Android
-                statusBarBrightness: Brightness.light,    // Black status bar text/icons for iOS
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppColors.primary,
+                brightness: Brightness.light,
+              ),
+              useMaterial3: true,
+              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+              fontFamily: 'GoogleSansFlex',
+              appBarTheme: const AppBarTheme(
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.dark, // Black status bar icons for Android
+                  statusBarBrightness: Brightness.light,    // Black status bar text/icons for iOS
+                ),
               ),
             ),
-          ),
-          darkTheme: ThemeData(
-            brightness: Brightness.dark,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primary,
+            darkTheme: ThemeData(
               brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-            scaffoldBackgroundColor: const Color(0xFF121212),
-            fontFamily: 'GoogleSansFlex',
-            appBarTheme: const AppBarTheme(
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.light, // White status bar icons for Android
-                statusBarBrightness: Brightness.dark,     // White status bar text/icons for iOS
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppColors.primary,
+                brightness: Brightness.dark,
+              ),
+              useMaterial3: true,
+              scaffoldBackgroundColor: const Color(0xFF121212),
+              fontFamily: 'GoogleSansFlex',
+              appBarTheme: const AppBarTheme(
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.light, // White status bar icons for Android
+                  statusBarBrightness: Brightness.dark,     // White status bar text/icons for iOS
+                ),
               ),
             ),
+            themeMode: ThemeMode.system, // Always respect system for dark mode
+            routerConfig: appRouter,
+            builder: (context, child) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                  statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                ),
+                child: AppLockWrapper(
+                  child: child ?? const SizedBox(),
+                ),
+              );
+            },
           ),
-          themeMode: ThemeMode.system, // Always respect system for dark mode
-          routerConfig: appRouter,
-          builder: (context, child) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-                statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-                systemNavigationBarColor: Colors.transparent,
-                systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-                systemNavigationBarDividerColor: Colors.transparent,
-              ),
-              child: AppLockWrapper(
-                child: child ?? const SizedBox(),
-              ),
-            );
-          },
         );
       },
     );
   }
 }
+

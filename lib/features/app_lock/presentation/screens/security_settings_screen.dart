@@ -7,6 +7,7 @@ import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_event.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_state.dart';
 import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 /// Settings screen for managing app lock (PIN + Biometric)
 class SecuritySettingsScreen extends StatelessWidget {
@@ -77,21 +78,11 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
           });
         }
         if (state is AppLockActionFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: AppText(state.error, color: Colors.white),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          AppToast.error(context, state.error);
           _loadSettings();
         }
         if (state is AppLockActionSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: AppText(state.message, color: Colors.white),
-              backgroundColor: AppColors.green600,
-            ),
-          );
+          AppToast.success(context, state.message);
           _loadSettings();
         }
       },

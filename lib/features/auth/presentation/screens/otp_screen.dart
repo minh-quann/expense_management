@@ -9,6 +9,7 @@ import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dar
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 class OtpScreen extends StatefulWidget {
   const OtpScreen({super.key});
@@ -80,9 +81,7 @@ class _OtpScreenState extends State<OtpScreen> {
           if (state is AuthSuccess) {
             context.go('/');
           } else if (state is AuthFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            AppToast.error(context, state.message);
           }
         },
         builder: (context, state) {

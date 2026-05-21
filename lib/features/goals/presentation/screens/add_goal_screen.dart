@@ -9,6 +9,7 @@ import 'package:expense_management/features/goals/domain/entities/goal.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_event.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/shared/widgets/app_toast.dart';
 
 class AddGoalScreen extends StatefulWidget {
   const AddGoalScreen({super.key});
@@ -52,11 +53,11 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
 
   void _saveGoal() {
     if (_amount == '0' || _amount.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập số tiền mục tiêu')));
+      AppToast.warning(context, 'Vui lòng nhập số tiền mục tiêu');
       return;
     }
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập tên mục tiêu')));
+      AppToast.warning(context, 'Vui lòng nhập tên mục tiêu');
       return;
     }
 
