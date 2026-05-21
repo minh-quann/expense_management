@@ -93,10 +93,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         final color = CategoryHelper.getColor(cat.color);
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
-                          decoration: BoxDecoration(
+                          decoration: ShapeDecoration(
                             color: AppColors.surface(context),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.border(context), width: 1),
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                           ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

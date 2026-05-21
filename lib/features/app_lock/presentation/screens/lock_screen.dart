@@ -340,7 +340,7 @@ class _LockScreenState extends State<LockScreen> with SingleTickerProviderStateM
       isDismissible: false,
       enableDrag: false,
       backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-      shape: const RoundedRectangleBorder(
+      shape: const RoundedSuperellipseBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {

@@ -115,10 +115,11 @@ class _RecurringScreenState extends State<RecurringScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(context), width: 1),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
       child: Row(
         children: [
@@ -164,9 +165,11 @@ class _RecurringScreenState extends State<RecurringScreen> {
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: isActive ? AppColors.green100 : AppColors.gray200,
-                  borderRadius: BorderRadius.circular(100),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(100),
+                  ),
                 ),
                 child: AppText(
                   isActive ? 'Đang bật' : 'Tạm dừng',

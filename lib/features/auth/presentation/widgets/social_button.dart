@@ -23,9 +23,7 @@ class SocialButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           side: BorderSide(color: AppColors.textSecondary(context).withValues(alpha: 0.2)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(100),
-          ),
+          shape: const StadiumBorder(),
         ),
         icon: icon,
         label: AppText(

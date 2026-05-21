@@ -4,6 +4,7 @@ import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:go_router/go_router.dart';
+import 'package:expense_management/shared/widgets/superellipse_input_border.dart';
 
 import 'package:expense_management/features/categories/domain/entities/category.dart';
 import 'package:expense_management/shared/utils/category_helper.dart';
@@ -125,15 +126,15 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                         ),
                         filled: true,
                         fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100,
-                        border: OutlineInputBorder(
+                        border: SuperellipseInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(color: AppColors.border(context)),
                         ),
-                        enabledBorder: OutlineInputBorder(
+                        enabledBorder: SuperellipseInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(color: AppColors.border(context)),
                         ),
-                        focusedBorder: OutlineInputBorder(
+                        focusedBorder: SuperellipseInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(color: AppColors.primary),
                         ),
@@ -215,10 +216,12 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedIcon = icon),
       child: Container(
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: isSelected ? _selectedColor.withValues(alpha: 0.1) : (AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100),
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: _selectedColor, width: 2) : Border.all(color: Colors.transparent, width: 2),
+          shape: RoundedSuperellipseBorder(
+            side: isSelected ? BorderSide(color: _selectedColor, width: 2) : const BorderSide(color: Colors.transparent, width: 2),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: Icon(
           icon,

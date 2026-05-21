@@ -19,13 +19,15 @@ class CustomNumberPad extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
+        shape: const RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
+          ),
         ),
-        boxShadow: [
+        shadows: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
@@ -90,9 +92,11 @@ class CustomNumberPad extends StatelessWidget {
         width: MediaQuery.of(context).size.width / 3 - 32,
         height: 60,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.gray50,
-          borderRadius: BorderRadius.circular(16),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: AppText(
           text,
@@ -112,9 +116,11 @@ class CustomNumberPad extends StatelessWidget {
         width: MediaQuery.of(context).size.width / 3 - 32,
         height: 60,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.gray50,
-          borderRadius: BorderRadius.circular(16),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Icon(icon, color: AppColors.textPrimary(context), size: 28),
       ),

@@ -60,9 +60,11 @@ class _AddWalletSheetState extends State<AddWalletSheet> {
         right: 24,
         top: 24,
       ),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(32),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(32),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -87,9 +89,11 @@ class _AddWalletSheetState extends State<AddWalletSheet> {
           ),
           const SizedBox(height: 24),
           Container(
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: AppColors.background(context),
-              borderRadius: BorderRadius.circular(16),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: TextField(
               controller: _nameController,
@@ -102,9 +106,11 @@ class _AddWalletSheetState extends State<AddWalletSheet> {
           ),
           const SizedBox(height: 16),
           Container(
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: AppColors.background(context),
-              borderRadius: BorderRadius.circular(16),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: TextField(
               controller: _balanceController,

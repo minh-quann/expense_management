@@ -211,10 +211,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
   Widget _buildEmptyWalletCard(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border(context), width: 1),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
       ),
       child: Center(
         child: Column(
@@ -239,10 +240,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
       onTap: () => _showAddWalletSheet(context),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: AppColors.surface(context),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border(context), width: 1),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -270,11 +272,12 @@ class _WalletsScreenState extends State<WalletsScreen> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
-          boxShadow: [
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          shadows: [
             BoxShadow(
               color: gradient.colors.last.withValues(alpha: 0.3),
               blurRadius: 16,
@@ -433,9 +436,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
             right: 24,
             top: 24, // increased top padding for better visual
           ),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: AppColors.surface(context),
-            borderRadius: BorderRadius.circular(32),
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(32),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -456,9 +461,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
               const SizedBox(height: 24),
               Container(
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.background(context),
-                  borderRadius: BorderRadius.circular(16),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: TextField(
                   decoration: const InputDecoration(
@@ -471,9 +478,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
               const SizedBox(height: 16),
               Container(
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.background(context),
-                  borderRadius: BorderRadius.circular(16),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: TextField(
                   decoration: const InputDecoration(
@@ -531,9 +540,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
             right: 24,
             top: 24,
           ),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: AppColors.surface(context),
-            borderRadius: BorderRadius.circular(32),
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(32),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -554,9 +565,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
               const SizedBox(height: 24),
               Container(
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.background(context),
-                  borderRadius: BorderRadius.circular(16),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: TextField(
                   controller: nameController,
@@ -569,9 +582,11 @@ class _WalletsScreenState extends State<WalletsScreen> {
               ),
               const SizedBox(height: 16),
               Container(
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.background(context),
-                  borderRadius: BorderRadius.circular(16),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: TextField(
                   controller: balanceController,
@@ -618,6 +633,9 @@ class _WalletsScreenState extends State<WalletsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: const RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.all(Radius.circular(24)),
+        ),
         title: const AppText('Xóa ví', fontWeight: FontWeight.bold),
         content: AppText('Bạn có chắc chắn muốn xóa ví "${wallet.name}"? Hành động này không thể hoàn tác.'),
         actions: [

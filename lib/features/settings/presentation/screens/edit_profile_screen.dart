@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/superellipse_input_border.dart';
 import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_bloc.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
@@ -238,15 +239,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         filled: true,
         fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF7F7F9),
-        border: OutlineInputBorder(
+        border: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.border(context)),
         ),
-        enabledBorder: OutlineInputBorder(
+        enabledBorder: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.border(context)),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.primary),
         ),
@@ -266,11 +267,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       decoration: InputDecoration(
         filled: true,
         fillColor: isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFFEFEFEF),
-        border: OutlineInputBorder(
+        border: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.border(context).withValues(alpha: 0.5)),
         ),
-        disabledBorder: OutlineInputBorder(
+        disabledBorder: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.border(context).withValues(alpha: 0.5)),
         ),
@@ -288,10 +289,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF7F7F9),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border(context)),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(

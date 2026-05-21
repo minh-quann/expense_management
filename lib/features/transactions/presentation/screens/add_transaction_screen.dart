@@ -223,6 +223,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             children: [
               ScreenHeader(
                 title: AppLocalizations.of(context)?.add_transaction_title ?? 'Thêm giao dịch mới',
+                showBackButton: true,
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -383,18 +384,21 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.border(context)),
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.gray50,
-                  borderRadius: BorderRadius.circular(16),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: const Icon(Icons.edit_note_rounded, color: AppColors.gray500, size: 24),
               ),

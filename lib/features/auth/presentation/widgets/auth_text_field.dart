@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
+import 'package:expense_management/shared/widgets/superellipse_input_border.dart';
 
 class AuthTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -53,25 +54,25 @@ class AuthTextField extends StatelessWidget {
             ? const Color(0xFF2C2C2E)
             : AppColors.gray100,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
+        border: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: AppColors.primary,
             width: 1.5,
           ),
         ),
-        errorBorder: OutlineInputBorder(
+        errorBorder: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: AppColors.error,
             width: 1.5,
           ),
         ),
-        focusedErrorBorder: OutlineInputBorder(
+        focusedErrorBorder: SuperellipseInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: AppColors.error,

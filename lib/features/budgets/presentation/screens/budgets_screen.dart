@@ -172,10 +172,11 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border(context)),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +208,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ClipRRect(
+          ClipRSuperellipse(
             borderRadius: BorderRadius.circular(100),
             child: LinearProgressIndicator(
               value: percentage.clamp(0.0, 1.0),

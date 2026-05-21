@@ -26,6 +26,8 @@ import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:expense_management/features/app_lock/presentation/widgets/app_lock_wrapper.dart';
+import 'package:expense_management/features/stats/presentation/bloc/stats_bloc.dart';
+import 'package:expense_management/features/stats/data/repositories/stats_repository_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,6 +83,11 @@ void main() async {
             repository: RecurringRepositoryImpl(FirebaseFirestore.instance),
           ),
         ),
+        BlocProvider<StatsBloc>(
+          create: (context) => StatsBloc(
+            statsRepository: StatsRepositoryImpl(),
+          ),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -108,7 +115,7 @@ class MyApp extends StatelessWidget {
                 brightness: Brightness.light,
               ),
               useMaterial3: true,
-              scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+              scaffoldBackgroundColor: AppColors.appBackgroundLight,
               fontFamily: 'GoogleSansFlex',
               appBarTheme: const AppBarTheme(
                 systemOverlayStyle: SystemUiOverlayStyle(

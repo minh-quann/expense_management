@@ -23,11 +23,12 @@ class WalletCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
-          boxShadow: [
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          shadows: [
             BoxShadow(
               color: gradient.colors.last.withValues(alpha: 0.3),
               blurRadius: 16,

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -60,41 +59,83 @@ class _AppShellState extends State<AppShell> {
             // The main content
             widget.navigationShell,
             
-            // Floating Glassmorphism Navigation Bar
+            // Floating Navigation Bar
             Positioned(
-              left: 24,
-              right: 24,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                  child: Container(
-                    height: 72,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: isDark 
-                          ? const Color(0xFF1C1C1E).withValues(alpha: 0.75) 
-                          : Colors.white.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(
-                        color: isDark 
-                            ? Colors.white.withValues(alpha: 0.1) 
-                            : Colors.black.withValues(alpha: 0.05),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildNavItem(context, 0, Icons.home_outlined, Icons.home, AppLocalizations.of(context)!.nav_home),
-                        _buildNavItem(context, 1, Icons.receipt_long_outlined, Icons.receipt_long, AppLocalizations.of(context)!.nav_transactions),
-                        _buildAddButton(context),
-                        _buildNavItem(context, 2, Icons.pie_chart_outline, Icons.pie_chart, AppLocalizations.of(context)!.nav_stats),
-                        _buildNavItem(context, 3, Icons.person_outline, Icons.person, AppLocalizations.of(context)!.nav_account),
-                      ],
-                    ),
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.of(context).padding.bottom + 12,
+              child: Container(
+                height: 64,
+                padding: const EdgeInsets.all(4),
+                decoration: ShapeDecoration(
+                  color: isDark
+                      ? const Color(0xFF2C2C2E)
+                      : const Color(0xFFF8F8F8),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(100),
                   ),
+                  shadows: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final totalWidth = constraints.maxWidth;
+                    final currentIndex = widget.navigationShell.currentIndex;
+                    // Map nav index (0-3) to slot (0-4), skipping slot 2 (add button)
+                    final slot = currentIndex < 2 ? currentIndex : currentIndex + 1;
+
+                    // Selected item is wider, pushes others aside
+                    const selectedFlex = 1.2;
+                    const normalFlex = 1.0;
+                    final totalFlex = 4 * normalFlex + selectedFlex; // 4 normal + 1 selected
+                    final normalWidth = totalWidth / totalFlex;
+                    final selectedWidth = normalWidth * selectedFlex;
+
+                    // Pill left = sum of all items before selected slot (all normal width)
+                    final pillLeft = slot * normalWidth;
+
+                    // Calculate width for each slot
+                    double slotWidth(int s) => s == slot ? selectedWidth : normalWidth;
+
+                    return Stack(
+                      children: [
+                        // Sliding pill indicator
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                          left: pillLeft,
+                          top: 0,
+                          bottom: 0,
+                          width: selectedWidth,
+                          child: Container(
+                            decoration: ShapeDecoration(
+                              color: isDark
+                                  ? const Color(0xFF3A3A3C)
+                                  : const Color(0xFFE5E5E5),
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Nav items row on top
+                        Row(
+                          children: [
+                            _buildNavItem(context, 0, Icons.home_outlined, Icons.home, AppLocalizations.of(context)!.nav_home, slotWidth(0)),
+                            _buildNavItem(context, 1, Icons.receipt_long_outlined, Icons.receipt_long, AppLocalizations.of(context)!.nav_transactions, slotWidth(1)),
+                            _buildAddItem(context, isDark, slotWidth(2)),
+                            _buildNavItem(context, 2, Icons.pie_chart_outline, Icons.pie_chart, AppLocalizations.of(context)!.nav_stats, slotWidth(3)),
+                            _buildNavItem(context, 3, Icons.person_outline, Icons.person, AppLocalizations.of(context)!.nav_account, slotWidth(4)),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -104,70 +145,85 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _buildAddButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/add-transaction'),
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.add_rounded,
-          color: Colors.white,
-          size: 28,
+  /// Center "add" button — styled identically to the other nav items
+  Widget _buildAddItem(BuildContext context, bool isDark, double width) {
+    final color = isDark ? const Color(0xFF8E8E93) : const Color(0xFF3C3C43);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      width: width,
+      child: GestureDetector(
+        onTap: () => context.push('/add-transaction'),
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.add_circle_outline,
+                color: color,
+                size: 24,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Thêm',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(BuildContext context, int index, IconData icon, IconData activeIcon, String label) {
+  Widget _buildNavItem(BuildContext context, int index, IconData icon, IconData activeIcon, String label, double width) {
     final isSelected = widget.navigationShell.currentIndex == index;
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary(context);
+    final isDark = AppColors.isDark(context);
+    final color = isSelected
+        ? AppColors.primary
+        : (isDark ? const Color(0xFF8E8E93) : const Color(0xFF3C3C43));
 
-    return GestureDetector(
-      onTap: () => _onTap(context, index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 16 : 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected 
-              ? AppColors.primary.withValues(alpha: 0.1) 
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: color,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 250),
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                fontFamily: 'Inter',
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      width: width,
+      child: GestureDetector(
+        onTap: () => _onTap(context, index),
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: Icon(
+                  isSelected ? activeIcon : icon,
+                  key: ValueKey(isSelected),
+                  color: color,
+                  size: 24,
+                ),
               ),
-              child: Text(label),
-            ),
-          ],
+              const SizedBox(height: 2),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontFamily: 'Inter',
+                ),
+                child: Text(label),
+              ),
+            ],
+          ),
         ),
       ),
     );

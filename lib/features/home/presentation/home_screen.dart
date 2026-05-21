@@ -11,6 +11,8 @@ import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 
+import 'package:expense_management/shared/widgets/screen_header.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -41,49 +43,34 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.iconBgLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(Icons.grid_view_rounded, color: AppColors.textPrimary(context), size: 24),
-        ),
-        AppText(
-          AppLocalizations.of(context)!.home_title,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary(context),
-        ),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.iconBgLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary(context), size: 24),
-              Positioned(
-                right: 2,
-                top: 2,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.notificationDot,
-                    shape: BoxShape.circle,
-                  ),
+    return ScreenHeader(
+      title: AppLocalizations.of(context)!.home_title,
+      padding: EdgeInsets.zero,
+      leading: ScreenHeader.circleButton(
+        context: context,
+        child: Icon(Icons.grid_view_rounded, color: AppColors.textPrimary(context), size: 24),
+      ),
+      trailing: ScreenHeader.circleButton(
+        context: context,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary(context), size: 24),
+            Positioned(
+              right: 2,
+              top: 2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppColors.notificationDot,
+                  shape: BoxShape.circle,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -100,9 +87,7 @@ class HomeScreen extends StatelessWidget {
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1),
+          decoration: ShapeDecoration(
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -111,6 +96,9 @@ class HomeScreen extends StatelessWidget {
                 AppColors.balanceGradientMiddle,
                 AppColors.balanceGradientEnd,
               ],
+            ),
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(28),
             ),
           ),
           child: Column(

@@ -234,12 +234,14 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
               // Info section
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.blue50,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.blue200,
-                    width: 1,
+                  shape: RoundedSuperellipseBorder(
+                    side: const BorderSide(
+                      color: AppColors.blue200,
+                      width: 1,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
                 child: Row(
@@ -285,18 +287,22 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(16),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: Row(
           children: [
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Icon(icon, color: iconColor, size: 22),
             ),

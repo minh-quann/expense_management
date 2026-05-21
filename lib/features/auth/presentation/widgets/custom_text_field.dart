@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/superellipse_input_border.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -48,15 +49,15 @@ class CustomTextField extends StatelessWidget {
               fontSize: 16,
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            border: OutlineInputBorder(
+            border: SuperellipseInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.textSecondary(context).withValues(alpha: 0.2)),
             ),
-            enabledBorder: OutlineInputBorder(
+            enabledBorder: SuperellipseInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.textSecondary(context).withValues(alpha: 0.2)),
             ),
-            focusedBorder: OutlineInputBorder(
+            focusedBorder: SuperellipseInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: AppColors.primary),
             ),
@@ -69,4 +70,3 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
-

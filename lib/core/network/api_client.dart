@@ -15,14 +15,15 @@ class ApiClient {
     String baseUrl = const String.fromEnvironment('API_BASE_URL', defaultValue: '');
     if (baseUrl.isEmpty) {
       baseUrl = 'http://localhost:8080/api/v1';
-      try {
-        if (Platform.isAndroid) {
-          baseUrl = 'http://10.0.2.2:8080/api/v1';
-        }
-      } catch (_) {
-        // Platform check can fail on Web platform
-        baseUrl = 'http://localhost:8080/api/v1';
+    }
+
+    // Automatically map localhost to 10.0.2.2 for Android emulator
+    try {
+      if (Platform.isAndroid && baseUrl.contains('localhost')) {
+        baseUrl = baseUrl.replaceFirst('localhost', '10.0.2.2');
       }
+    } catch (_) {
+      // Platform check can fail on Web platform
     }
 
     dio = Dio(

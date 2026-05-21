@@ -6,9 +6,11 @@ import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
-import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
-import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
+import 'package:expense_management/features/stats/presentation/bloc/stats_bloc.dart';
+import 'package:expense_management/features/stats/presentation/bloc/stats_event.dart';
+import 'package:expense_management/features/stats/presentation/bloc/stats_state.dart';
+import 'package:expense_management/features/stats/domain/entities/transaction_stats.dart';
+import 'package:expense_management/shared/utils/category_helper.dart';
 
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
@@ -20,6 +22,13 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   int _touchedIndex = -1;
   String _selectedType = 'EXPENSE'; // or 'INCOME'
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    context.read<StatsBloc>().add(GetStats(month: now.month, year: now.year));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,31 +50,18 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
       ),
       body: SafeArea(
-        child: BlocBuilder<TransactionBloc, TransactionState>(
+        child: BlocBuilder<StatsBloc, StatsState>(
           builder: (context, state) {
-            if (state is TransactionLoading) {
+            if (state is StatsLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (state is TransactionLoaded) {
-              final now = DateTime.now();
-              final currentMonthTx = state.transactions.where((tx) {
-                return tx.date.month == now.month && tx.date.year == now.year;
-              }).toList();
-
+            if (state is StatsLoaded) {
+              final stats = state.stats;
               final isExpense = _selectedType == 'EXPENSE';
-              final typeTx = currentMonthTx.where((tx) => tx.type == (isExpense ? TransactionType.expense : TransactionType.income)).toList();
-
-              double totalAmount = 0;
-              Map<String, double> categorySums = {};
-              for (var tx in typeTx) {
-                totalAmount += tx.amount;
-                final catName = tx.categoryName ?? 'Khác';
-                categorySums[catName] = (categorySums[catName] ?? 0) + tx.amount;
-              }
-
-              final sortedCategories = categorySums.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value));
+              
+              final double totalAmount = isExpense ? stats.totalExpense : stats.totalIncome;
+              final categories = isExpense ? stats.expenseCategories : stats.incomeCategories;
 
               return SingleChildScrollView(
                 child: Column(
@@ -73,16 +69,25 @@ class _StatsScreenState extends State<StatsScreen> {
                   children: [
                     _buildTypeToggle(l10n),
                     const SizedBox(height: 24),
-                    _buildChartSection(l10n, totalAmount, sortedCategories),
+                    _buildChartSection(l10n, totalAmount, categories),
                     const SizedBox(height: 32),
-                    _buildTopSpendingSection(l10n, totalAmount, sortedCategories),
+                    _buildTopSpendingSection(l10n, totalAmount, categories),
                     const SizedBox(height: 100), // Space for bottom nav
                   ],
                 ),
               );
             }
 
-            return const Center(child: AppText('Lỗi tải dữ liệu'));
+            if (state is StatsError) {
+              return Center(
+                child: AppText(
+                  'Lỗi tải dữ liệu: ${state.message}',
+                  color: AppColors.red500,
+                ),
+              );
+            }
+
+            return const Center(child: AppText('Chưa có dữ liệu thống kê'));
           },
         ),
       ),
@@ -117,7 +122,7 @@ class _StatsScreenState extends State<StatsScreen> {
     AppColors.pink500,
   ];
 
-  Widget _buildChartSection(AppLocalizations l10n, double totalAmount, List<MapEntry<String, double>> categories) {
+  Widget _buildChartSection(AppLocalizations l10n, double totalAmount, List<CategoryReport> categories) {
     final isExpense = _selectedType == 'EXPENSE';
     final chartTitle = isExpense ? l10n.stats_expense_chart : l10n.stats_income_chart;
     final totalAmountStr = CurrencyFormatter.format(context, totalAmount);
@@ -125,11 +130,12 @@ class _StatsScreenState extends State<StatsScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.symmetric(vertical: 24),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border(context), width: 1),
-        boxShadow: [
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        shadows: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
@@ -176,12 +182,25 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  List<PieChartSectionData> _showingSections(double total, List<MapEntry<String, double>> categories) {
+  List<PieChartSectionData> _showingSections(double total, List<CategoryReport> categories) {
     List<PieChartSectionData> sections = [];
     for (int i = 0; i < categories.length; i++) {
-      final value = categories[i].value;
-      final percentage = (value / total * 100);
-      final color = _chartColors[i % _chartColors.length];
+      final category = categories[i];
+      final value = category.totalAmount;
+      final percentage = category.percentage;
+      
+      Color color;
+      try {
+        if (category.categoryColor.startsWith('#')) {
+          color = Color(int.parse(category.categoryColor.replaceFirst('#', '0xFF')));
+        } else if (category.categoryColor.startsWith('0x')) {
+          color = Color(int.parse(category.categoryColor));
+        } else {
+          color = _chartColors[i % _chartColors.length];
+        }
+      } catch (_) {
+        color = _chartColors[i % _chartColors.length];
+      }
       
       sections.add(_buildSection(i, value, color, '${percentage.toStringAsFixed(1)}%'));
     }
@@ -206,7 +225,7 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _buildTopSpendingSection(AppLocalizations l10n, double total, List<MapEntry<String, double>> categories) {
+  Widget _buildTopSpendingSection(AppLocalizations l10n, double total, List<CategoryReport> categories) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -225,14 +244,28 @@ class _StatsScreenState extends State<StatsScreen> {
             ...categories.asMap().entries.map((entry) {
               final index = entry.key;
               final cat = entry.value;
-              final percentage = total > 0 ? (cat.value / total * 100) : 0;
-              final color = _chartColors[index % _chartColors.length];
+              
+              Color color;
+              try {
+                if (cat.categoryColor.startsWith('#')) {
+                  color = Color(int.parse(cat.categoryColor.replaceFirst('#', '0xFF')));
+                } else if (cat.categoryColor.startsWith('0x')) {
+                  color = Color(int.parse(cat.categoryColor));
+                } else {
+                  color = _chartColors[index % _chartColors.length];
+                }
+              } catch (_) {
+                color = _chartColors[index % _chartColors.length];
+              }
+
+              IconData icon = CategoryHelper.getIcon(cat.categoryIcon);
+
               return _buildCategoryItem(
-                Icons.category,
+                icon,
                 color,
-                cat.key,
-                '${percentage.toStringAsFixed(1)}%',
-                CurrencyFormatter.format(context, cat.value),
+                cat.categoryName,
+                '${cat.percentage.toStringAsFixed(1)}%',
+                CurrencyFormatter.format(context, cat.totalAmount),
               );
             }),
         ],
@@ -244,10 +277,11 @@ class _StatsScreenState extends State<StatsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border(context), width: 1),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
       child: Row(
         children: [

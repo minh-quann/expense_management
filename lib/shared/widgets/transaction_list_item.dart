@@ -39,9 +39,11 @@ class TransactionListItem extends StatelessWidget {
           Container(
             width: 50,
             height: 50,
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: iconBgColor,
-              borderRadius: BorderRadius.circular(16),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
             child: Icon(icon, color: iconColor, size: 24),
           ),

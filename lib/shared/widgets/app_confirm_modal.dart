@@ -99,10 +99,12 @@ class AppConfirmModal extends StatelessWidget {
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              shadows: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 30,

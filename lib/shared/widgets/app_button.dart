@@ -33,7 +33,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.isLoading = false,
-    this.height = 56,
+    this.height = 48,
     this.fontSize = 16,
     this.backgroundColor,
     this.foregroundColor,
@@ -56,8 +56,8 @@ class AppButton extends StatelessWidget {
     final fgColor = isOutlined
         ? (foregroundColor ?? (isDark ? Colors.grey[400]! : AppColors.gray500))
         : (foregroundColor ?? Colors.white);
-    final effectiveBorderColor = borderColor ??
-        (isDark ? Colors.grey[700]! : const Color(0xFFE0E0E0));
+    final effectiveBorderColor =
+        borderColor ?? (isDark ? Colors.grey[700]! : const Color(0xFFE0E0E0));
 
     // Build label or loading indicator
     final child = isLoading
@@ -77,9 +77,13 @@ class AppButton extends StatelessWidget {
           );
 
     // Common shape
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(borderRadius),
-    );
+    // Under iOS 26 design guidelines, stadium/capsule (100% rounded) buttons
+    // should use StadiumBorder to ensure a perfect 100% capsule shape.
+    final OutlinedBorder shape = borderRadius >= 100
+        ? const StadiumBorder()
+        : RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          );
 
     // Build the button widget
     Widget button;
@@ -141,4 +145,3 @@ class AppButton extends StatelessWidget {
     );
   }
 }
-

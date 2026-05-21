@@ -112,10 +112,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.surface(context),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border(context), width: 1),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +149,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          ClipRRect(
+          ClipRSuperellipse(
             borderRadius: BorderRadius.circular(100),
             child: LinearProgressIndicator(
               value: percentage.clamp(0.0, 1.0),

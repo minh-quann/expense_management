@@ -28,21 +28,24 @@ class BentoCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: AppColors.isDark(context)
               ? AppColors.surface(context)
               : Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border(context)),
+          shape: RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: iconBgColor,
-                borderRadius: BorderRadius.circular(16),
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
               child: Icon(icon, color: iconColor, size: 24),
             ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 
-
-class AnimatedToggleBar extends StatelessWidget {
+class AnimatedToggleBar extends StatefulWidget {
   final List<String> options;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
@@ -15,22 +14,80 @@ class AnimatedToggleBar extends StatelessWidget {
   });
 
   @override
+  State<AnimatedToggleBar> createState() => _AnimatedToggleBarState();
+}
+
+class _AnimatedToggleBarState extends State<AnimatedToggleBar> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollToSelected(animate: false);
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedToggleBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      _scrollToSelected(animate: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToSelected({required bool animate}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+
+      final viewportWidth = _scrollController.position.viewportDimension;
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      
+      if (maxScroll <= 0) return;
+
+      final contentWidth = viewportWidth + maxScroll;
+      final itemWidth = contentWidth / widget.options.length;
+
+      double target = (widget.selectedIndex + 0.5) * itemWidth - viewportWidth / 2;
+      target = target.clamp(0.0, maxScroll);
+
+      if (animate) {
+        _scrollController.animateTo(
+          target,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        _scrollController.jumpTo(target);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (options.isEmpty) return const SizedBox();
+    if (widget.options.isEmpty) return const SizedBox();
 
     return Container(
       height: 52, 
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100,
-        borderRadius: BorderRadius.circular(100),
-        border: Border.all(color: AppColors.border(context), width: 1),
+      padding: const EdgeInsets.all(2),
+      decoration: ShapeDecoration(
+        color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFD2D2D9),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(100),
+        ),
       ),
-      child: LayoutBuilder(
+      child: ClipRSuperellipse(
+        borderRadius: BorderRadius.circular(98), // Inner clip to keep pill inside the 2px gray border
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
           final double minItemWidth = 110.0;
-          double itemWidth = width / options.length;
+          double itemWidth = width / widget.options.length;
           
           bool isScrollable = false;
           if (itemWidth < minItemWidth) {
@@ -38,8 +95,8 @@ class AnimatedToggleBar extends StatelessWidget {
             isScrollable = true;
           }
           
-          final contentWidth = itemWidth * options.length;
-
+          final contentWidth = itemWidth * widget.options.length;
+ 
           Widget content = SizedBox(
             width: contentWidth,
             child: Stack(
@@ -48,31 +105,25 @@ class AnimatedToggleBar extends StatelessWidget {
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
-                  left: selectedIndex * itemWidth,
+                  left: widget.selectedIndex * itemWidth,
                   top: 0,
                   bottom: 0,
                   width: itemWidth,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: ShapeDecoration(
                       color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: AppColors.border(context).withValues(alpha: 0.5), width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
+                      shape: RoundedSuperellipseBorder(
+                        borderRadius: BorderRadius.circular(100),
+                      ),
                     ),
                   ),
                 ),
                 // Options
                 Row(
-                  children: List.generate(options.length, (index) {
-                    final isSelected = selectedIndex == index;
+                  children: List.generate(widget.options.length, (index) {
+                    final isSelected = widget.selectedIndex == index;
                     return GestureDetector(
-                      onTap: () => onChanged(index),
+                      onTap: () => widget.onChanged(index),
                       behavior: HitTestBehavior.opaque,
                       child: SizedBox(
                         width: itemWidth,
@@ -88,7 +139,7 @@ class AnimatedToggleBar extends StatelessWidget {
                                 : AppColors.textSecondary(context),
                             ),
                             child: Text(
-                              options[index],
+                              widget.options[index],
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
@@ -102,9 +153,10 @@ class AnimatedToggleBar extends StatelessWidget {
               ],
             ),
           );
-
+ 
           if (isScrollable) {
             return SingleChildScrollView(
+              controller: _scrollController,
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: content,
@@ -112,6 +164,7 @@ class AnimatedToggleBar extends StatelessWidget {
           }
           return content;
         },
+      ),
       ),
     );
   }

@@ -65,9 +65,11 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
           height: MediaQuery.of(context).size.height * 0.7,
           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-            borderRadius: BorderRadius.circular(32),
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(32),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,10 +199,11 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                 onTap: _showCategoryPicker,
                 child: Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
+                  decoration: ShapeDecoration(
                     color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border(context)),
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

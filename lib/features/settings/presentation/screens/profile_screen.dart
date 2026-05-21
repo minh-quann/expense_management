@@ -7,6 +7,7 @@ import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/core/network/api_client.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
@@ -56,7 +57,7 @@ class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final bgColor = isDark ? const Color(0xFF161A23) : Colors.white;
+    final bgColor = AppColors.background(context);
     final surfaceColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF7F7F9);
     final textColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
     final greyText = isDark ? Colors.grey[400] : const Color(0xFFA0A0A0);
@@ -92,61 +93,37 @@ class ProfileView extends StatelessWidget {
                 child: Column(
                   children: [
                     // Custom App Bar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Top Left Icon (Grid)
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: surfaceColor,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: SvgPicture.asset(
-                              'assets/icons/profile/grid.svg',
-                              width: 20,
-                              height: 20,
-                              colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
-                            ),
-                          ),
-                          // Title
-                          AppText(
-                            l10n.profile_title,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                          // Top Right Icon (Edit)
-                          GestureDetector(
-                            onTap: () {
-                              if (profile != null) {
-                                Navigator.of(context, rootNavigator: true).push(
-                                  MaterialPageRoute(
-                                    builder: (ctx) => BlocProvider.value(
-                                      value: context.read<ProfileBloc>(),
-                                      child: EditProfileScreen(profile: profile),
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: surfaceColor,
-                                borderRadius: BorderRadius.circular(16),
+                    ScreenHeader(
+                      title: l10n.profile_title,
+                      leading: ScreenHeader.circleButton(
+                        context: context,
+                        child: SvgPicture.asset(
+                          'assets/icons/profile/grid.svg',
+                          width: 20,
+                          height: 20,
+                          colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                        ),
+                      ),
+                      trailing: ScreenHeader.circleButton(
+                        context: context,
+                        onTap: () {
+                          if (profile != null) {
+                            Navigator.of(context, rootNavigator: true).push(
+                              MaterialPageRoute(
+                                builder: (ctx) => BlocProvider.value(
+                                  value: context.read<ProfileBloc>(),
+                                  child: EditProfileScreen(profile: profile),
+                                ),
                               ),
-                              child: SvgPicture.asset(
-                                'assets/icons/profile/edit.svg',
-                                width: 20,
-                                height: 20,
-                                colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
-                              ),
-                            ),
-                          ),
-                        ],
+                            );
+                          }
+                        },
+                        child: SvgPicture.asset(
+                          'assets/icons/profile/edit.svg',
+                          width: 20,
+                          height: 20,
+                          colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
+                        ),
                       ),
                     ),
                     
@@ -214,9 +191,11 @@ class ProfileView extends StatelessWidget {
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
+                        decoration: ShapeDecoration(
                           color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(100),
+                          shape: RoundedSuperellipseBorder(
+                            borderRadius: BorderRadius.circular(100),
+                          ),
                         ),
                         child: AppText(
                           'Đồng tiền: $currency',
@@ -359,9 +338,11 @@ class ProfileView extends StatelessWidget {
             Container(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(
+              decoration: ShapeDecoration(
                 color: iconBgColor,
-                borderRadius: BorderRadius.circular(14),
+                shape: RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               child: Center(
                 child: SvgPicture.asset(

@@ -4,6 +4,7 @@ import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
@@ -126,27 +127,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const SizedBox(width: 44),
-          AppText(
-            AppLocalizations.of(context)!.transactions_title,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary(context),
-          ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : AppColors.iconBgLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.search_rounded, color: AppColors.textPrimary(context), size: 24),
-          ),
-        ],
+    return ScreenHeader(
+      title: AppLocalizations.of(context)!.transactions_title,
+      trailing: ScreenHeader.circleButton(
+        context: context,
+        child: Icon(Icons.search_rounded, color: AppColors.textPrimary(context), size: 24),
       ),
     );
   }

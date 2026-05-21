@@ -129,9 +129,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           Container(
                             width: 70,
                             height: 70,
-                            decoration: BoxDecoration(
+                            decoration: ShapeDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(20),
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
                             child: const Icon(
                               Icons.account_balance_wallet_rounded,
@@ -167,9 +169,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       hasScrollBody: false,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                        decoration: BoxDecoration(
+                        decoration: ShapeDecoration(
                           color: AppColors.surface(context),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                          shape: const RoundedSuperellipseBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                          ),
                         ),
                         child: Form(
                           key: _formKey,

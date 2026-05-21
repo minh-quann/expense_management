@@ -162,10 +162,12 @@ class _PinRecoveryScreenState extends State<PinRecoveryScreen> {
                             if (_errorMessage != null) ...[
                               Container(
                                 padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
+                                decoration: ShapeDecoration(
                                   color: AppColors.error.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                                  shape: RoundedSuperellipseBorder(
+                                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                                 child: AppText(
                                   _errorMessage!,
@@ -181,9 +183,11 @@ class _PinRecoveryScreenState extends State<PinRecoveryScreen> {
                               // Question Box
                               Container(
                                 padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
+                                decoration: ShapeDecoration(
                                   color: cardColor,
-                                  borderRadius: BorderRadius.circular(16),
+                                  shape: RoundedSuperellipseBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,

@@ -41,11 +41,13 @@ class BottomSheetContainer extends StatelessWidget {
       height: MediaQuery.of(context).size.height * heightFactor,
       margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: AppColors.isDark(context)
             ? AppColors.surface(context)
             : Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        shape: RoundedSuperellipseBorder(
+          borderRadius: BorderRadius.circular(32),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
