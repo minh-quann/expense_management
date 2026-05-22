@@ -25,18 +25,19 @@ Dự án Frontend của ứng dụng quản lý chi tiêu cá nhân được ph�
 ## 🛠️ Công Nghệ Sử Dụng
 
 - **Core**: Flutter SDK, Dart Language.
-- **State Management**: Flutter BLoC (Cubit & Bloc) cho việc quản lý trạng thái sạch sẽ và dễ kiểm thử.
-- **Navigation & Routing**: GoRouter giúp quản lý các luồng màn hình rõ ràng.
+- **State Management**: Flutter BLoC (Cubit & Bloc) quản lý trạng thái độc lập và logic rõ ràng.
+- **Dependency Injection**: `get_it` làm Service Locator để tự động tiêm (inject) và quản lý vòng đời của các dependency (Client, Services, DataSources, Repositories, UseCases, Blocs).
+- **Navigation & Routing**: GoRouter giúp quản lý định tuyến luồng màn hình.
 - **Lưu trữ dữ liệu nhạy cảm**: Flutter Secure Storage (lưu trữ mã PIN, Auth token an toàn) & SharedPreferences.
-- **Network Client**: Dio CLI hỗ trợ Interceptors tự động đính kèm JWT và tự động làm mới token.
-- **Biometric**: `local_auth` để tích hợp FaceID/Fingerprint.
+- **Network Client**: Dio HTTP Client hỗ trợ Interceptors tự động đính kèm JWT và làm mới token (Refresh Token rotation).
+- **Biometric**: `local_auth` tích hợp FaceID/Fingerprint.
 - **Database Backend**: Kết nối song song với Cloud Firestore và Go RESTful API.
 
 ---
 
-## 📁 Cấu Trúc Thư Mục Dự Án (Feature-First Architecture)
+## 📁 Cấu Trúc Thư Mục Dự Án (Clean Architecture - Feature First)
 
-Dự án được tổ chức theo kiến trúc **Feature-First** để dễ dàng mở rộng và bảo trì:
+Dự án được tổ chức chặt chẽ theo kiến trúc **Clean Architecture (Feature-First)** (Trường phái ResoCoder) chia mỗi tính năng thành 3 Layer độc lập để dễ bảo trì, kiểm thử và mở rộng:
 
 ```text
 lib/
@@ -48,18 +49,49 @@ lib/
 │   ├── theme/                  # Định nghĩa màu sắc (AppColors) và chủ đề app
 │   └── utils/                  # Các helper class (AuthTokenManager,...)
 ├── features/                   # Các module tính năng của hệ thống
-│   ├── app_lock/               # Module khóa PIN ứng dụng & Biometrics
-│   │   ├── data/services/      # Tương tác với SecureStorage & Backend API
-│   │   └── presentation/       # UI LockScreen, PinRecovery và AppLockBloc
-│   ├── auth/                   # Module Xác thực (Login, Register, OTP, Google)
-│   ├── budgets/                # Module Quản lý ngân sách chi tiêu
-│   ├── categories/             # Module Quản lý danh mục thu chi
-│   ├── settings/               # Module Hồ sơ cá nhân (ProfileScreen, EditProfile)
-│   └── wallets/                # Module Quản lý ví tài chính
+│   ├── [feature_name]/         # Module từng tính năng (ví dụ: auth, wallets, app_lock,...)
+│   │   ├── data/               # Layer Dữ liệu: models, datasources, repositories impl
+│   │   │   ├── datasources/    # Remote/Local DataSources gọi API hoặc lưu local
+│   │   │   ├── models/         # Các Data Models ánh xạ từ JSON/Firestore
+│   │   │   └── repositories/   # Triển khai thực tế của Repository Interface
+│   │   ├── domain/             # Layer Nghiệp vụ (Enterprise logic): entities, usecases, repo interfaces
+│   │   │   ├── entities/       # Các đối tượng nghiệp vụ thuần túy
+│   │   │   ├── repositories/   # Giao diện (interface) trừu tượng của Repository
+│   │   │   └── usecases/       # Các UseCases thực thi một nghiệp vụ đơn lẻ
+│   │   └── presentation/       # Layer Hiển thị: BLoCs, Screens, Widgets
+│   │       ├── bloc/           # Các BLoC quản lý trạng thái màn hình
+│   │       ├── screens/        # Giao diện các màn hình chính
+│   │       └── widgets/        # Các UI component nội bộ dùng cho màn hình
+├── injection.dart              # Quản lý Dependency Injection toàn cục với get_it
 ├── l10n/                       # Định nghĩa file dịch ngôn ngữ (*.arb)
-├── shared/                     # Các widget và utils tái sử dụng toàn dự án
-│   └── widgets/                # AppText, AppButton, AppTextInput,...
-└── main.dart                   # File khởi chạy ứng dụng
+├── shared/                     # Các widget và cấu hình dùng chung toàn dự án
+└── main.dart                   # Khởi chạy ứng dụng (gọi initInjection & thiết lập MultiBlocProvider)
+```
+
+---
+
+## 🛡️ Xử lý Lỗi Tập trung (Centralized Error Handling)
+
+Ứng dụng sử dụng một hệ thống xử lý lỗi tập trung để chuyển đổi tất cả các ngoại lệ từ HTTP Client (`Dio`) và các ngoại lệ khác thành đối tượng `Failure` chuẩn hóa:
+
+- **`Failure`**: Class đại diện cho lỗi trong ứng dụng, chứa `message` thân thiện với người dùng, `code` định danh lỗi và `statusCode` HTTP (nếu có).
+- **`ErrorHandler`**: Bộ phân tích lỗi tập trung. Khi nhận được một `DioException` dạng `badResponse`, nó sẽ tự động phân tích cấu trúc lỗi JSON gửi về từ Go Backend `{ "error": { "code": "...", "message": "..." } }`:
+  - Đối chiếu mã `code` với bảng ánh xạ lỗi (`_errorMap`) để hiển thị thông báo Tiếng Việt phù hợp với ngữ cảnh người dùng.
+  - Nếu mã lỗi không nằm trong danh mục định nghĩa trước, ứng dụng sẽ hiển thị thông điệp `message` gốc nhận được từ Server hoặc thông báo lỗi chung.
+
+### Sơ đồ xử lý lỗi:
+
+```mermaid
+graph TD
+    A[Giao tiếp API / Dio Call] -->|Gặp ngoại lệ| B{Loại lỗi?}
+    B -->|DioException| C[Xác định lỗi mạng/timeout/badResponse]
+    B -->|Lỗi khác| D[Tạo Failure với code UNKNOWN_ERROR]
+    C -->|badResponse| E{Có chứa error object từ backend?}
+    E -->|Có| F{Mã lỗi code nằm trong _errorMap?}
+    F -->|Có| G[Hiển thị bản dịch Tiếng Việt tương ứng]
+    F -->|Không| H[Hiển thị thông điệp message gốc từ Server]
+    E -->|Không| I[Hiển thị lỗi máy chủ phản hồi không xác định]
+    C -->|Timeout/Cancel/Connection| J[Hiển thị lỗi mạng tương ứng]
 ```
 
 ---
