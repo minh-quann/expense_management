@@ -54,7 +54,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final bgColor = isDark ? const Color(0xFF161A23) : Colors.white;
+    final bgColor = AppColors.background(context);
     final textColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
     
     return Scaffold(

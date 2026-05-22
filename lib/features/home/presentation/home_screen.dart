@@ -11,6 +11,8 @@ import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:expense_management/shared/widgets/screen_header.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -48,10 +50,9 @@ class HomeScreen extends StatelessWidget {
       padding: EdgeInsets.zero,
       leading: ScreenHeader.circleButton(
         context: context,
-        child: Icon(Icons.grid_view_rounded, color: AppColors.textPrimary(context), size: 24),
-      ),
-      trailing: ScreenHeader.circleButton(
-        context: context,
+        onTap: () {
+          // TODO: Mở màn hình thông báo
+        },
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -70,6 +71,11 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      trailing: ScreenHeader.circleButton(
+        context: context,
+        onTap: () => context.push('/add-transaction'),
+        child: Icon(Icons.add_rounded, color: AppColors.textPrimary(context), size: 24),
       ),
     );
   }

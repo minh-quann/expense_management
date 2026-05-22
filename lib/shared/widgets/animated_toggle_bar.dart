@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
+import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
 
 class AnimatedToggleBar extends StatefulWidget {
   final List<String> options;
@@ -72,54 +73,36 @@ class _AnimatedToggleBarState extends State<AnimatedToggleBar> {
   Widget build(BuildContext context) {
     if (widget.options.isEmpty) return const SizedBox();
 
-    return Container(
-      height: 52, 
-      padding: const EdgeInsets.all(2),
-      decoration: ShapeDecoration(
-        color: AppColors.isDark(context) ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFD2D2D9),
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(100),
-        ),
-      ),
-      child: ClipRSuperellipse(
-        borderRadius: BorderRadius.circular(98), // Inner clip to keep pill inside the 2px gray border
-        child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final double minItemWidth = 110.0;
-          double itemWidth = width / widget.options.length;
-          
-          bool isScrollable = false;
-          if (itemWidth < minItemWidth) {
-            itemWidth = minItemWidth;
-            isScrollable = true;
-          }
-          
-          final contentWidth = itemWidth * widget.options.length;
- 
-          Widget content = SizedBox(
-            width: contentWidth,
-            child: Stack(
-              children: [
-                // Sliding background pill
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  left: widget.selectedIndex * itemWidth,
-                  top: 0,
-                  bottom: 0,
-                  width: itemWidth,
-                  child: Container(
-                    decoration: ShapeDecoration(
-                      color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
-                      shape: RoundedSuperellipseBorder(
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                    ),
-                  ),
-                ),
-                // Options
-                Row(
+    final isDark = AppColors.isDark(context);
+
+    return SizedBox(
+      height: 52,
+      child: AppLiquidGlassIndicator(
+        selectedIndex: widget.selectedIndex,
+        count: widget.options.length,
+        isDark: isDark,
+        onChanged: widget.onChanged,
+        borderRadius: 100,
+        padding: const EdgeInsets.all(2),
+        child: ClipRSuperellipse(
+          borderRadius: BorderRadius.circular(98), // Inner clip to keep pill inside the 2px border
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final double minItemWidth = 110.0;
+              double itemWidth = width / widget.options.length;
+              
+              bool isScrollable = false;
+              if (itemWidth < minItemWidth) {
+                itemWidth = minItemWidth;
+                isScrollable = true;
+              }
+              
+              final contentWidth = itemWidth * widget.options.length;
+     
+              Widget content = SizedBox(
+                width: contentWidth,
+                child: Row(
                   children: List.generate(widget.options.length, (index) {
                     final isSelected = widget.selectedIndex == index;
                     return GestureDetector(
@@ -150,21 +133,20 @@ class _AnimatedToggleBarState extends State<AnimatedToggleBar> {
                     );
                   }),
                 ),
-              ],
-            ),
-          );
- 
-          if (isScrollable) {
-            return SingleChildScrollView(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: content,
-            );
-          }
-          return content;
-        },
-      ),
+              );
+     
+              if (isScrollable) {
+                return SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: content,
+                );
+              }
+              return content;
+            },
+          ),
+        ),
       ),
     );
   }

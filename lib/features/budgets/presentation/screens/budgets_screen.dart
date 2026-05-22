@@ -30,8 +30,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final bgColor = isDark ? const Color(0xFF161A23) : const Color(0xFFF0F2F5);
+    final bgColor = AppColors.background(context);
 
     return Scaffold(
       backgroundColor: bgColor,
