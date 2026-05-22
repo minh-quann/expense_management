@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_cupertino_symbols/flutter_cupertino_symbols.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
@@ -11,7 +12,7 @@ import 'package:expense_management/shared/widgets/screen_header.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_event.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_state.dart';
-import 'package:expense_management/features/settings/data/repositories/profile_repository.dart';
+import 'package:expense_management/injection.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_bloc.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_state.dart';
@@ -29,7 +30,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<ProfileBloc>(
-      create: (context) => ProfileBloc(ProfileRepository())..add(FetchProfileEvent()),
+      create: (context) => getIt<ProfileBloc>()..add(FetchProfileEvent()),
       child: const ProfileView(),
     );
   }
@@ -208,102 +209,118 @@ class ProfileView extends StatelessWidget {
                     
                     const SizedBox(height: 32),
                     
-                    // Menu List
+                    // Menu List wrapped in a card
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        children: [
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/user.svg',
-                            iconBgColor: const Color(0xFF5A45FE),
-                            title: l10n.profile_account_info,
-                            textColor: textColor,
-                            onTap: () {
-                              if (profile != null) {
-                                Navigator.of(context, rootNavigator: true).push(
-                                  MaterialPageRoute(
-                                    builder: (ctx) => BlocProvider.value(
-                                      value: context.read<ProfileBloc>(),
-                                      child: EditProfileScreen(profile: profile),
+                      child: Container(
+                        decoration: ShapeDecoration(
+                          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+                          shape: RoundedSuperellipseBorder(
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.person_fill,
+                              iconBgColor: const Color(0xFF5A45FE),
+                              title: l10n.profile_account_info,
+                              textColor: textColor,
+                              onTap: () {
+                                if (profile != null) {
+                                  Navigator.of(context, rootNavigator: true).push(
+                                    MaterialPageRoute(
+                                      builder: (ctx) => BlocProvider.value(
+                                        value: context.read<ProfileBloc>(),
+                                        child: EditProfileScreen(profile: profile),
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/user.svg',
-                            iconBgColor: AppColors.cyan600,
-                            title: 'Quản lý ví (Wallets)',
-                            textColor: textColor,
-                            onTap: () => context.push('/wallets'),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/shield.svg',
-                            iconBgColor: AppColors.orange500,
-                            title: 'Ngân sách (Budgets)',
-                            textColor: textColor,
-                            onTap: () => context.push('/budgets'),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/shield.svg',
-                            iconBgColor: AppColors.pink500,
-                            title: 'Mục tiêu tiết kiệm (Goals)',
-                            textColor: textColor,
-                            onTap: () => context.push('/goals'),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/shield.svg',
-                            iconBgColor: AppColors.blue500,
-                            title: 'Giao dịch định kỳ',
-                            textColor: textColor,
-                            onTap: () => context.push('/recurring'),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/settings.svg',
-                            iconBgColor: AppColors.purple500,
-                            title: 'Quản lý danh mục',
-                            textColor: textColor,
-                            onTap: () => context.push('/categories'),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/shield.svg',
-                            iconBgColor: const Color(0xFF4CD964),
-                            title: l10n.profile_security_code,
-                            textColor: textColor,
-                            onTap: () => context.push('/security'),
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/lock.svg',
-                            iconBgColor: const Color(0xFF344356),
-                            title: l10n.profile_privacy_policy,
-                            textColor: textColor,
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/settings.svg',
-                            iconBgColor: const Color(0xFF249689),
-                            title: l10n.profile_settings,
-                            textColor: textColor,
-                          ),
-                          _buildMenuItem(
-                            context,
-                            iconPath: 'assets/icons/profile/logout.svg',
-                            iconBgColor: const Color(0xFFFF3B30),
-                            title: l10n.profile_logout,
-                            textColor: textColor,
-                            onTap: () => _showLogoutConfirmation(context),
-                            isLast: true,
-                          ),
-                        ],
+                                  );
+                                }
+                              },
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.wallet_pass_fill,
+                              iconBgColor: AppColors.cyan600,
+                              title: 'Quản lý ví (Wallets)',
+                              textColor: textColor,
+                              onTap: () => context.push('/wallets'),
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.banknote_fill,
+                              iconBgColor: AppColors.orange500,
+                              title: 'Ngân sách (Budgets)',
+                              textColor: textColor,
+                              onTap: () => context.push('/budgets'),
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.target,
+                              iconBgColor: AppColors.pink500,
+                              title: 'Mục tiêu tiết kiệm (Goals)',
+                              textColor: textColor,
+                              onTap: () => context.push('/goals'),
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.repeat,
+                              iconBgColor: AppColors.blue500,
+                              title: 'Giao dịch định kỳ',
+                              textColor: textColor,
+                              onTap: () => context.push('/recurring'),
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.square_grid_2x2_fill,
+                              iconBgColor: AppColors.purple500,
+                              title: 'Quản lý danh mục',
+                              textColor: textColor,
+                              onTap: () => context.push('/categories'),
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.lock_shield_fill,
+                              iconBgColor: const Color(0xFF4CD964),
+                              title: l10n.profile_security_code,
+                              textColor: textColor,
+                              onTap: () => context.push('/security'),
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.lock_fill,
+                              iconBgColor: const Color(0xFF344356),
+                              title: l10n.profile_privacy_policy,
+                              textColor: textColor,
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.gearshape_fill,
+                              iconBgColor: const Color(0xFF249689),
+                              title: l10n.profile_settings,
+                              textColor: textColor,
+                            ),
+                            _menuDivider(isDark),
+                            _buildMenuItem(
+                              context,
+                              icon: SFSymbols.rectangle_portrait_and_arrow_right,
+                              iconBgColor: const Color(0xFFFF3B30),
+                              title: l10n.profile_logout,
+                              textColor: textColor,
+                              onTap: () => _showLogoutConfirmation(context),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     
@@ -318,56 +335,68 @@ class ProfileView extends StatelessWidget {
     );
   }
 
+  /// Divider between menu items (iOS Settings style)
+  Widget _menuDivider(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 64),
+      child: Divider(
+        height: 1,
+        thickness: 0.5,
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+      ),
+    );
+  }
+
   Widget _buildMenuItem(
     BuildContext context, {
-    required String iconPath,
+    required IconData icon,
     required Color iconBgColor,
     required String title,
     required Color textColor,
     VoidCallback? onTap,
-    bool isLast = false,
   }) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.only(bottom: isLast ? 0 : 24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             // Icon Container
             Container(
-              width: 48,
-              height: 48,
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
               decoration: ShapeDecoration(
                 color: iconBgColor,
                 shape: RoundedSuperellipseBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Center(
-                child: SvgPicture.asset(
-                  iconPath,
-                  width: 20,
-                  height: 20,
-                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  child: Icon(icon, color: Colors.white),
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             // Title
             Expanded(
               child: AppText(
                 title,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w500,
                 color: textColor,
               ),
             ),
             // Chevron
             Icon(
-              Icons.chevron_right_rounded,
+              SFSymbols.chevron_right,
               color: Colors.grey[400],
-              size: 24,
+              size: 14,
             ),
           ],
         ),
@@ -398,7 +427,7 @@ class ProfileView extends StatelessWidget {
       final verified = await Navigator.of(context, rootNavigator: true).push<bool>(
         MaterialPageRoute(
           builder: (ctx2) => BlocProvider<AppLockBloc>(
-            create: (context) => AppLockBloc()..add(LockApp()),
+            create: (context) => getIt<AppLockBloc>()..add(LockApp()),
             child: LockScreen(
               title: 'Xác nhận mã PIN',
               subtitle: 'Nhập mã PIN của bạn để đăng xuất',

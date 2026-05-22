@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
+import 'package:expense_management/injection.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_event.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_state.dart';
@@ -16,7 +17,7 @@ class SecuritySettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AppLockBloc()..add(CheckAppLockStatus()),
+      create: (_) => getIt<AppLockBloc>()..add(CheckAppLockStatus()),
       child: const _SecuritySettingsView(),
     );
   }
@@ -338,7 +339,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (routeContext) => BlocProvider(
-          create: (_) => AppLockBloc()..add(EnableAppLock('')),
+          create: (_) => getIt<AppLockBloc>()..add(EnableAppLock('')),
           child: LockScreen(
             isSetup: true,
             onSetupComplete: () {
@@ -356,7 +357,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (routeContext) => BlocProvider(
-          create: (_) => AppLockBloc()..add(CheckAppLockStatus()),
+          create: (_) => getIt<AppLockBloc>()..add(CheckAppLockStatus()),
           child: LockScreen(
             title: 'Tắt khóa ứng dụng',
             subtitle: 'Nhập mã PIN hiện tại để xác nhận tắt khóa',
@@ -374,7 +375,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (routeContext) => BlocProvider(
-          create: (_) => AppLockBloc()..add(CheckAppLockStatus()),
+          create: (_) => getIt<AppLockBloc>()..add(CheckAppLockStatus()),
           child: LockScreen(
             title: 'Nhập mã PIN cũ',
             subtitle: 'Nhập mã PIN hiện tại của bạn',

@@ -1,10 +1,14 @@
-import 'package:expense_management/core/network/api_client.dart';
-import 'package:expense_management/features/stats/data/models/transaction_stats_model.dart';
+import 'package:expense_management/features/stats/data/datasources/stats_remote_datasource.dart';
 import 'package:expense_management/features/stats/domain/entities/transaction_stats.dart';
 import 'package:expense_management/features/stats/domain/repositories/stats_repository.dart';
 
 class StatsRepositoryImpl implements StatsRepository {
-  final ApiClient _apiClient = ApiClient();
+  final StatsRemoteDataSource _remoteDataSource;
+
+  // Accept optional parameter for backwards compatibility
+  StatsRepositoryImpl([dynamic _]) : _remoteDataSource = StatsRemoteDataSourceImpl();
+
+  StatsRepositoryImpl.withDataSource(this._remoteDataSource);
 
   @override
   Future<TransactionStats> getStats({
@@ -12,22 +16,10 @@ class StatsRepositoryImpl implements StatsRepository {
     int? year,
     String? walletId,
   }) async {
-    final queryParams = <String, dynamic>{};
-    if (month != null) {
-      queryParams['month'] = month;
-    }
-    if (year != null) {
-      queryParams['year'] = year;
-    }
-    if (walletId != null && walletId.isNotEmpty) {
-      queryParams['wallet_id'] = walletId;
-    }
-
-    final response = await _apiClient.dio.get(
-      '/transactions/statistics',
-      queryParameters: queryParams,
+    return _remoteDataSource.getStats(
+      month: month,
+      year: year,
+      walletId: walletId,
     );
-
-    return TransactionStatsModel.fromJson(response.data as Map<String, dynamic>);
   }
 }

@@ -1,248 +1,204 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:expense_management/core/constants/app_constants.dart';
-import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
-import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
 import 'package:expense_management/core/network/error_handler.dart';
+import 'package:expense_management/features/auth/domain/usecases/login_usecase.dart';
+import 'package:expense_management/features/auth/domain/usecases/register_usecase.dart';
+import 'package:expense_management/features/auth/domain/usecases/google_login_usecase.dart';
+import 'package:expense_management/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:expense_management/features/auth/domain/usecases/forgot_password_usecase.dart';
+import 'package:expense_management/features/auth/domain/usecases/reset_password_usecase.dart';
+import 'package:expense_management/features/auth/data/repositories/auth_repository_impl.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth;
+  final LoginUseCase _loginUseCase;
+  final RegisterUseCase _registerUseCase;
+  final GoogleLoginUseCase _googleLoginUseCase;
+  final LogoutUseCase _logoutUseCase;
+  final ForgotPasswordUseCase _forgotPasswordUseCase;
+  final ResetPasswordUseCase _resetPasswordUseCase;
 
-  AuthBloc() : super(AuthTokenManager.isLoggedIn() ? AuthSuccess() : AuthInitial()) {
-    on<LoginWithEmailEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final response = await ApiClient().dio.post('/auth/login', data: {
-          'email': event.email,
-          'password': event.password,
-        });
+  AuthBloc({
+    FirebaseAuth? auth,
+    LoginUseCase? loginUseCase,
+    RegisterUseCase? registerUseCase,
+    GoogleLoginUseCase? googleLoginUseCase,
+    LogoutUseCase? logoutUseCase,
+    ForgotPasswordUseCase? forgotPasswordUseCase,
+    ResetPasswordUseCase? resetPasswordUseCase,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _loginUseCase = loginUseCase ?? LoginUseCase(AuthRepositoryImpl()),
+        _registerUseCase = registerUseCase ?? RegisterUseCase(AuthRepositoryImpl()),
+        _googleLoginUseCase = googleLoginUseCase ?? GoogleLoginUseCase(AuthRepositoryImpl()),
+        _logoutUseCase = logoutUseCase ?? LogoutUseCase(AuthRepositoryImpl()),
+        _forgotPasswordUseCase = forgotPasswordUseCase ?? ForgotPasswordUseCase(AuthRepositoryImpl()),
+        _resetPasswordUseCase = resetPasswordUseCase ?? ResetPasswordUseCase(AuthRepositoryImpl()),
+        super(AuthTokenManager.isLoggedIn() ? AuthSuccess() : AuthInitial()) {
+    on<LoginWithEmailEvent>(_onLoginWithEmail);
+    on<RegisterWithEmailEvent>(_onRegisterWithEmail);
+    on<LoginWithGoogleEvent>(_onLoginWithGoogle);
+    on<LoginWithPhoneEvent>(_onLoginWithPhone);
+    on<PhoneAuthCodeSentEvent>(_onPhoneAuthCodeSent);
+    on<PhoneAuthVerificationFailedEvent>(_onPhoneAuthVerificationFailed);
+    on<PhoneAuthVerificationCompletedEvent>(_onPhoneAuthVerificationCompleted);
+    on<VerifyOtpEvent>(_onVerifyOtp);
+    on<ForgotPasswordEvent>(_onForgotPassword);
+    on<ResetPasswordEvent>(_onResetPassword);
+    on<LogoutEvent>(_onLogout);
+  }
 
-        final token = response.data['token'];
-        final refreshToken = response.data['refresh_token'] ?? '';
-        final userData = response.data['user'];
+  Future<void> _onLoginWithEmail(LoginWithEmailEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await _loginUseCase(event.email, event.password);
+      emit(AuthSuccess());
+    } catch (e) {
+      emit(AuthFailure(ErrorHandler.handle(e).failure.message));
+    }
+  }
 
-        await AuthTokenManager.saveAuthData(
-          token: token,
-          refreshToken: refreshToken,
-          userId: userData['id'],
-          email: userData['email'],
-          name: userData['display_name'] ?? '',
-        );
+  Future<void> _onRegisterWithEmail(RegisterWithEmailEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await _registerUseCase(event.email, event.password, event.displayName);
+      emit(AuthSuccess());
+    } catch (e) {
+      emit(AuthFailure(ErrorHandler.handle(e).failure.message));
+    }
+  }
 
-        await AppLockService().syncLockState(userData['has_pin'] ?? false);
+  Future<void> _onLoginWithGoogle(LoginWithGoogleEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: AppConstants.googleWebClientId.isNotEmpty
+            ? AppConstants.googleWebClientId
+            : null,
+      );
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-        emit(AuthSuccess());
-      } on DioException catch (e) {
-        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
+      // Canceled sign in
+      if (googleUser == null) {
+        emit(AuthInitial());
+        return;
       }
-    });
 
-    on<RegisterWithEmailEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final response = await ApiClient().dio.post('/auth/register', data: {
-          'email': event.email,
-          'password': event.password,
-          'display_name': event.displayName,
-        });
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
 
-        final token = response.data['token'];
-        final refreshToken = response.data['refresh_token'] ?? '';
-        final userData = response.data['user'];
-
-        await AuthTokenManager.saveAuthData(
-          token: token,
-          refreshToken: refreshToken,
-          userId: userData['id'],
-          email: userData['email'],
-          name: userData['display_name'] ?? '',
-        );
-
-        await AppLockService().syncLockState(userData['has_pin'] ?? false);
-
-        emit(AuthSuccess());
-      } on DioException catch (e) {
-        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
+      if (idToken == null) {
+        emit(AuthFailure('Could not retrieve Google ID Token'));
+        return;
       }
-    });
 
-    on<LoginWithGoogleEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final GoogleSignIn googleSignIn = GoogleSignIn(
+      // Verify token via backend through use case
+      await _googleLoginUseCase(idToken);
+      emit(AuthSuccess());
+    } catch (e) {
+      emit(AuthFailure(ErrorHandler.handle(e).failure.message));
+    }
+  }
+
+  Future<void> _onLoginWithPhone(LoginWithPhoneEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: event.phoneNumber,
+        verificationCompleted: (PhoneAuthCredential credential) {
+          add(PhoneAuthVerificationCompletedEvent(credential));
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          add(PhoneAuthVerificationFailedEvent(e.message ?? 'Verification failed.'));
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          add(PhoneAuthCodeSentEvent(verificationId, resendToken));
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          // Can be handled if needed
+        },
+      );
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
+
+  void _onPhoneAuthCodeSent(PhoneAuthCodeSentEvent event, Emitter<AuthState> emit) {
+    emit(AuthOtpSent(event.verificationId));
+  }
+
+  void _onPhoneAuthVerificationFailed(PhoneAuthVerificationFailedEvent event, Emitter<AuthState> emit) {
+    emit(AuthFailure(event.error));
+  }
+
+  Future<void> _onPhoneAuthVerificationCompleted(PhoneAuthVerificationCompletedEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await _auth.signInWithCredential(event.credential);
+      emit(AuthSuccess());
+    } on FirebaseAuthException catch (e) {
+      emit(AuthFailure(e.message ?? 'Sign in failed.'));
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onVerifyOtp(VerifyOtpEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: event.verificationId,
+        smsCode: event.otpCode,
+      );
+      await _auth.signInWithCredential(credential);
+      emit(AuthSuccess());
+    } on FirebaseAuthException catch (e) {
+      emit(AuthFailure(e.message ?? 'Invalid OTP code.'));
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onForgotPassword(ForgotPasswordEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final result = await _forgotPasswordUseCase(event.email);
+      emit(ForgotPasswordSuccess(result.token));
+    } catch (e) {
+      emit(AuthFailure(ErrorHandler.handle(e).failure.message));
+    }
+  }
+
+  Future<void> _onResetPassword(ResetPasswordEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final message = await _resetPasswordUseCase(event.email, event.token, event.newPassword);
+      emit(ResetPasswordSuccess(message));
+    } catch (e) {
+      emit(AuthFailure(ErrorHandler.handle(e).failure.message));
+    }
+  }
+
+  Future<void> _onLogout(LogoutEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final refreshToken = AuthTokenManager.getRefreshToken();
+      await _logoutUseCase(refreshToken ?? '');
+      await Future.wait([
+        _auth.signOut(),
+        GoogleSignIn(
           serverClientId: AppConstants.googleWebClientId.isNotEmpty
               ? AppConstants.googleWebClientId
               : null,
-        );
-        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-        
-        // Canceled sign in
-        if (googleUser == null) {
-          emit(AuthInitial());
-          return;
-        }
-
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final String? idToken = googleAuth.idToken;
-
-        if (idToken == null) {
-          emit(AuthFailure('Could not retrieve Google ID Token'));
-          return;
-        }
-
-        // Verify token on the Go backend
-        final response = await ApiClient().dio.post('/auth/google', data: {
-          'id_token': idToken,
-        });
-
-        final token = response.data['token'];
-        final refreshToken = response.data['refresh_token'] ?? '';
-        final userData = response.data['user'];
-
-        await AuthTokenManager.saveAuthData(
-          token: token,
-          refreshToken: refreshToken,
-          userId: userData['id'],
-          email: userData['email'],
-          name: userData['display_name'] ?? '',
-        );
-
-        await AppLockService().syncLockState(userData['has_pin'] ?? false);
-
-        emit(AuthSuccess());
-      } on DioException catch (e) {
-        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<LoginWithPhoneEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        await _auth.verifyPhoneNumber(
-          phoneNumber: event.phoneNumber,
-          verificationCompleted: (PhoneAuthCredential credential) {
-            add(PhoneAuthVerificationCompletedEvent(credential));
-          },
-          verificationFailed: (FirebaseAuthException e) {
-            add(PhoneAuthVerificationFailedEvent(e.message ?? 'Verification failed.'));
-          },
-          codeSent: (String verificationId, int? resendToken) {
-            add(PhoneAuthCodeSentEvent(verificationId, resendToken));
-          },
-          codeAutoRetrievalTimeout: (String verificationId) {
-            // Can be handled if needed, usually just ignore
-          },
-        );
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<PhoneAuthCodeSentEvent>((event, emit) {
-      emit(AuthOtpSent(event.verificationId));
-    });
-
-    on<PhoneAuthVerificationFailedEvent>((event, emit) {
-      emit(AuthFailure(event.error));
-    });
-
-    on<PhoneAuthVerificationCompletedEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        await _auth.signInWithCredential(event.credential);
-        emit(AuthSuccess());
-      } on FirebaseAuthException catch (e) {
-        emit(AuthFailure(e.message ?? 'Sign in failed.'));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<VerifyOtpEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        PhoneAuthCredential credential = PhoneAuthProvider.credential(
-          verificationId: event.verificationId,
-          smsCode: event.otpCode,
-        );
-        await _auth.signInWithCredential(credential);
-        emit(AuthSuccess());
-      } on FirebaseAuthException catch (e) {
-        emit(AuthFailure(e.message ?? 'Invalid OTP code.'));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<ForgotPasswordEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final response = await ApiClient().dio.post('/auth/forgot-password', data: {
-          'email': event.email,
-        });
-        final token = response.data['token'] ?? '';
-        emit(ForgotPasswordSuccess(token));
-      } on DioException catch (e) {
-        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<ResetPasswordEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final response = await ApiClient().dio.post('/auth/reset-password', data: {
-          'email': event.email,
-          'token': event.token,
-          'new_password': event.newPassword,
-        });
-        final message = response.data['message'] ?? 'Đặt lại mật khẩu thành công';
-        emit(ResetPasswordSuccess(message));
-      } on DioException catch (e) {
-        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
-
-    on<LogoutEvent>((event, emit) async {
-      emit(AuthLoading());
-      try {
-        final refreshToken = AuthTokenManager.getRefreshToken();
-        if (refreshToken != null && refreshToken.isNotEmpty) {
-          try {
-            await ApiClient().dio.post('/auth/logout', data: {
-              'refresh_token': refreshToken,
-            });
-          } catch (e) {
-            // Ignore API logout failures so that offline users can still logout locally
-          }
-        }
-        await AuthTokenManager.clearAuthData();
-        await Future.wait([
-          _auth.signOut(),
-          GoogleSignIn(
-            serverClientId: AppConstants.googleWebClientId.isNotEmpty
-                ? AppConstants.googleWebClientId
-                : null,
-          ).signOut(),
-        ]);
-        emit(AuthInitial());
-      } catch (e) {
-        emit(AuthFailure(e.toString()));
-      }
-    });
+        ).signOut(),
+      ]);
+      emit(AuthInitial());
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
   }
 }

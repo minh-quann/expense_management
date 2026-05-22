@@ -2,14 +2,35 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/goals/domain/entities/goal.dart';
 import 'package:expense_management/features/goals/domain/repositories/goal_repository.dart';
+import 'package:expense_management/features/goals/domain/usecases/get_goals_usecase.dart';
+import 'package:expense_management/features/goals/domain/usecases/add_goal_usecase.dart';
+import 'package:expense_management/features/goals/domain/usecases/update_goal_usecase.dart';
+import 'package:expense_management/features/goals/domain/usecases/delete_goal_usecase.dart';
+import 'package:expense_management/features/goals/domain/usecases/add_funds_to_goal_usecase.dart';
 import 'goal_event.dart';
 import 'goal_state.dart';
 
 class GoalBloc extends Bloc<GoalEvent, GoalState> {
-  final GoalRepository repository;
+  final GetGoalsUseCase _getGoalsUseCase;
+  final AddGoalUseCase _addGoalUseCase;
+  final UpdateGoalUseCase _updateGoalUseCase;
+  final DeleteGoalUseCase _deleteGoalUseCase;
+  final AddFundsToGoalUseCase _addFundsToGoalUseCase;
   StreamSubscription? _subscription;
 
-  GoalBloc({required this.repository}) : super(GoalInitial()) {
+  GoalBloc({
+    required GoalRepository repository,
+    GetGoalsUseCase? getGoalsUseCase,
+    AddGoalUseCase? addGoalUseCase,
+    UpdateGoalUseCase? updateGoalUseCase,
+    DeleteGoalUseCase? deleteGoalUseCase,
+    AddFundsToGoalUseCase? addFundsToGoalUseCase,
+  })  : _getGoalsUseCase = getGoalsUseCase ?? GetGoalsUseCase(repository),
+        _addGoalUseCase = addGoalUseCase ?? AddGoalUseCase(repository),
+        _updateGoalUseCase = updateGoalUseCase ?? UpdateGoalUseCase(repository),
+        _deleteGoalUseCase = deleteGoalUseCase ?? DeleteGoalUseCase(repository),
+        _addFundsToGoalUseCase = addFundsToGoalUseCase ?? AddFundsToGoalUseCase(repository),
+        super(GoalInitial()) {
     on<LoadGoals>(_onLoadGoals);
     on<AddGoalEvent>(_onAddGoal);
     on<UpdateGoalEvent>(_onUpdateGoal);
@@ -22,7 +43,7 @@ class GoalBloc extends Bloc<GoalEvent, GoalState> {
   void _onLoadGoals(LoadGoals event, Emitter<GoalState> emit) {
     emit(GoalLoading());
     _subscription?.cancel();
-    _subscription = repository.getGoals(event.userId).listen(
+    _subscription = _getGoalsUseCase(event.userId).listen(
       (goals) {
         if (!isClosed) {
           add(_GoalsUpdated(goals));
@@ -38,7 +59,7 @@ class GoalBloc extends Bloc<GoalEvent, GoalState> {
 
   void _onAddGoal(AddGoalEvent event, Emitter<GoalState> emit) async {
     try {
-      await repository.addGoal(event.userId, event.goal);
+      await _addGoalUseCase(event.userId, event.goal);
     } catch (e) {
       emit(GoalError('Lỗi thêm mục tiêu: $e'));
     }
@@ -46,7 +67,7 @@ class GoalBloc extends Bloc<GoalEvent, GoalState> {
 
   void _onUpdateGoal(UpdateGoalEvent event, Emitter<GoalState> emit) async {
     try {
-      await repository.updateGoal(event.userId, event.goal);
+      await _updateGoalUseCase(event.userId, event.goal);
     } catch (e) {
       emit(GoalError('Lỗi cập nhật mục tiêu: $e'));
     }
@@ -54,7 +75,7 @@ class GoalBloc extends Bloc<GoalEvent, GoalState> {
 
   void _onDeleteGoal(DeleteGoalEvent event, Emitter<GoalState> emit) async {
     try {
-      await repository.deleteGoal(event.userId, event.goalId);
+      await _deleteGoalUseCase(event.userId, event.goalId);
     } catch (e) {
       emit(GoalError('Lỗi xoá mục tiêu: $e'));
     }
@@ -62,7 +83,7 @@ class GoalBloc extends Bloc<GoalEvent, GoalState> {
 
   void _onAddFundsToGoal(AddFundsToGoalEvent event, Emitter<GoalState> emit) async {
     try {
-      await repository.addFundsToGoal(event.userId, event.goalId, event.amount);
+      await _addFundsToGoalUseCase(event.userId, event.goalId, event.amount);
     } catch (e) {
       emit(GoalError('Lỗi thêm tiền vào mục tiêu: $e'));
     }

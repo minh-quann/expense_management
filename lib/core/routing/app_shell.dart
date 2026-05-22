@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_cupertino_symbols/flutter_cupertino_symbols.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
@@ -126,11 +127,11 @@ class _AppShellState extends State<AppShell> {
                         // Nav items row on top
                         Row(
                           children: [
-                            _buildNavItem(context, 0, Icons.home_outlined, Icons.home, AppLocalizations.of(context)!.nav_home, slotWidth(0)),
-                            _buildNavItem(context, 1, Icons.receipt_long_outlined, Icons.receipt_long, AppLocalizations.of(context)!.nav_transactions, slotWidth(1)),
+                            _buildNavItem(context, 0, SFSymbols.house, SFSymbols.house_fill, AppLocalizations.of(context)!.nav_home, slotWidth(0)),
+                            _buildNavItem(context, 1, SFSymbols.list_clipboard, SFSymbols.list_clipboard_fill, AppLocalizations.of(context)!.nav_transactions, slotWidth(1)),
                             _buildAddItem(context, isDark, slotWidth(2)),
-                            _buildNavItem(context, 2, Icons.pie_chart_outline, Icons.pie_chart, AppLocalizations.of(context)!.nav_stats, slotWidth(3)),
-                            _buildNavItem(context, 3, Icons.person_outline, Icons.person, AppLocalizations.of(context)!.nav_account, slotWidth(4)),
+                            _buildNavItem(context, 2, SFSymbols.chart_bar, SFSymbols.chart_bar_fill, AppLocalizations.of(context)!.nav_stats, slotWidth(3)),
+                            _buildNavItem(context, 3, SFSymbols.person, SFSymbols.person_fill, AppLocalizations.of(context)!.nav_account, slotWidth(4)),
                           ],
                         ),
                       ],
@@ -162,7 +163,7 @@ class _AppShellState extends State<AppShell> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.add_circle_outline,
+                SFSymbols.plus_circle,
                 color: color,
                 size: 24,
               ),

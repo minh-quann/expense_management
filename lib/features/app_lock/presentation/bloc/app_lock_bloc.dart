@@ -1,15 +1,51 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
+import 'package:expense_management/features/app_lock/domain/repositories/app_lock_repository.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/save_pin_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/verify_pin_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/remove_pin_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/reset_pin_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/is_lock_enabled_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/is_biometric_enabled_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/set_biometric_enabled_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/is_biometric_available_usecase.dart';
+import 'package:expense_management/features/app_lock/domain/usecases/authenticate_with_biometrics_usecase.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_event.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_state.dart';
 
 /// BLoC managing app lock logic: PIN verification, biometric auth, and lock state.
 class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
-  final AppLockService _service;
+  final IsLockEnabledUseCase _isLockEnabledUseCase;
+  final IsBiometricAvailableUseCase _isBiometricAvailableUseCase;
+  final IsBiometricEnabledUseCase _isBiometricEnabledUseCase;
+  final VerifyPinUseCase _verifyPinUseCase;
+  final AuthenticateWithBiometricsUseCase _authenticateWithBiometricsUseCase;
+  final RemovePinUseCase _removePinUseCase;
+  final SetBiometricEnabledUseCase _setBiometricEnabledUseCase;
+  final SavePinUseCase _savePinUseCase;
+  final ResetPinUseCase _resetPinUseCase;
+
   static const int pinLength = 4;
 
-  AppLockBloc({AppLockService? service})
-      : _service = service ?? AppLockService(),
+  AppLockBloc({
+    required AppLockRepository repository,
+    IsLockEnabledUseCase? isLockEnabledUseCase,
+    IsBiometricAvailableUseCase? isBiometricAvailableUseCase,
+    IsBiometricEnabledUseCase? isBiometricEnabledUseCase,
+    VerifyPinUseCase? verifyPinUseCase,
+    AuthenticateWithBiometricsUseCase? authenticateWithBiometricsUseCase,
+    RemovePinUseCase? removePinUseCase,
+    SetBiometricEnabledUseCase? setBiometricEnabledUseCase,
+    SavePinUseCase? savePinUseCase,
+    ResetPinUseCase? resetPinUseCase,
+  })  : _isLockEnabledUseCase = isLockEnabledUseCase ?? IsLockEnabledUseCase(repository),
+        _isBiometricAvailableUseCase = isBiometricAvailableUseCase ?? IsBiometricAvailableUseCase(repository),
+        _isBiometricEnabledUseCase = isBiometricEnabledUseCase ?? IsBiometricEnabledUseCase(repository),
+        _verifyPinUseCase = verifyPinUseCase ?? VerifyPinUseCase(repository),
+        _authenticateWithBiometricsUseCase = authenticateWithBiometricsUseCase ?? AuthenticateWithBiometricsUseCase(repository),
+        _removePinUseCase = removePinUseCase ?? RemovePinUseCase(repository),
+        _setBiometricEnabledUseCase = setBiometricEnabledUseCase ?? SetBiometricEnabledUseCase(repository),
+        _savePinUseCase = savePinUseCase ?? SavePinUseCase(repository),
+        _resetPinUseCase = resetPinUseCase ?? ResetPinUseCase(repository),
         super(AppLockInitial()) {
     on<CheckAppLockStatus>(_onCheckStatus);
     on<EnterPinDigit>(_onEnterDigit);
@@ -29,14 +65,14 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
     CheckAppLockStatus event,
     Emitter<AppLockState> emit,
   ) async {
-    final isEnabled = await _service.isLockEnabled();
+    final isEnabled = await _isLockEnabledUseCase();
     if (!isEnabled) {
       emit(AppLockDisabled());
       return;
     }
 
-    final biometricAvailable = await _service.isBiometricAvailable();
-    final biometricEnabled = await _service.isBiometricEnabled();
+    final biometricAvailable = await _isBiometricAvailableUseCase();
+    final biometricEnabled = await _isBiometricEnabledUseCase();
 
     emit(AppLocked(
       mode: LockScreenMode.unlock,
@@ -68,7 +104,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
 
       switch (currentState.mode) {
         case LockScreenMode.unlock:
-          final isCorrect = await _service.verifyPin(newPin);
+          final isCorrect = await _verifyPinUseCase(newPin);
           if (isCorrect) {
             emit(AppUnlocked(pin: newPin));
           } else {
@@ -140,7 +176,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
 
     emit(currentState.copyWith(isAuthenticating: true));
 
-    final success = await _service.authenticateWithBiometrics();
+    final success = await _authenticateWithBiometricsUseCase();
     if (success) {
       emit(AppUnlocked());
     } else {
@@ -155,7 +191,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
     // Show setup screen for new PIN
     emit(AppLocked(
       mode: LockScreenMode.setup,
-      isBiometricAvailable: await _service.isBiometricAvailable(),
+      isBiometricAvailable: await _isBiometricAvailableUseCase(),
       isBiometricEnabled: false,
     ));
   }
@@ -166,7 +202,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
   ) async {
     emit(AppLockLoading());
     try {
-      await _service.removePin(event.pin);
+      await _removePinUseCase(event.pin);
       emit(const AppLockSettings(
         isLockEnabled: false,
         isBiometricAvailable: false,
@@ -181,7 +217,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
     ToggleBiometric event,
     Emitter<AppLockState> emit,
   ) async {
-    await _service.setBiometricEnabled(event.enabled);
+    await _setBiometricEnabledUseCase(event.enabled);
 
     final currentState = state;
     if (currentState is AppLockSettings) {
@@ -200,11 +236,11 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
     LockApp event,
     Emitter<AppLockState> emit,
   ) async {
-    final isEnabled = await _service.isLockEnabled();
+    final isEnabled = await _isLockEnabledUseCase();
     if (!isEnabled) return;
 
-    final biometricAvailable = await _service.isBiometricAvailable();
-    final biometricEnabled = await _service.isBiometricEnabled();
+    final biometricAvailable = await _isBiometricAvailableUseCase();
+    final biometricEnabled = await _isBiometricEnabledUseCase();
 
     emit(AppLocked(
       mode: LockScreenMode.unlock,
@@ -219,15 +255,15 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
   ) async {
     emit(AppLockLoading());
     try {
-      await _service.savePin(
+      await _savePinUseCase(
         event.pin,
         question: event.question,
         answer: event.answer,
       );
       emit(AppLockSettings(
         isLockEnabled: true,
-        isBiometricAvailable: await _service.isBiometricAvailable(),
-        isBiometricEnabled: await _service.isBiometricEnabled(),
+        isBiometricAvailable: await _isBiometricAvailableUseCase(),
+        isBiometricEnabled: await _isBiometricEnabledUseCase(),
       ));
     } catch (e) {
       emit(AppLockActionFailure(e.toString()));
@@ -240,7 +276,7 @@ class AppLockBloc extends Bloc<AppLockEvent, AppLockState> {
   ) async {
     emit(AppLockLoading());
     try {
-      await _service.resetPin(event.answer, event.newPin);
+      await _resetPinUseCase(event.answer, event.newPin);
       emit(const AppLockActionSuccess('Khôi phục mã PIN thành công'));
       emit(AppUnlocked());
     } catch (e) {

@@ -3,31 +3,24 @@ import 'package:flutter/services.dart';
 import 'package:toastification/toastification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:expense_management/firebase_options.dart';
+import 'package:expense_management/injection.dart';
 import 'package:expense_management/core/routing/app_router.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/core/localization/locale_cubit.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
-import 'package:expense_management/features/wallets/data/repositories/wallet_repository_impl.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
-import 'package:expense_management/features/transactions/data/repositories/transaction_repository_impl.dart';
 import 'package:expense_management/features/categories/presentation/bloc/category_bloc.dart';
-import 'package:expense_management/features/categories/data/repositories/category_repository_impl.dart';
 import 'package:expense_management/features/budgets/presentation/bloc/budget_bloc.dart';
-import 'package:expense_management/features/budgets/data/repositories/budget_repository_impl.dart';
 import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
-import 'package:expense_management/features/goals/data/repositories/goal_repository_impl.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
-import 'package:expense_management/features/recurring/data/repositories/recurring_repository_impl.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:expense_management/features/app_lock/presentation/widgets/app_lock_wrapper.dart';
 import 'package:expense_management/features/stats/presentation/bloc/stats_bloc.dart';
-import 'package:expense_management/features/stats/data/repositories/stats_repository_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,52 +34,41 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Initialize Dependency Injection
+  await initInjection();
+
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider<AppLockBloc>(
-          create: (context) => AppLockBloc(),
+          create: (context) => getIt<AppLockBloc>(),
         ),
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc(),
+          create: (context) => getIt<AuthBloc>(),
         ),
         BlocProvider<LocaleCubit>(
           create: (context) => LocaleCubit(),
         ),
         BlocProvider<WalletBloc>(
-          create: (context) => WalletBloc(
-            repository: WalletRepositoryImpl(FirebaseFirestore.instance),
-          ),
+          create: (context) => getIt<WalletBloc>(),
         ),
         BlocProvider<TransactionBloc>(
-          create: (context) => TransactionBloc(
-            repository: TransactionRepositoryImpl(FirebaseFirestore.instance),
-          ),
+          create: (context) => getIt<TransactionBloc>(),
         ),
         BlocProvider<CategoryBloc>(
-          create: (context) => CategoryBloc(
-            repository: CategoryRepositoryImpl(FirebaseFirestore.instance),
-          ),
+          create: (context) => getIt<CategoryBloc>(),
         ),
         BlocProvider<BudgetBloc>(
-          create: (context) => BudgetBloc(
-            repository: BudgetRepositoryImpl(FirebaseFirestore.instance),
-          ),
+          create: (context) => getIt<BudgetBloc>(),
         ),
         BlocProvider<GoalBloc>(
-          create: (context) => GoalBloc(
-            repository: GoalRepositoryImpl(FirebaseFirestore.instance),
-          ),
+          create: (context) => getIt<GoalBloc>(),
         ),
         BlocProvider<RecurringBloc>(
-          create: (context) => RecurringBloc(
-            repository: RecurringRepositoryImpl(FirebaseFirestore.instance),
-          ),
+          create: (context) => getIt<RecurringBloc>(),
         ),
         BlocProvider<StatsBloc>(
-          create: (context) => StatsBloc(
-            statsRepository: StatsRepositoryImpl(),
-          ),
+          create: (context) => getIt<StatsBloc>(),
         ),
       ],
       child: const MyApp(),

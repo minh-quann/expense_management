@@ -2,18 +2,40 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/categories/domain/entities/category.dart';
 import 'package:expense_management/features/categories/domain/repositories/category_repository.dart';
+import 'package:expense_management/features/categories/domain/usecases/get_categories_usecase.dart';
+import 'package:expense_management/features/categories/domain/usecases/add_category_usecase.dart';
+import 'package:expense_management/features/categories/domain/usecases/update_category_usecase.dart';
+import 'package:expense_management/features/categories/domain/usecases/delete_category_usecase.dart';
+import 'package:expense_management/features/categories/domain/usecases/seed_default_categories_usecase.dart';
 import 'category_event.dart';
 import 'category_state.dart';
 
 class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
-  final CategoryRepository repository;
+  final GetCategoriesUseCase _getCategoriesUseCase;
+  final AddCategoryUseCase _addCategoryUseCase;
+  final UpdateCategoryUseCase _updateCategoryUseCase;
+  final DeleteCategoryUseCase _deleteCategoryUseCase;
+  final SeedDefaultCategoriesUseCase _seedDefaultCategoriesUseCase;
+
   StreamSubscription? _expenseSubscription;
   StreamSubscription? _incomeSubscription;
 
   List<AppCategory> _currentExpenses = [];
   List<AppCategory> _currentIncomes = [];
 
-  CategoryBloc({required this.repository}) : super(CategoryInitial()) {
+  CategoryBloc({
+    required CategoryRepository repository,
+    GetCategoriesUseCase? getCategoriesUseCase,
+    AddCategoryUseCase? addCategoryUseCase,
+    UpdateCategoryUseCase? updateCategoryUseCase,
+    DeleteCategoryUseCase? deleteCategoryUseCase,
+    SeedDefaultCategoriesUseCase? seedDefaultCategoriesUseCase,
+  })  : _getCategoriesUseCase = getCategoriesUseCase ?? GetCategoriesUseCase(repository),
+        _addCategoryUseCase = addCategoryUseCase ?? AddCategoryUseCase(repository),
+        _updateCategoryUseCase = updateCategoryUseCase ?? UpdateCategoryUseCase(repository),
+        _deleteCategoryUseCase = deleteCategoryUseCase ?? DeleteCategoryUseCase(repository),
+        _seedDefaultCategoriesUseCase = seedDefaultCategoriesUseCase ?? SeedDefaultCategoriesUseCase(repository),
+        super(CategoryInitial()) {
     on<LoadCategories>(_onLoadCategories);
     on<AddCategoryEvent>(_onAddCategory);
     on<UpdateCategoryEvent>(_onUpdateCategory);
@@ -33,12 +55,12 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
     bool hasSeeded = false;
 
-    _expenseSubscription = repository.getCategories(event.userId, 'EXPENSE').listen(
+    _expenseSubscription = _getCategoriesUseCase(event.userId, 'EXPENSE').listen(
       (categories) async {
         _currentExpenses = categories;
         if (categories.isEmpty && !hasSeeded) {
           hasSeeded = true;
-          await repository.seedDefaultCategories(event.userId);
+          await _seedDefaultCategoriesUseCase(event.userId);
         }
         if (!isClosed) {
           add(const _CategoriesUpdated());
@@ -51,7 +73,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
       },
     );
 
-    _incomeSubscription = repository.getCategories(event.userId, 'INCOME').listen(
+    _incomeSubscription = _getCategoriesUseCase(event.userId, 'INCOME').listen(
       (categories) {
         _currentIncomes = categories;
         if (!isClosed) {
@@ -68,7 +90,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
   void _onAddCategory(AddCategoryEvent event, Emitter<CategoryState> emit) async {
     try {
-      await repository.addCategory(event.userId, event.category);
+      await _addCategoryUseCase(event.userId, event.category);
     } catch (e) {
       emit(CategoryError('Lỗi thêm danh mục: $e'));
     }
@@ -76,7 +98,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
   void _onUpdateCategory(UpdateCategoryEvent event, Emitter<CategoryState> emit) async {
     try {
-      await repository.updateCategory(event.userId, event.category);
+      await _updateCategoryUseCase(event.userId, event.category);
     } catch (e) {
       emit(CategoryError('Lỗi cập nhật danh mục: $e'));
     }
@@ -84,7 +106,7 @@ class CategoryBloc extends Bloc<CategoryEvent, CategoryState> {
 
   void _onDeleteCategory(DeleteCategoryEvent event, Emitter<CategoryState> emit) async {
     try {
-      await repository.deleteCategory(event.userId, event.categoryId);
+      await _deleteCategoryUseCase(event.userId, event.categoryId);
     } catch (e) {
       emit(CategoryError('Lỗi xoá danh mục: $e'));
     }

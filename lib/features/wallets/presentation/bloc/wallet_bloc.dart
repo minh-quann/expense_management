@@ -1,14 +1,35 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/wallets/domain/repositories/wallet_repository.dart';
+import 'package:expense_management/features/wallets/domain/usecases/get_wallets_usecase.dart';
+import 'package:expense_management/features/wallets/domain/usecases/add_wallet_usecase.dart';
+import 'package:expense_management/features/wallets/domain/usecases/update_wallet_usecase.dart';
+import 'package:expense_management/features/wallets/domain/usecases/delete_wallet_usecase.dart';
+import 'package:expense_management/features/wallets/domain/usecases/toggle_favorite_wallet_usecase.dart';
 import 'wallet_event.dart';
 import 'wallet_state.dart';
 
 class WalletBloc extends Bloc<WalletEvent, WalletState> {
-  final WalletRepository repository;
+  final GetWalletsUseCase _getWalletsUseCase;
+  final AddWalletUseCase _addWalletUseCase;
+  final UpdateWalletUseCase _updateWalletUseCase;
+  final DeleteWalletUseCase _deleteWalletUseCase;
+  final ToggleFavoriteWalletUseCase _toggleFavoriteWalletUseCase;
   StreamSubscription? _walletSubscription;
 
-  WalletBloc({required this.repository}) : super(WalletInitial()) {
+  WalletBloc({
+    required WalletRepository repository,
+    GetWalletsUseCase? getWalletsUseCase,
+    AddWalletUseCase? addWalletUseCase,
+    UpdateWalletUseCase? updateWalletUseCase,
+    DeleteWalletUseCase? deleteWalletUseCase,
+    ToggleFavoriteWalletUseCase? toggleFavoriteWalletUseCase,
+  })  : _getWalletsUseCase = getWalletsUseCase ?? GetWalletsUseCase(repository),
+        _addWalletUseCase = addWalletUseCase ?? AddWalletUseCase(repository),
+        _updateWalletUseCase = updateWalletUseCase ?? UpdateWalletUseCase(repository),
+        _deleteWalletUseCase = deleteWalletUseCase ?? DeleteWalletUseCase(repository),
+        _toggleFavoriteWalletUseCase = toggleFavoriteWalletUseCase ?? ToggleFavoriteWalletUseCase(repository),
+        super(WalletInitial()) {
     on<LoadWalletsEvent>(_onLoadWallets);
     on<AddWalletEvent>(_onAddWallet);
     on<UpdateWalletEvent>(_onUpdateWallet);
@@ -21,7 +42,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
   void _onLoadWallets(LoadWalletsEvent event, Emitter<WalletState> emit) {
     emit(WalletLoading());
     _walletSubscription?.cancel();
-    _walletSubscription = repository.getWallets(event.userId).listen((wallets) {
+    _walletSubscription = _getWalletsUseCase(event.userId).listen((wallets) {
       add(WalletsUpdatedInternalEvent(wallets));
     }, onError: (error) {
       add(WalletsErrorInternalEvent(error.toString()));
@@ -30,7 +51,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   void _onAddWallet(AddWalletEvent event, Emitter<WalletState> emit) async {
     try {
-      await repository.addWallet(event.wallet);
+      await _addWalletUseCase(event.wallet);
     } catch (e) {
       add(WalletsErrorInternalEvent(e.toString()));
     }
@@ -38,7 +59,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   void _onUpdateWallet(UpdateWalletEvent event, Emitter<WalletState> emit) async {
     try {
-      await repository.updateWallet(event.wallet);
+      await _updateWalletUseCase(event.wallet);
     } catch (e) {
       add(WalletsErrorInternalEvent(e.toString()));
     }
@@ -46,7 +67,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   void _onDeleteWallet(DeleteWalletEvent event, Emitter<WalletState> emit) async {
     try {
-      await repository.deleteWalletForUser(event.userId, event.walletId);
+      await _deleteWalletUseCase(event.userId, event.walletId);
     } catch (e) {
       add(WalletsErrorInternalEvent(e.toString()));
     }
@@ -54,7 +75,7 @@ class WalletBloc extends Bloc<WalletEvent, WalletState> {
 
   void _onToggleFavoriteWallet(ToggleFavoriteWalletEvent event, Emitter<WalletState> emit) async {
     try {
-      await repository.toggleFavoriteWallet(event.userId, event.walletId);
+      await _toggleFavoriteWalletUseCase(event.userId, event.walletId);
     } catch (e) {
       add(WalletsErrorInternalEvent(e.toString()));
     }

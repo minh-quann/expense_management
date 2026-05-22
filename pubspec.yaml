@@ -57,6 +57,8 @@ dependencies:
   local_auth: ^3.0.1
   flutter_secure_storage: ^10.2.0
   toastification: ^3.2.0
+  flutter_cupertino_symbols: ^1.0.2
+  get_it: ^9.2.1
 
 dev_dependencies:
   flutter_test:
