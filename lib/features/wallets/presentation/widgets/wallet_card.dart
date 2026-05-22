@@ -69,7 +69,7 @@ class WalletCard extends StatelessWidget {
                       child: AppText(
                         wallet.name,
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color: Colors.white,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -133,12 +133,12 @@ class WalletCard extends StatelessWidget {
                         AppText(
                           CurrencyFormatter.format(context, wallet.balance),
                           fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ],
                     ),
-                    const AppText('VISA', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    const AppText('VISA', fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
                   ],
                 ),
               ],

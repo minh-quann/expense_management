@@ -92,7 +92,7 @@ class ScreenHeader extends StatelessWidget {
           AppText(
             title,
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: AppColors.textPrimary(context),
           ),
           trailing ?? const SizedBox(width: 44),

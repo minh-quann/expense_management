@@ -87,12 +87,12 @@ class _WalletsScreenState extends State<WalletsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        AppText(AppLocalizations.of(context)!.wallets_total_assets, fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+                        AppText(AppLocalizations.of(context)!.wallets_total_assets, fontSize: 20, fontWeight: FontWeight.w500, color: AppColors.textPrimary(context)),
                         const SizedBox(height: 4),
                         AppText(
                           CurrencyFormatter.format(context, totalBalance),
                           fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary(context),
                         ),
                       ],
@@ -136,11 +136,13 @@ class _WalletsScreenState extends State<WalletsScreen> {
                             margin: const EdgeInsets.symmetric(horizontal: 4),
                             width: _currentPage == index ? 24 : 8,
                             height: 4,
-                            decoration: BoxDecoration(
+                            decoration: ShapeDecoration(
                               color: _currentPage == index 
                                   ? AppColors.textPrimary(context).withValues(alpha: 0.8) 
                                   : AppColors.textSecondary(context).withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(2),
+                              shape: RoundedSuperellipseBorder(
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
                         ),
@@ -155,7 +157,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        AppText('GIAO DỊCH GẦN ĐÂY', fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary(context)),
+                        AppText('GIAO DỊCH GẦN ĐÂY', fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary(context)),
                         AppText('Xem tất cả', fontSize: 13, color: AppColors.textSecondary(context)),
                       ],
                     ),
@@ -214,7 +216,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
       decoration: ShapeDecoration(
         color: AppColors.surface(context),
         shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
         ),
       ),
       child: Center(
@@ -243,7 +245,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
         decoration: ShapeDecoration(
           color: AppColors.surface(context),
           shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(26),
           ),
         ),
         child: Column(
@@ -258,7 +260,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
               child: Icon(Icons.add, size: 32, color: AppColors.textPrimary(context)),
             ),
             const SizedBox(height: 16),
-            AppText(AppLocalizations.of(context)!.wallets_add, fontWeight: FontWeight.w600),
+            AppText(AppLocalizations.of(context)!.wallets_add, fontWeight: FontWeight.w500),
           ],
         ),
       ),
@@ -321,7 +323,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
                             child: AppText(
                               wallet.name,
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                               color: Colors.white,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -401,12 +403,12 @@ class _WalletsScreenState extends State<WalletsScreen> {
                         AppText(
                           CurrencyFormatter.format(context, wallet.balance),
                           fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
                       ],
                     ),
-                    const AppText('VISA', fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    const AppText('VISA', fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
                   ],
                 ),
               ],
@@ -449,15 +451,17 @@ class _WalletsScreenState extends State<WalletsScreen> {
               Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.border(context),
-                  borderRadius: BorderRadius.circular(2),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               Align(
                 alignment: Alignment.centerLeft,
-                child: AppText(AppLocalizations.of(context)!.wallets_add, fontSize: 24, fontWeight: FontWeight.bold),
+                child: AppText(AppLocalizations.of(context)!.wallets_add, fontSize: 24, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 24),
               Container(
@@ -553,15 +557,17 @@ class _WalletsScreenState extends State<WalletsScreen> {
               Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(
+                decoration: ShapeDecoration(
                   color: AppColors.border(context),
-                  borderRadius: BorderRadius.circular(2),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
               Align(
                 alignment: Alignment.centerLeft,
-                child: const AppText('Chỉnh sửa ví', fontSize: 24, fontWeight: FontWeight.bold),
+                child: const AppText('Chỉnh sửa ví', fontSize: 24, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 24),
               Container(
@@ -636,7 +642,7 @@ class _WalletsScreenState extends State<WalletsScreen> {
         shape: const RoundedSuperellipseBorder(
           borderRadius: BorderRadius.all(Radius.circular(24)),
         ),
-        title: const AppText('Xóa ví', fontWeight: FontWeight.bold),
+        title: const AppText('Xóa ví', fontWeight: FontWeight.w600),
         content: AppText('Bạn có chắc chắn muốn xóa ví "${wallet.name}"? Hành động này không thể hoàn tác.'),
         actions: [
           TextButton(

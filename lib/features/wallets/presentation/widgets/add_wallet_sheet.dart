@@ -73,9 +73,11 @@ class _AddWalletSheetState extends State<AddWalletSheet> {
           Container(
             width: 40,
             height: 4,
-            decoration: BoxDecoration(
+            decoration: ShapeDecoration(
               color: AppColors.border(context),
-              borderRadius: BorderRadius.circular(2),
+              shape: RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -84,7 +86,7 @@ class _AddWalletSheetState extends State<AddWalletSheet> {
             child: AppText(
               AppLocalizations.of(context)!.wallets_add,
               fontSize: 24,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 24),

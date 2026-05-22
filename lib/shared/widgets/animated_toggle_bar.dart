@@ -133,9 +133,9 @@ class _AnimatedToggleBarState extends State<AnimatedToggleBar> {
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
                               color: isSelected 
-                                ? AppColors.textPrimary(context) 
+                                ? AppColors.primary 
                                 : AppColors.textSecondary(context),
                             ),
                             child: Text(

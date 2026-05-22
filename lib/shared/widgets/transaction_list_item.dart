@@ -56,7 +56,7 @@ class TransactionListItem extends StatelessWidget {
                 AppText(
                   title,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -80,7 +80,7 @@ class TransactionListItem extends StatelessWidget {
               AppText(
                 amount,
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: amountColor,
               ),
               const SizedBox(height: 4),

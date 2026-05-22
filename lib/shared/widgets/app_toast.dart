@@ -72,7 +72,7 @@ class AppToast {
       primaryColor: primaryColor,
       alignment: Alignment.topCenter,
       autoCloseDuration: const Duration(seconds: 3),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(26),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       showProgressBar: false,

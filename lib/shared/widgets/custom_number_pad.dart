@@ -101,7 +101,7 @@ class CustomNumberPad extends StatelessWidget {
         child: AppText(
           text,
           fontSize: 24,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           color: AppColors.textPrimary(context),
         ),
       ),

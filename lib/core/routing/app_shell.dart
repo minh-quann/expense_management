@@ -217,7 +217,7 @@ class _AppShellState extends State<AppShell> {
                 style: TextStyle(
                   color: color,
                   fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   fontFamily: 'Inter',
                 ),
                 child: Text(label),

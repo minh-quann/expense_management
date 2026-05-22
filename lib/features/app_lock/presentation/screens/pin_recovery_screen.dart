@@ -123,7 +123,7 @@ class _PinRecoveryScreenState extends State<PinRecoveryScreen> {
         title: AppText(
           'Khôi phục mã PIN',
           fontSize: 18,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: textColor,
         ),
         centerTitle: true,
@@ -202,7 +202,7 @@ class _PinRecoveryScreenState extends State<PinRecoveryScreen> {
                                     AppText(
                                       _securityQuestion!,
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w500,
                                       color: textColor,
                                     ),
                                   ],

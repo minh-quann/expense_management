@@ -42,7 +42,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
         title: AppText(
           'Ngân sách',
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
         leading: IconButton(
@@ -97,7 +97,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                           AppText(
                             'Ngân sách danh mục',
                             fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary(context),
                           ),
                           const SizedBox(height: 16),
@@ -175,7 +175,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
       decoration: ShapeDecoration(
         color: AppColors.surface(context),
         shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
         ),
       ),
       child: Column(
@@ -195,7 +195,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
                 const SizedBox(width: 12),
               ],
               Expanded(
-                child: AppText(title, fontSize: 16, fontWeight: FontWeight.w600),
+                child: AppText(title, fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -204,7 +204,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               AppText('Đã tiêu: ₫${(spentAmount / 1000).toStringAsFixed(0)}k', color: AppColors.textSecondary(context)),
-              AppText('Tổng: ₫${(totalAmount / 1000).toStringAsFixed(0)}k', fontWeight: FontWeight.w600),
+              AppText('Tổng: ₫${(totalAmount / 1000).toStringAsFixed(0)}k', fontWeight: FontWeight.w500),
             ],
           ),
           const SizedBox(height: 12),

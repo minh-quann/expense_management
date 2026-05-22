@@ -102,7 +102,7 @@ class AppConfirmModal extends StatelessWidget {
             decoration: ShapeDecoration(
               color: bgColor,
               shape: RoundedSuperellipseBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(26),
               ),
               shadows: [
                 BoxShadow(
@@ -135,7 +135,7 @@ class AppConfirmModal extends StatelessWidget {
                 AppText(
                   title,
                   fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: textColor,
                   textAlign: TextAlign.center,
                 ),
@@ -162,7 +162,7 @@ class AppConfirmModal extends StatelessWidget {
                         isOutlined: true,
                         height: 48,
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -175,7 +175,7 @@ class AppConfirmModal extends StatelessWidget {
                         backgroundColor: confirmColor,
                         height: 48,
                         fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

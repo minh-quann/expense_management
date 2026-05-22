@@ -67,7 +67,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         title: AppText(
           widget.category != null ? 'Chỉnh sửa danh mục' : 'Thêm danh mục',
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
         leading: IconButton(
@@ -110,7 +110,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     const SizedBox(height: 24),
 
                     // Name Input
-                    AppText('Tên danh mục', fontSize: 14, fontWeight: FontWeight.w600),
+                    AppText('Tên danh mục', fontSize: 14, fontWeight: FontWeight.w500),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameController,
@@ -144,7 +144,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     const SizedBox(height: 24),
 
                     // Colors
-                    AppText('Màu sắc', fontSize: 14, fontWeight: FontWeight.w600),
+                    AppText('Màu sắc', fontSize: 14, fontWeight: FontWeight.w500),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 12,
@@ -154,7 +154,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     const SizedBox(height: 24),
 
                     // Icons
-                    AppText('Biểu tượng', fontSize: 14, fontWeight: FontWeight.w600),
+                    AppText('Biểu tượng', fontSize: 14, fontWeight: FontWeight.w500),
                     const SizedBox(height: 12),
                     GridView.builder(
                       shrinkWrap: true,

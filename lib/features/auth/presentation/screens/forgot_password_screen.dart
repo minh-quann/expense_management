@@ -133,7 +133,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             'Khôi Phục Mật Khẩu',
                             color: Colors.white,
                             fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                           ),
                           const SizedBox(height: 4),
                           AppText(
@@ -167,7 +167,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     const AppText(
                                       'Yêu Cầu Mã Đặt Lại',
                                       fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                       textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 24),
@@ -204,7 +204,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     const AppText(
                                       'Đặt Lại Mật Khẩu',
                                       fontSize: 20,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                       textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 24),

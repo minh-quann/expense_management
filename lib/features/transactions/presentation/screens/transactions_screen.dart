@@ -163,7 +163,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         AppText(
           dateLabel,
           fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
           color: AppColors.textPrimary(context),
         ),
         const SizedBox(height: 16),

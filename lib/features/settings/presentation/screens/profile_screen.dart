@@ -175,7 +175,7 @@ class ProfileView extends StatelessWidget {
                     AppText(
                       displayName.isNotEmpty ? displayName : 'Tải thông tin...',
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: textColor,
                     ),
                     const SizedBox(height: 4),
@@ -200,7 +200,7 @@ class ProfileView extends StatelessWidget {
                         child: AppText(
                           'Đồng tiền: $currency',
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.primary,
                         ),
                       ),
@@ -359,7 +359,7 @@ class ProfileView extends StatelessWidget {
               child: AppText(
                 title,
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: textColor,
               ),
             ),

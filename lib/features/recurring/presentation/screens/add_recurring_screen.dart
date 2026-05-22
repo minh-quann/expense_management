@@ -85,7 +85,7 @@ class _AddRecurringScreenState extends State<AddRecurringScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: AppText('Giao dịch định kỳ', fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+        title: AppText('Giao dịch định kỳ', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary(context)),
           onPressed: () => Navigator.pop(context),
@@ -121,7 +121,7 @@ class _AddRecurringScreenState extends State<AddRecurringScreen> {
                     const SizedBox(height: 8),
                     AppText(
                       CurrencyFormatter.format(context, double.parse(_amount)),
-                      fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary
+                      fontSize: 48, fontWeight: FontWeight.w600, color: AppColors.primary
                     ),
                   ],
                 ),

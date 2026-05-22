@@ -44,7 +44,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         title: AppText(
           'Danh mục',
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
         leading: IconButton(
@@ -109,7 +109,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               ),
                               child: Icon(CategoryHelper.getIcon(cat.icon), color: color, size: 24),
                             ),
-                            title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w600),
+                            title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w500),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -182,7 +182,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const AppText('Xóa danh mục', fontWeight: FontWeight.bold),
+        title: const AppText('Xóa danh mục', fontWeight: FontWeight.w600),
         content: AppText('Bạn có chắc chắn muốn xóa danh mục "$name"?'),
         actions: [
           TextButton(

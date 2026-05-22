@@ -100,7 +100,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
           title: AppText(
             'Bảo mật',
             fontSize: 18,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: textColor,
           ),
         ),
@@ -137,7 +137,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
                 child: AppText(
                   'Bảo vệ ứng dụng của bạn',
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: textColor,
                 ),
               ),
@@ -314,7 +314,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
                   AppText(
                     title,
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     color: textColor,
                   ),
                   const SizedBox(height: 2),

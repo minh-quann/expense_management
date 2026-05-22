@@ -59,7 +59,7 @@ class CategoryPickerSheet extends StatelessWidget {
                     title: AppText(
                       cat.name,
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary(context),
                     ),
                     trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),

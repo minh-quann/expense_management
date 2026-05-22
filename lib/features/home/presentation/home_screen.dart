@@ -122,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                 CurrencyFormatter.format(context, totalBalance),
                 color: Colors.white,
                 fontSize: 32,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
               const SizedBox(height: 32),
               BlocBuilder<TransactionBloc, TransactionState>(
@@ -195,7 +195,7 @@ class HomeScreen extends StatelessWidget {
               amount,
               color: Colors.white,
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
             ),
           ],
         ),
@@ -210,7 +210,7 @@ class HomeScreen extends StatelessWidget {
         AppText(
           AppLocalizations.of(context)!.home_transactions,
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
         AppText(

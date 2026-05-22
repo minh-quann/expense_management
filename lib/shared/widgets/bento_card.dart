@@ -33,7 +33,7 @@ class BentoCard extends StatelessWidget {
               ? AppColors.surface(context)
               : Colors.white,
           shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(26),
           ),
         ),
         child: Column(
@@ -59,7 +59,7 @@ class BentoCard extends StatelessWidget {
             AppText(
               value,
               fontSize: 16,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
               color: AppColors.textPrimary(context),
             ),
           ],

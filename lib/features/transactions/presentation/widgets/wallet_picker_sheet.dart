@@ -51,7 +51,7 @@ class WalletPickerSheet extends StatelessWidget {
                     title: AppText(
                       wallet.name,
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary(context),
                     ),
                     subtitle: AppText(

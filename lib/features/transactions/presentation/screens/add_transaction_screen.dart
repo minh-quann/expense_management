@@ -129,8 +129,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
-
-
   Future<void> _showDateTimePicker() async {
     final date = await showDatePicker(
       context: context,
@@ -145,7 +143,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       );
       if (time != null) {
         setState(() {
-          _selectedDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+          _selectedDate = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            time.hour,
+            time.minute,
+          );
         });
       }
     }
@@ -168,7 +172,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       AppToast.warning(context, 'Vui lòng chọn ví đích');
       return;
     }
-    if (_transactionType == 'TRANSFER' && _selectedWalletId == _selectedToWalletId) {
+    if (_transactionType == 'TRANSFER' &&
+        _selectedWalletId == _selectedToWalletId) {
       AppToast.warning(context, 'Ví nguồn và ví đích không được trùng nhau');
       return;
     }
@@ -176,27 +181,39 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     final userId = AuthTokenManager.getUserId();
     final type = _transactionType == 'EXPENSE'
         ? TransactionType.expense
-        : (_transactionType == 'INCOME' ? TransactionType.income : TransactionType.transfer);
+        : (_transactionType == 'INCOME'
+              ? TransactionType.income
+              : TransactionType.transfer);
 
     final transaction = AppTransaction(
       id: '',
       amount: double.parse(_amount),
       type: type,
       categoryId: type == TransactionType.transfer ? null : _selectedCategoryId,
-      categoryName: type == TransactionType.transfer ? null : _selectedCategoryName,
-      categoryIcon: type == TransactionType.transfer ? null : _selectedCategoryIcon,
-      categoryColor: type == TransactionType.transfer ? null : _selectedCategoryColor,
+      categoryName: type == TransactionType.transfer
+          ? null
+          : _selectedCategoryName,
+      categoryIcon: type == TransactionType.transfer
+          ? null
+          : _selectedCategoryIcon,
+      categoryColor: type == TransactionType.transfer
+          ? null
+          : _selectedCategoryColor,
       walletId: _selectedWalletId,
       walletName: _selectedWalletName,
       toWalletId: type == TransactionType.transfer ? _selectedToWalletId : null,
-      toWalletName: type == TransactionType.transfer ? _selectedToWalletName : null,
+      toWalletName: type == TransactionType.transfer
+          ? _selectedToWalletName
+          : null,
       date: _selectedDate,
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
-    context.read<TransactionBloc>().add(AddTransactionEvent(userId, transaction));
+    context.read<TransactionBloc>().add(
+      AddTransactionEvent(userId, transaction),
+    );
     Navigator.pop(context);
   }
 
@@ -222,7 +239,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           child: Column(
             children: [
               ScreenHeader(
-                title: AppLocalizations.of(context)?.add_transaction_title ?? 'Thêm giao dịch mới',
+                title:
+                    AppLocalizations.of(context)?.add_transaction_title ??
+                    'Thêm giao dịch mới',
                 showBackButton: true,
               ),
               Expanded(
@@ -261,7 +280,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       options: [
         AppLocalizations.of(context)?.add_transaction_expense ?? 'Chi tiêu',
         AppLocalizations.of(context)?.add_transaction_income ?? 'Thu nhập',
-        AppLocalizations.of(context)?.add_transaction_transfer ?? 'Chuyển khoản',
+        AppLocalizations.of(context)?.add_transaction_transfer ??
+            'Chuyển khoản',
       ],
       selectedIndex: selectedIndex,
       onChanged: (index) {
@@ -294,19 +314,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: AppText(
-                  Localizations.localeOf(context).languageCode == 'vi' ? '₫' : '\$',
+                  Localizations.localeOf(context).languageCode == 'vi'
+                      ? '₫'
+                      : '\$',
                   fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                   color: _transactionType == 'EXPENSE'
                       ? AppColors.red500
-                      : (_transactionType == 'INCOME' ? AppColors.green500 : AppColors.blue500),
+                      : (_transactionType == 'INCOME'
+                            ? AppColors.green500
+                            : AppColors.blue500),
                 ),
               ),
               const SizedBox(width: 4),
               AppText(
-                NumberFormat.decimalPattern(Localizations.localeOf(context).languageCode).format(double.parse(_amount)),
+                NumberFormat.decimalPattern(
+                  Localizations.localeOf(context).languageCode,
+                ).format(double.parse(_amount)),
                 fontSize: 56,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary(context),
               ),
             ],
@@ -327,7 +353,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       icon: Icons.account_balance_wallet_outlined,
                       iconColor: AppColors.orange500,
                       iconBgColor: AppColors.orange50,
-                      title: AppLocalizations.of(context)?.add_transaction_source_wallet ?? 'Ví nguồn',
+                      title:
+                          AppLocalizations.of(
+                            context,
+                          )?.add_transaction_source_wallet ??
+                          'Ví nguồn',
                       value: _selectedWalletName,
                       onTap: () => _showWalletPicker(isSource: true),
                     )
@@ -339,21 +369,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           ? CategoryHelper.getColor(_selectedCategoryColor!)
                           : AppColors.purple500,
                       iconBgColor: _selectedCategoryColor != null
-                          ? CategoryHelper.getColor(_selectedCategoryColor!).withValues(alpha: 0.1)
+                          ? CategoryHelper.getColor(
+                              _selectedCategoryColor!,
+                            ).withValues(alpha: 0.1)
                           : AppColors.purple50,
-                      title: AppLocalizations.of(context)?.add_transaction_category ?? 'Danh mục',
+                      title:
+                          AppLocalizations.of(
+                            context,
+                          )?.add_transaction_category ??
+                          'Danh mục',
                       value: _selectedCategoryName,
                       onTap: _showCategoryPicker,
                     ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 8),
             Expanded(
               child: _transactionType == 'TRANSFER'
                   ? BentoCard(
                       icon: Icons.account_balance_wallet_rounded,
                       iconColor: AppColors.blue500,
                       iconBgColor: AppColors.blue50,
-                      title: AppLocalizations.of(context)?.add_transaction_destination_wallet ?? 'Ví đích',
+                      title:
+                          AppLocalizations.of(
+                            context,
+                          )?.add_transaction_destination_wallet ??
+                          'Ví đích',
                       value: _selectedToWalletName,
                       onTap: () => _showWalletPicker(isSource: false),
                     )
@@ -361,7 +401,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       icon: Icons.account_balance_wallet_rounded,
                       iconColor: AppColors.blue500,
                       iconBgColor: AppColors.blue50,
-                      title: AppLocalizations.of(context)?.add_transaction_wallet ?? 'Ví',
+                      title:
+                          AppLocalizations.of(
+                            context,
+                          )?.add_transaction_wallet ??
+                          'Ví',
                       value: _selectedWalletName,
                       onTap: () => _showWalletPicker(isSource: true),
                     ),
@@ -385,9 +429,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: ShapeDecoration(
-            color: AppColors.isDark(context) ? AppColors.surface(context) : Colors.white,
+            color: AppColors.isDark(context)
+                ? AppColors.surface(context)
+                : Colors.white,
             shape: RoundedSuperellipseBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(26),
             ),
           ),
           child: Row(
@@ -400,20 +446,34 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: const Icon(Icons.edit_note_rounded, color: AppColors.gray500, size: 24),
+                child: const Icon(
+                  Icons.edit_note_rounded,
+                  color: AppColors.gray500,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: TextField(
                   controller: _noteController,
                   decoration: InputDecoration(
-                    hintText: AppLocalizations.of(context)?.add_transaction_note_hint ?? 'Thêm ghi chú...',
-                    hintStyle: TextStyle(color: AppColors.textSecondary(context), fontSize: 16),
+                    hintText:
+                        AppLocalizations.of(
+                          context,
+                        )?.add_transaction_note_hint ??
+                        'Thêm ghi chú...',
+                    hintStyle: TextStyle(
+                      color: AppColors.textSecondary(context),
+                      fontSize: 16,
+                    ),
                     border: InputBorder.none,
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                   ),
-                  style: TextStyle(color: AppColors.textPrimary(context), fontSize: 16),
+                  style: TextStyle(
+                    color: AppColors.textPrimary(context),
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ],
@@ -425,7 +485,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   Widget _buildSaveButton() {
     return AppButton(
-      label: AppLocalizations.of(context)?.add_transaction_save ?? 'Lưu giao dịch',
+      label:
+          AppLocalizations.of(context)?.add_transaction_save ?? 'Lưu giao dịch',
       onPressed: _saveTransaction,
       height: 60,
     );

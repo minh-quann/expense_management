@@ -12,14 +12,14 @@ class PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background(context),
       appBar: AppBar(
-        title: AppText(title, fontWeight: FontWeight.bold, color: AppColors.surface(context)),
+        title: AppText(title, fontWeight: FontWeight.w600, color: AppColors.surface(context)),
         backgroundColor: AppColors.primary,
       ),
       body: Center(
         child: AppText(
           title,
           fontSize: 24,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: AppColors.textSecondary(context),
         ),
       ),

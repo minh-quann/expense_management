@@ -83,7 +83,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: AppText('Thêm mục tiêu', fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+        title: AppText('Thêm mục tiêu', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary(context)),
           onPressed: () => Navigator.pop(context),
@@ -99,7 +99,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: _nameController,
-                style: TextStyle(fontSize: 20, color: AppColors.textPrimary(context), fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, color: AppColors.textPrimary(context), fontWeight: FontWeight.w600),
                 decoration: InputDecoration(
                   hintText: 'VD: Mua iPhone 16',
                   hintStyle: TextStyle(color: AppColors.textSecondary(context).withValues(alpha: 0.5)),
@@ -118,7 +118,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                     const SizedBox(height: 8),
                     AppText(
                       CurrencyFormatter.format(context, double.parse(_amount)),
-                      fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary
+                      fontSize: 48, fontWeight: FontWeight.w600, color: AppColors.primary
                     ),
                   ],
                 ),

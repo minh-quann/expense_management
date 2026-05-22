@@ -74,7 +74,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppText('Chọn danh mục', fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+              AppText('Chọn danh mục', fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
               const SizedBox(height: 16),
               ListTile(
                 title: AppText('Tổng ngân sách (Tất cả)', color: AppColors.textPrimary(context)),
@@ -108,7 +108,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                                   ),
                                   child: Icon(CategoryHelper.getIcon(cat.icon), color: CategoryHelper.getColor(cat.color), size: 24),
                                 ),
-                                title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+                                title: AppText(cat.name, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textPrimary(context)),
                                 trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),
                                 onTap: () {
                                   setState(() {
@@ -167,7 +167,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: AppText('Thêm ngân sách', fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+        title: AppText('Thêm ngân sách', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary(context)),
           onPressed: () => Navigator.pop(context),
@@ -189,7 +189,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                     const SizedBox(height: 8),
                     AppText(
                       CurrencyFormatter.format(context, double.parse(_amount)),
-                      fontSize: 48, fontWeight: FontWeight.bold, color: AppColors.primary
+                      fontSize: 48, fontWeight: FontWeight.w600, color: AppColors.primary
                     ),
                   ],
                 ),
@@ -213,7 +213,7 @@ class _AddBudgetScreenState extends State<AddBudgetScreen> {
                         children: [
                           AppText('Danh mục', fontSize: 13, color: AppColors.textSecondary(context)),
                           const SizedBox(height: 4),
-                          AppText(_selectedCategoryName, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+                          AppText(_selectedCategoryName, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textPrimary(context)),
                         ],
                       ),
                       Icon(Icons.chevron_right, color: AppColors.textSecondary(context)),

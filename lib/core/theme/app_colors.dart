@@ -4,7 +4,7 @@ class AppColors {
   static bool isDark(BuildContext context) => Theme.of(context).brightness == Brightness.dark;
 
   // Primary colors - Modern Electric Blue
-  static const Color primary = Color(0xFF2970FF);
+  static const Color primary = Color(0xFF0E6BCC);
   static const Color primaryLight = Color(0xFF6B9AFF);
   static const Color primaryDark = Color(0xFF004EE6);
 

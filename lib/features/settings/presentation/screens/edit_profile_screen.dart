@@ -69,7 +69,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: AppText(
           'Chỉnh sửa hồ sơ',
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: textColor,
         ),
         centerTitle: true,
@@ -99,7 +99,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         const AppText(
                           'Thông tin cá nhân',
                           fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                         const SizedBox(height: 20),
 
@@ -135,7 +135,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           items: _genders.map((g) {
                             return DropdownMenuItem<String>(
                               value: g['value'],
-                              child: AppText(g['label']!, fontWeight: FontWeight.w600),
+                              child: AppText(g['label']!, fontWeight: FontWeight.w500),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -158,7 +158,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           items: _currencies.map((currency) {
                             return DropdownMenuItem<String>(
                               value: currency,
-                              child: AppText(currency, fontWeight: FontWeight.w600),
+                              child: AppText(currency, fontWeight: FontWeight.w500),
                             );
                           }).toList(),
                           onChanged: (val) {
@@ -304,7 +304,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             color: textColor,
             fontFamily: 'Inter',
             fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
           ),
           items: items,
           onChanged: onChanged,

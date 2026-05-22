@@ -96,7 +96,7 @@ class LockNumberPad extends StatelessWidget {
           child: AppText(
             digit,
             fontSize: 28,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: isDark ? Colors.white : AppColors.gray900,
           ),
         ),

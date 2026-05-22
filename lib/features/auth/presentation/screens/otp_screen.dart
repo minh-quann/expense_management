@@ -53,7 +53,7 @@ class _OtpScreenState extends State<OtpScreen> {
       textStyle: TextStyle(
         fontSize: 20,
         color: AppColors.textPrimary(context),
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w500,
       ),
       decoration: BoxDecoration(
         border: Border.all(color: AppColors.textSecondary(context).withValues(alpha: 0.2)),
@@ -94,7 +94,7 @@ class _OtpScreenState extends State<OtpScreen> {
                   AppText(
                     l10n.otp_title,
                     fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                   const SizedBox(height: 8),
                   AppText(

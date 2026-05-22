@@ -45,7 +45,7 @@ class _StatsScreenState extends State<StatsScreen> {
         title: AppText(
           l10n.stats_title,
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
       ),
@@ -133,7 +133,7 @@ class _StatsScreenState extends State<StatsScreen> {
       decoration: ShapeDecoration(
         color: AppColors.surface(context),
         shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
         ),
         shadows: [
           BoxShadow(
@@ -145,9 +145,9 @@ class _StatsScreenState extends State<StatsScreen> {
       ),
       child: Column(
         children: [
-          AppText(chartTitle, fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
+          AppText(chartTitle, fontSize: 16, fontWeight: FontWeight.w500, color: AppColors.textPrimary(context)),
           const SizedBox(height: 8),
-          AppText(totalAmountStr, fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context)),
+          AppText(totalAmountStr, fontSize: 28, fontWeight: FontWeight.w600, color: AppColors.textPrimary(context)),
           const SizedBox(height: 32),
           if (totalAmount > 0)
             SizedBox(
@@ -219,7 +219,7 @@ class _StatsScreenState extends State<StatsScreen> {
       radius: radius,
       titleStyle: TextStyle(
         fontSize: fontSize,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w600,
         color: Colors.white,
       ),
     );
@@ -234,7 +234,7 @@ class _StatsScreenState extends State<StatsScreen> {
           AppText(
             l10n.stats_top_spending,
             fontSize: 18,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary(context),
           ),
           const SizedBox(height: 16),
@@ -298,13 +298,13 @@ class _StatsScreenState extends State<StatsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppText(name, fontSize: 16, fontWeight: FontWeight.w600),
+                AppText(name, fontSize: 16, fontWeight: FontWeight.w500),
                 const SizedBox(height: 4),
                 AppText(percentage, fontSize: 13, color: AppColors.textSecondary(context)),
               ],
             ),
           ),
-          AppText(amount, fontSize: 16, fontWeight: FontWeight.bold),
+          AppText(amount, fontSize: 16, fontWeight: FontWeight.w600),
         ],
       ),
     );

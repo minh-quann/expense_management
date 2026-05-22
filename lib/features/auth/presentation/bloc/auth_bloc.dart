@@ -6,6 +6,7 @@ import 'package:expense_management/core/constants/app_constants.dart';
 import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
+import 'package:expense_management/core/utils/api_error_mapper.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -37,8 +38,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         emit(AuthSuccess());
       } on DioException catch (e) {
-        final errorMessage = e.response?.data['error'] ?? 'Login failed';
-        emit(AuthFailure(errorMessage.toString()));
+        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -69,8 +69,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         emit(AuthSuccess());
       } on DioException catch (e) {
-        final errorMessage = e.response?.data['error'] ?? 'Registration failed';
-        emit(AuthFailure(errorMessage.toString()));
+        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -121,8 +120,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         emit(AuthSuccess());
       } on DioException catch (e) {
-        final errorMessage = e.response?.data['error'] ?? 'Google login on backend failed';
-        emit(AuthFailure(errorMessage.toString()));
+        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -196,8 +194,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final token = response.data['token'] ?? '';
         emit(ForgotPasswordSuccess(token));
       } on DioException catch (e) {
-        final errorMessage = e.response?.data['error'] ?? 'Yêu cầu đặt lại mật khẩu thất bại';
-        emit(AuthFailure(errorMessage.toString()));
+        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -214,8 +211,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final message = response.data['message'] ?? 'Đặt lại mật khẩu thành công';
         emit(ResetPasswordSuccess(message));
       } on DioException catch (e) {
-        final errorMessage = e.response?.data['error'] ?? 'Đặt lại mật khẩu thất bại';
-        emit(AuthFailure(errorMessage.toString()));
+        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }

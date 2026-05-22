@@ -39,7 +39,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
         title: AppText(
           'Mục tiêu tiết kiệm',
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
         leading: IconButton(
@@ -115,7 +115,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
       decoration: ShapeDecoration(
         color: AppColors.surface(context),
         shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
         ),
       ),
       child: Column(
@@ -136,7 +136,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppText(title, fontSize: 16, fontWeight: FontWeight.w600),
+                    AppText(title, fontSize: 16, fontWeight: FontWeight.w500),
                     const SizedBox(height: 4),
                     AppText(
                       'Hoàn thành ${(percentage * 100).toStringAsFixed(1)}%',
@@ -162,7 +162,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              AppText('₫${(currentAmount / 1000000).toStringAsFixed(1)}M', color: iconColor, fontWeight: FontWeight.w600),
+              AppText('₫${(currentAmount / 1000000).toStringAsFixed(1)}M', color: iconColor, fontWeight: FontWeight.w500),
               AppText('₫${(targetAmount / 1000000).toStringAsFixed(1)}M', color: AppColors.textSecondary(context)),
             ],
           ),

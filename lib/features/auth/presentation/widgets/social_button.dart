@@ -28,7 +28,7 @@ class SocialButton extends StatelessWidget {
         icon: icon,
         label: AppText(
           label,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

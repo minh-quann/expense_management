@@ -42,7 +42,7 @@ class AppButton extends StatelessWidget {
     this.borderColor,
     this.borderRadius = 100,
     this.expand = true,
-    this.fontWeight = FontWeight.bold,
+    this.fontWeight = FontWeight.w600,
   });
 
   @override

@@ -132,7 +132,7 @@ class _LockScreenState extends State<LockScreen> with SingleTickerProviderStateM
                       AppText(
                         _getTitle(state.mode),
                         fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : AppColors.gray900,
                       ),
 
@@ -193,7 +193,7 @@ class _LockScreenState extends State<LockScreen> with SingleTickerProviderStateM
                           child: const AppText(
                             'Quên mã PIN?',
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.primary,
                           ),
                         ),
@@ -362,7 +362,7 @@ class _LockScreenState extends State<LockScreen> with SingleTickerProviderStateM
                     AppText(
                       'Thiết lập câu hỏi bảo mật',
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : AppColors.gray900,
                       textAlign: TextAlign.center,
                     ),

@@ -40,7 +40,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
         title: AppText(
           'Giao dịch định kỳ',
           fontSize: 18,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.textPrimary(context),
         ),
         leading: IconButton(
@@ -139,7 +139,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                 AppText(
                   title, 
                   fontSize: 16, 
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: isActive ? AppColors.textPrimary(context) : AppColors.textSecondary(context),
                 ),
                 const SizedBox(height: 4),
@@ -157,7 +157,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
               AppText(
                 '${isExpense ? '-' : '+'}₫${(amount / 1000).toStringAsFixed(0)}k',
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: isActive 
                   ? (isExpense ? AppColors.transactionExpense : AppColors.transactionIncome)
                   : AppColors.textSecondary(context),
@@ -174,7 +174,7 @@ class _RecurringScreenState extends State<RecurringScreen> {
                 child: AppText(
                   isActive ? 'Đang bật' : 'Tạm dừng',
                   fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: isActive ? AppColors.green700 : AppColors.gray600,
                 ),
               ),

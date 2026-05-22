@@ -55,7 +55,7 @@ class BottomSheetContainer extends StatelessWidget {
           AppText(
             title,
             fontSize: 20,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary(context),
           ),
           const SizedBox(height: 16),
