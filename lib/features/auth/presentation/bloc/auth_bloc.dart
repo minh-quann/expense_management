@@ -6,7 +6,7 @@ import 'package:expense_management/core/constants/app_constants.dart';
 import 'package:expense_management/core/network/api_client.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
-import 'package:expense_management/core/utils/api_error_mapper.dart';
+import 'package:expense_management/core/network/error_handler.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -38,7 +38,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         emit(AuthSuccess());
       } on DioException catch (e) {
-        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
+        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -69,7 +69,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         emit(AuthSuccess());
       } on DioException catch (e) {
-        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
+        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -120,7 +120,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         emit(AuthSuccess());
       } on DioException catch (e) {
-        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
+        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -194,7 +194,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final token = response.data['token'] ?? '';
         emit(ForgotPasswordSuccess(token));
       } on DioException catch (e) {
-        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
+        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
@@ -211,7 +211,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final message = response.data['message'] ?? 'Đặt lại mật khẩu thành công';
         emit(ResetPasswordSuccess(message));
       } on DioException catch (e) {
-        emit(AuthFailure(ApiErrorMapper.getErrorMessage(e)));
+        emit(AuthFailure(ErrorHandler.handle(e).failure.message));
       } catch (e) {
         emit(AuthFailure(e.toString()));
       }
