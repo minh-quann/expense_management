@@ -24,58 +24,60 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: AppColors.background(context),
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 32),
-              _buildBalanceCard(context),
-              const SizedBox(height: 32),
-              _buildTransactionsHeader(context),
-              const SizedBox(height: 16),
-              _buildTransactionsList(context),
-              const SizedBox(height: 100), // Space for bottom nav
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return ScreenHeader(
-      title: AppLocalizations.of(context)!.home_title,
-      padding: EdgeInsets.zero,
-      leading: ScreenHeader.circleButton(
-        context: context,
-        onTap: () {
-          // TODO: Mở màn hình thông báo
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary(context), size: 24),
-            Positioned(
-              right: 2,
-              top: 2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.notificationDot,
-                  shape: BoxShape.circle,
+            ScreenHeader(
+              title: AppLocalizations.of(context)!.home_title,
+              leading: ScreenHeader.circleButton(
+                context: context,
+                onTap: () {
+                  // TODO: Mở màn hình thông báo
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary(context), size: 24),
+                    Positioned(
+                      right: 2,
+                      top: 2,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.notificationDot,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              trailing: ScreenHeader.circleButton(
+                context: context,
+                onTap: () => context.push('/add-transaction'),
+                child: Icon(Icons.add_rounded, color: AppColors.textPrimary(context), size: 24),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _buildBalanceCard(context),
+                    const SizedBox(height: 32),
+                    _buildTransactionsHeader(context),
+                    const SizedBox(height: 16),
+                    _buildTransactionsList(context),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-      ),
-      trailing: ScreenHeader.circleButton(
-        context: context,
-        onTap: () => context.push('/add-transaction'),
-        child: Icon(Icons.add_rounded, color: AppColors.textPrimary(context), size: 24),
       ),
     );
   }

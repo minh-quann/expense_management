@@ -79,8 +79,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
                     } else if (_selectedFilterIndex == 2) {
                       filtered = filtered.where((t) => t.type == TransactionType.income).toList();
-                    } else if (_selectedFilterIndex == 3) {
-                      filtered = filtered.where((t) => t.type == TransactionType.transfer).toList();
                     }
 
                     if (filtered.isEmpty) {
@@ -144,7 +142,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           AppLocalizations.of(context)!.transactions_filter_all,
           AppLocalizations.of(context)!.transactions_filter_expense,
           AppLocalizations.of(context)!.transactions_filter_income,
-          AppLocalizations.of(context)!.transactions_filter_transfer,
         ],
         selectedIndex: _selectedFilterIndex,
         onChanged: (index) {

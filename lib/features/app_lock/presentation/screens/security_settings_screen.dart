@@ -9,6 +9,7 @@ import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_state.dart';
 import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
 import 'package:expense_management/shared/widgets/app_toast.dart';
+import 'package:expense_management/shared/widgets/app_liquid_glass_switch.dart';
 
 /// Settings screen for managing app lock (PIN + Biometric)
 class SecuritySettingsScreen extends StatelessWidget {
@@ -166,7 +167,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
                 subtitle: _isLockEnabled
                     ? 'Ứng dụng sẽ yêu cầu mã PIN khi mở'
                     : 'Tắt - không yêu cầu mã PIN',
-                trailing: Switch.adaptive(
+                trailing: AppLiquidGlassSwitch(
                   value: _isLockEnabled,
                   onChanged: (value) {
                     if (value) {
@@ -175,7 +176,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
                       _showDisableVerification(context);
                     }
                   },
-                  activeTrackColor: AppColors.primary,
+                  activeColor: AppColors.primary,
                 ),
               ),
 
@@ -197,15 +198,16 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
                           ? 'Đang bật - mở khóa nhanh bằng sinh trắc học'
                           : 'Tắt - chỉ sử dụng mã PIN')
                       : 'Thiết bị không hỗ trợ sinh trắc học',
-                  trailing: Switch.adaptive(
-                    value: _isBiometricEnabled,
-                    onChanged: (_isLockEnabled && _isBiometricAvailable)
-                        ? (value) {
-                            context.read<AppLockBloc>().add(ToggleBiometric(value));
-                            setState(() => _isBiometricEnabled = value);
-                          }
-                        : null,
-                    activeTrackColor: AppColors.green600,
+                  trailing: IgnorePointer(
+                    ignoring: !(_isLockEnabled && _isBiometricAvailable),
+                    child: AppLiquidGlassSwitch(
+                      value: _isBiometricEnabled,
+                      onChanged: (value) {
+                        context.read<AppLockBloc>().add(ToggleBiometric(value));
+                        setState(() => _isBiometricEnabled = value);
+                      },
+                      activeColor: AppColors.green600,
+                    ),
                   ),
                 ),
               ),

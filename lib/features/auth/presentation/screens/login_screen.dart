@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/services.dart';
 
@@ -305,6 +306,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 icon: SvgPicture.asset('assets/icons/google-icon-logo-svgrepo-com.svg', width: 20, height: 20),
                                 onPressed: authState is AuthLoading ? () {} : () => _onGoogleLoginPressed(context),
                               ),
+
+                              if (kDebugMode) ...[
+                                const SizedBox(height: 16),
+                                AppButton(
+                                  label: 'Bỏ qua đăng nhập (Dev)',
+                                  isOutlined: true,
+                                  foregroundColor: AppColors.error,
+                                  borderColor: AppColors.error.withValues(alpha: 0.5),
+                                  onPressed: authState is AuthLoading
+                                      ? null
+                                      : () => context.read<AuthBloc>().add(BypassLoginDevEvent()),
+                                ),
+                              ],
                             ],
                           ),
                         ),

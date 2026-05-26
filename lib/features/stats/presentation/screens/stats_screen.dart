@@ -5,6 +5,7 @@ import 'package:expense_management/shared/widgets/app_text.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/stats/presentation/bloc/stats_bloc.dart';
 import 'package:expense_management/features/stats/presentation/bloc/stats_event.dart';
@@ -37,18 +38,8 @@ class _StatsScreenState extends State<StatsScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: AppText(
-          l10n.stats_title,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary(context),
-        ),
-      ),
       body: SafeArea(
+        bottom: false,
         child: BlocBuilder<StatsBloc, StatsState>(
           builder: (context, state) {
             if (state is StatsLoading) {
@@ -62,31 +53,54 @@ class _StatsScreenState extends State<StatsScreen> {
               final double totalAmount = isExpense ? stats.totalExpense : stats.totalIncome;
               final categories = isExpense ? stats.expenseCategories : stats.incomeCategories;
 
-              return SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTypeToggle(l10n),
-                    const SizedBox(height: 24),
-                    _buildChartSection(l10n, totalAmount, categories),
-                    const SizedBox(height: 32),
-                    _buildTopSpendingSection(l10n, totalAmount, categories),
-                    const SizedBox(height: 100), // Space for bottom nav
-                  ],
-                ),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ScreenHeader(title: l10n.stats_title),
+                  const SizedBox(height: 16),
+                  _buildTypeToggle(l10n),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 24),
+                          _buildChartSection(l10n, totalAmount, categories),
+                          const SizedBox(height: 32),
+                          _buildTopSpendingSection(l10n, totalAmount, categories),
+                          const SizedBox(height: 100),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               );
             }
 
             if (state is StatsError) {
-              return Center(
-                child: AppText(
-                  'Lỗi tải dữ liệu: ${state.message}',
-                  color: AppColors.red500,
-                ),
+              return Column(
+                children: [
+                  ScreenHeader(title: l10n.stats_title),
+                  Expanded(
+                    child: Center(
+                      child: AppText(
+                        'Lỗi tải dữ liệu: ${state.message}',
+                        color: AppColors.red500,
+                      ),
+                    ),
+                  ),
+                ],
               );
             }
 
-            return const Center(child: AppText('Chưa có dữ liệu thống kê'));
+            return Column(
+              children: [
+                ScreenHeader(title: l10n.stats_title),
+                const Expanded(
+                  child: Center(child: AppText('Chưa có dữ liệu thống kê')),
+                ),
+              ],
+            );
           },
         ),
       ),

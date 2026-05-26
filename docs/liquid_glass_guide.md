@@ -163,3 +163,28 @@ AppLiquidGlass(
 - `glassColor`: Tự động thích ứng với chế độ Sáng/Tối nếu không truyền vào.
 - `lightIntensity`: Tự động căn chỉnh độ tương phản rìa sáng cho chế độ Sáng/Tối.
 - `padding` / `margin`: Điều chỉnh khoảng cách bên trong/bên ngoài hộp.
+
+---
+
+## 7. Sử dụng Widget dùng chung `AppLiquidGlassSwitch` cho nút bật tắt (Switch Toggle)
+
+Để tạo nút bật/tắt (Switch/Toggle) độc lập sử dụng hiệu ứng kính lỏng cao cấp kết hợp hiệu ứng hòa trộn lỏng (Liquid Blending) và chuyển động đàn hồi (Spring Motion), hãy sử dụng `AppLiquidGlassSwitch`:
+
+```dart
+import 'package:expense_management/shared/widgets/app_liquid_glass_switch.dart';
+
+AppLiquidGlassSwitch(
+  value: isNotificationEnabled,
+  onChanged: (newValue) {
+    setState(() {
+      isNotificationEnabled = newValue;
+    });
+  },
+)
+```
+
+### Các thuộc tính tùy biến chính của `AppLiquidGlassSwitch`:
+- `width` / `height`: Kích thước của thanh trượt Switch (mặc định là 56.0 x 32.0).
+- `activeColor`: Màu sắc của nền kính khi Switch ở trạng thái ON (mặc định sử dụng màu `AppColors.primary`).
+- `inactiveColor`: Màu sắc của nền kính khi Switch ở trạng thái OFF (mặc định tự động thích ứng với Light/Dark Mode).
+

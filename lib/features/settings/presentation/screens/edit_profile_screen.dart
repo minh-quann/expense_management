@@ -40,7 +40,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _phoneController = TextEditingController(text: widget.profile.phoneNumber);
     _addressController = TextEditingController(text: widget.profile.address);
     _selectedCurrency = widget.profile.currencyCode;
-    _selectedGender = widget.profile.gender.isNotEmpty ? widget.profile.gender : 'male';
+    final genderLower = widget.profile.gender.trim().toLowerCase();
+    _selectedGender = _genders.any((g) => g['value'] == genderLower) ? genderLower : 'male';
   }
 
   @override
@@ -193,7 +194,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   currencyCode: _selectedCurrency,
                                   phoneNumber: _phoneController.text.trim(),
                                   address: _addressController.text.trim(),
-                                  gender: _selectedGender,
+                                  gender: _selectedGender.toUpperCase(),
                                 ),
                               );
                         }

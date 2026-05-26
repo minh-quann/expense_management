@@ -50,6 +50,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ForgotPasswordEvent>(_onForgotPassword);
     on<ResetPasswordEvent>(_onResetPassword);
     on<LogoutEvent>(_onLogout);
+    on<BypassLoginDevEvent>(_onBypassLoginDev);
   }
 
   Future<void> _onLoginWithEmail(LoginWithEmailEvent event, Emitter<AuthState> emit) async {
@@ -197,6 +198,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ).signOut(),
       ]);
       emit(AuthInitial());
+    } catch (e) {
+      emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onBypassLoginDev(BypassLoginDevEvent event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      // Save dummy credentials so AuthTokenManager.isLoggedIn() returns true
+      await AuthTokenManager.saveAuthData(
+        token: 'dummy_dev_token',
+        refreshToken: 'dummy_dev_refresh_token',
+        userId: 'dev_user_id',
+        email: 'dev@example.com',
+        name: 'Developer',
+      );
+      emit(AuthSuccess());
     } catch (e) {
       emit(AuthFailure(e.toString()));
     }

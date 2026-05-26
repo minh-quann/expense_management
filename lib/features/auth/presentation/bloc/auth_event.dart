@@ -108,3 +108,5 @@ class ResetPasswordEvent extends AuthEvent {
   @override
   List<Object?> get props => [email, token, newPassword];
 }
+
+class BypassLoginDevEvent extends AuthEvent {}

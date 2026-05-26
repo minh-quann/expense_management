@@ -83,20 +83,24 @@ class ScreenHeader extends StatelessWidget {
       leadingWidget = leading ?? const SizedBox(width: 44);
     }
 
-    return Padding(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          leadingWidget,
-          AppText(
-            title,
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary(context),
-          ),
-          trailing ?? const SizedBox(width: 44),
-        ],
+    return SizedBox(
+      height: 64,
+      child: Padding(
+        padding: padding ?? const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            leadingWidget,
+            AppText(
+              title,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary(context),
+            ),
+            trailing ?? const SizedBox(width: 44),
+          ],
+        ),
       ),
     );
   }

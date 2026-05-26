@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
+import 'package:expense_management/shared/widgets/app_text.dart';
 
 class AnimatedToggleBar extends StatefulWidget {
   final List<String> options;
@@ -111,22 +112,16 @@ class _AnimatedToggleBarState extends State<AnimatedToggleBar> {
                       child: SizedBox(
                         width: itemWidth,
                         child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 200),
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
-                              color: isSelected 
-                                ? AppColors.primary 
-                                : AppColors.textSecondary(context),
-                            ),
-                            child: Text(
-                              widget.options[index],
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                            ),
+                          child: AppText(
+                            widget.options[index],
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
+                            color: isSelected 
+                              ? AppColors.primary 
+                              : AppColors.textSecondary(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ),

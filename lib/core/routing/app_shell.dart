@@ -11,6 +11,7 @@ import 'package:expense_management/features/transactions/presentation/bloc/trans
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
+import 'package:expense_management/shared/widgets/app_text.dart';
 
 class AppShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -150,15 +151,11 @@ class _AppShellState extends State<AppShell> {
                 ),
               ),
               const SizedBox(height: 2),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  fontFamily: 'Inter',
-                ),
-                child: Text(label),
+              AppText(
+                label,
+                color: color,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
               ),
             ],
           ),
