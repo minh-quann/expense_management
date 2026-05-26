@@ -72,37 +72,33 @@ class _AppShellState extends State<AppShell> {
                   selectedIndex: widget.navigationShell.currentIndex,
                   count: 4,
                   isDark: isDark,
-                  onChanged: (index) => _onTap(context, index),
+                  onChanged: (index) {
+                    _onTap(context, index);
+                  },
                   borderRadius: 100,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       _buildNavItem(
-                        context,
                         0,
                         SFSymbols.house,
                         SFSymbols.house_fill,
                         AppLocalizations.of(context)!.nav_home,
                       ),
                       _buildNavItem(
-                        context,
                         1,
                         SFSymbols.list_clipboard,
                         SFSymbols.list_clipboard_fill,
-                        AppLocalizations.of(
-                          context,
-                        )!.nav_transactions,
+                        AppLocalizations.of(context)!.nav_transactions,
                       ),
                       _buildNavItem(
-                        context,
                         2,
                         SFSymbols.chart_bar,
                         SFSymbols.chart_bar_fill,
                         AppLocalizations.of(context)!.nav_stats,
                       ),
                       _buildNavItem(
-                        context,
                         3,
                         SFSymbols.person,
                         SFSymbols.person_fill,
@@ -120,46 +116,46 @@ class _AppShellState extends State<AppShell> {
   }
 
   Widget _buildNavItem(
-    BuildContext context,
     int index,
     IconData icon,
     IconData activeIcon,
     String label,
   ) {
-    final isSelected = widget.navigationShell.currentIndex == index;
-    final isDark = AppColors.isDark(context);
-    final color = isSelected
-        ? AppColors.primary
-        : (isDark ? const Color(0xFF8E8E93) : const Color(0xFF3C3C43));
-
     return Expanded(
-      child: GestureDetector(
-        onTap: () => _onTap(context, index),
-        behavior: HitTestBehavior.opaque,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                child: Icon(
-                  isSelected ? activeIcon : icon,
-                  key: ValueKey(isSelected),
-                  color: color,
-                  size: 24,
-                ),
+      child: Builder(
+        builder: (context) {
+          final activeIndex = IndicatorStateScope.of(context);
+          final isSelected = activeIndex == index;
+          final isDark = AppColors.isDark(context);
+          final color = isSelected
+              ? AppColors.primary
+              : (isDark ? const Color(0xFF8E8E93) : const Color(0xFF3C3C43));
+
+          return GestureDetector(
+            onTap: () => _onTap(context, index),
+            behavior: HitTestBehavior.opaque,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isSelected ? activeIcon : icon,
+                    color: color,
+                    size: 24,
+                  ),
+                  const SizedBox(height: 2),
+                  AppText(
+                    label,
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              AppText(
-                label,
-                color: color,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

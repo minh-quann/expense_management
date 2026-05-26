@@ -88,7 +88,11 @@ class AppLiquidGlass extends StatelessWidget {
           thickness: thickness,
           blur: blur,
           saturation: saturation,
-          lightIntensity: lightIntensity ?? (isDark ? 0.3 : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
+          lightIntensity:
+              lightIntensity ??
+              (isDark
+                  ? 0.3
+                  : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
           ambientStrength: ambientStrength ?? (isDark ? 0.3 : 0.5),
           lightAngle: math.pi / 4,
           glassColor: glassColor ?? defaultGlassColor,
@@ -98,15 +102,19 @@ class AppLiquidGlass extends StatelessWidget {
           shape: shape ?? LiquidRoundedSuperellipse(borderRadius: borderRadius),
           child: Container(
             padding: padding,
-            decoration: isDark ? ShapeDecoration(
-              shape: RoundedSuperellipseBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                side: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.09), // Even grey border like Telegram
-                  width: 1, // Slightly thicker border
-                ),
-              ),
-            ) : null,
+            decoration: isDark
+                ? ShapeDecoration(
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: BorderRadius.circular(borderRadius),
+                      side: BorderSide(
+                        color: Colors.white.withValues(
+                          alpha: 0.09,
+                        ), // Even grey border like Telegram
+                        width: 1, // Slightly thicker border
+                      ),
+                    ),
+                  )
+                : null,
             child: child,
           ),
         ),
@@ -124,6 +132,7 @@ class AppLiquidGlassIndicator extends StatefulWidget {
     required this.count,
     required this.onChanged,
     required this.child,
+    this.onHoverChanged,
     this.isDark,
     this.borderRadius = 100.0,
     this.refractiveIndex = 1.4,
@@ -146,6 +155,9 @@ class AppLiquidGlassIndicator extends StatefulWidget {
 
   /// Callback when the selected index is updated via drag gesture.
   final ValueChanged<int> onChanged;
+
+  /// Real-time callback during dragging to track closest tab index.
+  final ValueChanged<int?>? onHoverChanged;
 
   /// The navigation/toggle bar items.
   final Widget child;
@@ -196,6 +208,7 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
   late final ValueNotifier<double> _xAlignNotifier;
   late final ValueNotifier<bool> _isDownNotifier;
   late final ValueNotifier<bool> _isDraggingNotifier;
+  late int _activeSlot;
 
   /// Map index directly to alignment range -1..1
   double _computeXAlign(int index) {
@@ -207,23 +220,45 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
   @override
   void initState() {
     super.initState();
+    _activeSlot = widget.selectedIndex;
     _xAlignNotifier = ValueNotifier(_computeXAlign(widget.selectedIndex));
     _isDownNotifier = ValueNotifier(false);
     _isDraggingNotifier = ValueNotifier(false);
+    _xAlignNotifier.addListener(_handleAlignChange);
   }
 
   @override
   void dispose() {
+    _xAlignNotifier.removeListener(_handleAlignChange);
     _xAlignNotifier.dispose();
     _isDownNotifier.dispose();
     _isDraggingNotifier.dispose();
     super.dispose();
   }
 
+  void _handleAlignChange() {
+    // Only update hover index when user is actively interacting
+    if (!_isDownNotifier.value && !_isDraggingNotifier.value) return;
+    final currentRelativeX = (_xAlignNotifier.value + 1) / 2;
+    final targetSlot = (currentRelativeX * (widget.count - 1)).round().clamp(
+      0,
+      widget.count - 1,
+    );
+    if (_activeSlot != targetSlot) {
+      setState(() {
+        _activeSlot = targetSlot;
+      });
+      widget.onHoverChanged?.call(targetSlot);
+    }
+  }
+
   @override
   void didUpdateWidget(covariant AppLiquidGlassIndicator oldWidget) {
     if (oldWidget.selectedIndex != widget.selectedIndex) {
       _xAlignNotifier.value = _computeXAlign(widget.selectedIndex);
+      setState(() {
+        _activeSlot = widget.selectedIndex;
+      });
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -280,7 +315,6 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
     final box = context.findRenderObject() as RenderBox;
     final currentRelativeX =
         (_xAlignNotifier.value + 1) / 2; // Convert from -1..1 to 0..1
-    final tabWidth = 1.0 / widget.count;
 
     final indicatorWidth = 1.0 / widget.count;
     final draggableRange = 1.0 - indicatorWidth;
@@ -297,9 +331,9 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
       const velocityThreshold = 0.5;
       if (velocityX.abs() > velocityThreshold) {
         final projectedX = (currentRelativeX + velocityX * 0.3).clamp(0.0, 1.0);
-        targetSlot = (projectedX / tabWidth).round().clamp(0, widget.count - 1);
+        targetSlot = (projectedX * (widget.count - 1)).round().clamp(0, widget.count - 1);
       } else {
-        targetSlot = (currentRelativeX / tabWidth).round().clamp(
+        targetSlot = (currentRelativeX * (widget.count - 1)).round().clamp(
           0,
           widget.count - 1,
         );
@@ -308,6 +342,13 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
 
     final navIndex = targetSlot;
     _xAlignNotifier.value = _computeXAlign(navIndex);
+
+    setState(() {
+      _activeSlot = navIndex;
+    });
+
+    // Reset hover to indicate drag finished
+    widget.onHoverChanged?.call(null);
 
     if (navIndex != widget.selectedIndex) {
       widget.onChanged(navIndex);
@@ -318,6 +359,11 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
     _isDraggingNotifier.value = false;
     _isDownNotifier.value = false;
     _xAlignNotifier.value = _computeXAlign(widget.selectedIndex);
+    setState(() {
+      _activeSlot = widget.selectedIndex;
+    });
+    // Reset hover back to null to indicate drag finished
+    widget.onHoverChanged?.call(null);
   }
 
   @override
@@ -403,7 +449,7 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
                       ),
                       // Background/Child scales slightly when active
                       Transform.scale(
-                        scale: 1.0 + (thickness * 0.04), // Grow by 4%
+                        scale: 1.0 + (thickness * 0.03), // Grow by 4%
                         child: stackChild!,
                       ),
                       // Active glass pill - always in tree, visibility via LiquidGlassSettings.visibility
@@ -415,12 +461,12 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
                         child: LiquidGlass.withOwnLayer(
                           settings: LiquidGlassSettings(
                             visibility: thickness,
-                            glassColor: const Color.fromARGB(0, 255, 255, 255),
-                            saturation: 1.5,
+                            glassColor: AppColors.primary,
+                            saturation: 1,
                             refractiveIndex: 1.2,
-                            thickness: 40,
-                            lightIntensity: 2.5,
-                            chromaticAberration: 0.5,
+                            thickness: 48,
+                            lightIntensity: 1.5,
+                            chromaticAberration: 0.15,
                             blur: 0,
                           ),
                           shape: LiquidRoundedSuperellipse(
@@ -440,16 +486,25 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
                   child: Container(
                     padding: widget.padding,
                     margin: widget.margin,
-                    decoration: dark ? ShapeDecoration(
-                      shape: RoundedSuperellipseBorder(
-                        borderRadius: BorderRadius.circular(widget.borderRadius),
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.09), // Even grey border like Telegram
-                          width: 1.2, // Slightly thicker border
-                        ),
-                      ),
-                    ) : null,
-                    child: widget.child,
+                    decoration: dark
+                        ? ShapeDecoration(
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(
+                                widget.borderRadius,
+                              ),
+                              side: BorderSide(
+                                color: Colors.white.withValues(
+                                  alpha: 0.09,
+                                ), // Even grey border like Telegram
+                                width: 1.2, // Slightly thicker border
+                              ),
+                            ),
+                          )
+                        : null,
+                    child: IndicatorStateScope(
+                      activeIndex: _activeSlot,
+                      child: widget.child,
+                    ),
                   ),
                 ),
               );
@@ -466,7 +521,11 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
           thickness: widget.thickness,
           blur: widget.blur,
           saturation: widget.saturation,
-          lightIntensity: widget.lightIntensity ?? (dark ? 0.3 : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
+          lightIntensity:
+              widget.lightIntensity ??
+              (dark
+                  ? 0.3
+                  : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
           ambientStrength: widget.ambientStrength ?? (dark ? 0.3 : 0.5),
           lightAngle: math.pi / 4,
           glassColor: widget.glassColor ?? defaultGlassColor,
@@ -563,5 +622,26 @@ class _IndicatorTransform extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// InheritedWidget to propagate the currently active (or hovered) tab index down the widget tree.
+class IndicatorStateScope extends InheritedWidget {
+  final int activeIndex;
+
+  const IndicatorStateScope({
+    super.key,
+    required this.activeIndex,
+    required super.child,
+  });
+
+  static int of(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<IndicatorStateScope>();
+    return scope?.activeIndex ?? 0;
+  }
+
+  @override
+  bool updateShouldNotify(IndicatorStateScope oldWidget) {
+    return oldWidget.activeIndex != activeIndex;
   }
 }
