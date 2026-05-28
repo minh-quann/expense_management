@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:toastification/toastification.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'package:expense_management/firebase_options.dart';
 import 'package:expense_management/injection.dart';
@@ -37,41 +38,46 @@ void main() async {
   // Initialize Dependency Injection
   await initInjection();
 
+  // Pre-warm glass shaders to avoid first-frame white flash
+  await LiquidGlassWidgets.initialize();
+
   runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider<AppLockBloc>(
-          create: (context) => getIt<AppLockBloc>(),
-        ),
-        BlocProvider<AuthBloc>(
-          create: (context) => getIt<AuthBloc>(),
-        ),
-        BlocProvider<LocaleCubit>(
-          create: (context) => LocaleCubit(),
-        ),
-        BlocProvider<WalletBloc>(
-          create: (context) => getIt<WalletBloc>(),
-        ),
-        BlocProvider<TransactionBloc>(
-          create: (context) => getIt<TransactionBloc>(),
-        ),
-        BlocProvider<CategoryBloc>(
-          create: (context) => getIt<CategoryBloc>(),
-        ),
-        BlocProvider<BudgetBloc>(
-          create: (context) => getIt<BudgetBloc>(),
-        ),
-        BlocProvider<GoalBloc>(
-          create: (context) => getIt<GoalBloc>(),
-        ),
-        BlocProvider<RecurringBloc>(
-          create: (context) => getIt<RecurringBloc>(),
-        ),
-        BlocProvider<StatsBloc>(
-          create: (context) => getIt<StatsBloc>(),
-        ),
-      ],
-      child: const MyApp(),
+    LiquidGlassWidgets.wrap(
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AppLockBloc>(
+            create: (context) => getIt<AppLockBloc>(),
+          ),
+          BlocProvider<AuthBloc>(
+            create: (context) => getIt<AuthBloc>(),
+          ),
+          BlocProvider<LocaleCubit>(
+            create: (context) => LocaleCubit(),
+          ),
+          BlocProvider<WalletBloc>(
+            create: (context) => getIt<WalletBloc>(),
+          ),
+          BlocProvider<TransactionBloc>(
+            create: (context) => getIt<TransactionBloc>(),
+          ),
+          BlocProvider<CategoryBloc>(
+            create: (context) => getIt<CategoryBloc>(),
+          ),
+          BlocProvider<BudgetBloc>(
+            create: (context) => getIt<BudgetBloc>(),
+          ),
+          BlocProvider<GoalBloc>(
+            create: (context) => getIt<GoalBloc>(),
+          ),
+          BlocProvider<RecurringBloc>(
+            create: (context) => getIt<RecurringBloc>(),
+          ),
+          BlocProvider<StatsBloc>(
+            create: (context) => getIt<StatsBloc>(),
+          ),
+        ],
+        child: const MyApp(),
+      ),
     ),
   );
 }

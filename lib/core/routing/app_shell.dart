@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_cupertino_symbols/flutter_cupertino_symbols.dart';
+import 'package:expense_management/shared/widgets/sf_symbols.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';

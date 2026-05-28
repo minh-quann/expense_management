@@ -57,10 +57,10 @@ dependencies:
   local_auth: ^3.0.1
   flutter_secure_storage: ^10.2.0
   toastification: ^3.2.0
-  flutter_cupertino_symbols: ^1.0.2
   get_it: ^9.2.1
   liquid_glass_renderer: ^0.2.0-dev.4
   motor: ^1.1.0
+  liquid_glass_widgets: ^0.12.8
 
 dev_dependencies:
   flutter_test:
@@ -127,6 +127,9 @@ flutter:
           weight: 800
         - asset: assets/fonts/GoogleSansFlex120pt-Black.ttf
           weight: 900
+    - family: SFSymbols
+      fonts:
+        - asset: assets/fonts/SFSymbols.ttf
   #   - family: Schyler
   #     fonts:
   #       - asset: fonts/Schyler-Regular.ttf

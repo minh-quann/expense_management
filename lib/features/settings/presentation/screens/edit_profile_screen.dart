@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
@@ -9,6 +10,7 @@ import 'package:expense_management/features/settings/presentation/bloc/profile_e
 import 'package:expense_management/features/settings/presentation/bloc/profile_state.dart';
 import 'package:expense_management/features/settings/domain/entities/user_profile.dart';
 import 'package:expense_management/shared/widgets/app_toast.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -57,24 +59,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final isDark = AppColors.isDark(context);
     final bgColor = AppColors.background(context);
     final textColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final headerHeight = statusBarHeight + 64.0;
     
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: AppText(
-          'Chỉnh sửa hồ sơ',
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-        centerTitle: true,
-      ),
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is ProfileLoaded) {
@@ -88,118 +77,187 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           builder: (context, state) {
             final isLoading = state is ProfileLoading;
 
-            return Column(
+            return Stack(
               children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        const AppText(
-                          'Thông tin cá nhân',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                // 1. Content
+                Positioned.fill(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(24.0, headerHeight + 16, 24.0, 24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Title
+                              const AppText(
+                                'Thông tin cá nhân',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Display Name input
+                              _buildLabel('Tên hiển thị', isDark),
+                              const SizedBox(height: 8),
+                              _buildTextField(_nameController, 'Nhập tên hiển thị của bạn', isDark),
+                              const SizedBox(height: 20),
+
+                              // Email (Read-only)
+                              _buildLabel('Email (Không thể thay đổi)', isDark),
+                              const SizedBox(height: 8),
+                              _buildReadOnlyTextField(widget.profile.email, isDark),
+                              const SizedBox(height: 20),
+
+                              // Phone Number input
+                              _buildLabel('Số điện thoại', isDark),
+                              const SizedBox(height: 8),
+                              _buildTextField(_phoneController, 'Nhập số điện thoại của bạn', isDark, keyboardType: TextInputType.phone),
+                              const SizedBox(height: 20),
+
+                              // Address input
+                              _buildLabel('Địa chỉ', isDark),
+                              const SizedBox(height: 8),
+                              _buildTextField(_addressController, 'Nhập địa chỉ của bạn', isDark),
+                              const SizedBox(height: 20),
+
+                              // Gender dropdown
+                              _buildLabel('Giới tính', isDark),
+                              const SizedBox(height: 8),
+                              _buildDropdown<String>(
+                                value: _selectedGender,
+                                items: _genders.map((g) {
+                                  return DropdownMenuItem<String>(
+                                    value: g['value'],
+                                    child: AppText(g['label']!, fontWeight: FontWeight.w500),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _selectedGender = val;
+                                    });
+                                  }
+                                },
+                                isDark: isDark,
+                                textColor: textColor,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Preferred currency dropdown
+                              _buildLabel('Đơn vị tiền tệ chính', isDark),
+                              const SizedBox(height: 8),
+                              _buildDropdown<String>(
+                                value: _selectedCurrency,
+                                items: _currencies.map((currency) {
+                                  return DropdownMenuItem<String>(
+                                    value: currency,
+                                    child: AppText(currency, fontWeight: FontWeight.w500),
+                                  );
+                                }).toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _selectedCurrency = val;
+                                    });
+                                  }
+                                },
+                                isDark: isDark,
+                                textColor: textColor,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 20),
+                      ),
 
-                        // Display Name input
-                        _buildLabel('Tên hiển thị', isDark),
-                        const SizedBox(height: 8),
-                        _buildTextField(_nameController, 'Nhập tên hiển thị của bạn', isDark),
-                        const SizedBox(height: 20),
-
-                        // Email (Read-only)
-                        _buildLabel('Email (Không thể thay đổi)', isDark),
-                        const SizedBox(height: 8),
-                        _buildReadOnlyTextField(widget.profile.email, isDark),
-                        const SizedBox(height: 20),
-
-                        // Phone Number input
-                        _buildLabel('Số điện thoại', isDark),
-                        const SizedBox(height: 8),
-                        _buildTextField(_phoneController, 'Nhập số điện thoại của bạn', isDark, keyboardType: TextInputType.phone),
-                        const SizedBox(height: 20),
-
-                        // Address input
-                        _buildLabel('Địa chỉ', isDark),
-                        const SizedBox(height: 8),
-                        _buildTextField(_addressController, 'Nhập địa chỉ của bạn', isDark),
-                        const SizedBox(height: 20),
-
-                        // Gender dropdown
-                        _buildLabel('Giới tính', isDark),
-                        const SizedBox(height: 8),
-                        _buildDropdown<String>(
-                          value: _selectedGender,
-                          items: _genders.map((g) {
-                            return DropdownMenuItem<String>(
-                              value: g['value'],
-                              child: AppText(g['label']!, fontWeight: FontWeight.w500),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() {
-                                _selectedGender = val;
-                              });
-                            }
-                          },
-                          isDark: isDark,
-                          textColor: textColor,
+                      // Save Button (Docked at bottom)
+                      SafeArea(
+                        top: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 16.0),
+                          child: AppButton(
+                            label: 'Lưu thay đổi',
+                            isLoading: isLoading,
+                            onPressed: () {
+                              final name = _nameController.text.trim();
+                              if (name.isNotEmpty) {
+                                context.read<ProfileBloc>().add(
+                                      UpdateProfileDetailsEvent(
+                                        displayName: name,
+                                        currencyCode: _selectedCurrency,
+                                        phoneNumber: _phoneController.text.trim(),
+                                        address: _addressController.text.trim(),
+                                        gender: _selectedGender.toUpperCase(),
+                                      ),
+                                    );
+                              }
+                            },
+                          ),
                         ),
-                        const SizedBox(height: 20),
-
-                        // Preferred currency dropdown
-                        _buildLabel('Đơn vị tiền tệ chính', isDark),
-                        const SizedBox(height: 8),
-                        _buildDropdown<String>(
-                          value: _selectedCurrency,
-                          items: _currencies.map((currency) {
-                            return DropdownMenuItem<String>(
-                              value: currency,
-                              child: AppText(currency, fontWeight: FontWeight.w500),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() {
-                                _selectedCurrency = val;
-                              });
-                            }
-                          },
-                          isDark: isDark,
-                          textColor: textColor,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
 
-                // Save Button (Docked at bottom)
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 16.0),
-                    child: AppButton(
-                      label: 'Lưu thay đổi',
-                      isLoading: isLoading,
-                      onPressed: () {
-                        final name = _nameController.text.trim();
-                        if (name.isNotEmpty) {
-                          context.read<ProfileBloc>().add(
-                                UpdateProfileDetailsEvent(
-                                  displayName: name,
-                                  currencyCode: _selectedCurrency,
-                                  phoneNumber: _phoneController.text.trim(),
-                                  address: _addressController.text.trim(),
-                                  gender: _selectedGender.toUpperCase(),
-                                ),
-                              );
-                        }
-                      },
-                    ),
+                // 2. Transparent Header with Gradient Blur (Pinned at top)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: headerHeight,
+                  child: Stack(
+                    children: [
+                      // 2.1. Fading Blur Layer
+                      Positioned.fill(
+                        child: ShaderMask(
+                          shaderCallback: (rect) {
+                            return const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.black, Colors.transparent],
+                              stops: [0.35, 1.0],
+                            ).createShader(rect);
+                          },
+                          blendMode: BlendMode.dstIn,
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.05),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // 2.2. Fading Background Color Layer
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                bgColor,
+                                bgColor.withValues(alpha: 0.8),
+                                bgColor.withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.45, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // 2.3. Actual Header Widgets
+                      Positioned.fill(
+                        child: Container(
+                          padding: EdgeInsets.only(top: statusBarHeight),
+                          alignment: Alignment.center,
+                          child: ScreenHeader(
+                            title: 'Chỉnh sửa hồ sơ',
+                            showBackButton: true,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

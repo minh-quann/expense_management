@@ -286,14 +286,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "9.1.1"
-  flutter_cupertino_symbols:
-    dependency: "direct main"
-    description:
-      name: flutter_cupertino_symbols
-      sha256: "30e6acb6302bf444e415751994ad46ce3fb805fac6dbabd2cf043a8a082da0f0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -613,6 +605,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0-dev.4"
+  liquid_glass_widgets:
+    dependency: "direct main"
+    description:
+      name: liquid_glass_widgets
+      sha256: "017562b30f5e5458ff93404fd5612688371fbf86ef00b3f185c19cd07a77277f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.12.8"
   local_auth:
     dependency: "direct main"
     description:

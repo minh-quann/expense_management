@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
@@ -5,6 +6,7 @@ import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:expense_management/shared/widgets/superellipse_input_border.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 
 import 'package:expense_management/features/categories/domain/entities/category.dart';
 import 'package:expense_management/shared/utils/category_helper.dart';
@@ -57,139 +59,193 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
     final bgColor = AppColors.background(context);
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final headerHeight = statusBarHeight + 64.0;
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: AppText(
-          widget.category != null ? 'Chỉnh sửa danh mục' : 'Thêm danh mục',
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary(context),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary(context), size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Preview
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: _selectedColor.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+      body: Stack(
+        children: [
+          // 1. Content
+          Positioned.fill(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(24, headerHeight + 16, 24, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Preview
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: _selectedColor.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(_selectedIcon, color: _selectedColor, size: 48),
+                          ),
                         ),
-                        child: Icon(_selectedIcon, color: _selectedColor, size: 48),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                    // Type Toggle
-                    AnimatedToggleBar(
-                      options: const ['Chi tiêu', 'Thu nhập'],
-                      selectedIndex: _selectedTypeIndex,
-                      onChanged: (index) {
-                        setState(() {
-                          _selectedTypeIndex = index;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 24),
+                        // Type Toggle
+                        AnimatedToggleBar(
+                          options: const ['Chi tiêu', 'Thu nhập'],
+                          selectedIndex: _selectedTypeIndex,
+                          onChanged: (index) {
+                            setState(() {
+                              _selectedTypeIndex = index;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 24),
 
-                    // Name Input
-                    AppText('Tên danh mục', fontSize: 14, fontWeight: FontWeight.w500),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _nameController,
-                      style: TextStyle(
-                        color: AppColors.textPrimary(context),
-                        fontFamily: 'Inter',
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Nhập tên danh mục...',
-                        hintStyle: TextStyle(
-                          color: AppColors.textSecondary(context),
-                          fontFamily: 'Inter',
+                        // Name Input
+                        AppText('Tên danh mục', fontSize: 14, fontWeight: FontWeight.w500),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _nameController,
+                          style: TextStyle(
+                            color: AppColors.textPrimary(context),
+                            fontFamily: 'Inter',
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Nhập tên danh mục...',
+                            hintStyle: TextStyle(
+                              color: AppColors.textSecondary(context),
+                              fontFamily: 'Inter',
+                            ),
+                            filled: true,
+                            fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100,
+                            border: SuperellipseInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: AppColors.border(context)),
+                            ),
+                            enabledBorder: SuperellipseInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: AppColors.border(context)),
+                            ),
+                            focusedBorder: SuperellipseInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(color: AppColors.primary),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
                         ),
-                        filled: true,
-                        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.gray100,
-                        border: SuperellipseInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppColors.border(context)),
-                        ),
-                        enabledBorder: SuperellipseInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppColors.border(context)),
-                        ),
-                        focusedBorder: SuperellipseInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppColors.primary),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // Colors
-                    AppText('Màu sắc', fontSize: 14, fontWeight: FontWeight.w500),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: _availableColors.map((color) => _buildColorItem(color)).toList(),
-                    ),
-                    const SizedBox(height: 24),
+                        // Colors
+                        AppText('Màu sắc', fontSize: 14, fontWeight: FontWeight.w500),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: _availableColors.map((color) => _buildColorItem(color)).toList(),
+                        ),
+                        const SizedBox(height: 24),
 
-                    // Icons
-                    AppText('Biểu tượng', fontSize: 14, fontWeight: FontWeight.w500),
-                    const SizedBox(height: 12),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 6,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: _availableIcons.length,
-                      itemBuilder: (context, index) {
-                        return _buildIconItem(_availableIcons[index]);
-                      },
+                        // Icons
+                        AppText('Biểu tượng', fontSize: 14, fontWeight: FontWeight.w500),
+                        const SizedBox(height: 12),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 6,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: _availableIcons.length,
+                          itemBuilder: (context, index) {
+                            return _buildIconItem(_availableIcons[index]);
+                          },
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: AppButton(
+                    label: 'Lưu danh mục',
+                    onPressed: () {
+                      if (_nameController.text.trim().isEmpty) return;
+                      context.pop({
+                        'name': _nameController.text.trim(),
+                        'type': _selectedTypeIndex == 0 ? 'EXPENSE' : 'INCOME',
+                        'icon': _selectedIcon,
+                        'color': _selectedColor,
+                      });
+                    },
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: AppButton(
-                label: 'Lưu danh mục',
-                onPressed: () {
-                  if (_nameController.text.trim().isEmpty) return;
-                  context.pop({
-                    'name': _nameController.text.trim(),
-                    'type': _selectedTypeIndex == 0 ? 'EXPENSE' : 'INCOME',
-                    'icon': _selectedIcon,
-                    'color': _selectedColor,
-                  });
-                },
-              ),
+          ),
+
+          // 2. Transparent Header with Gradient Blur (Pinned at top)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: headerHeight,
+            child: Stack(
+              children: [
+                // 2.1. Fading Blur Layer
+                Positioned.fill(
+                  child: ShaderMask(
+                    shaderCallback: (rect) {
+                      return const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black, Colors.transparent],
+                        stops: [0.35, 1.0],
+                      ).createShader(rect);
+                    },
+                    blendMode: BlendMode.dstIn,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2.2. Fading Background Color Layer
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          bgColor,
+                          bgColor.withValues(alpha: 0.8),
+                          bgColor.withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.45, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2.3. Actual Header Widgets
+                Positioned.fill(
+                  child: Container(
+                    padding: EdgeInsets.only(top: statusBarHeight),
+                    alignment: Alignment.center,
+                    child: ScreenHeader(
+                      title: widget.category != null ? 'Chỉnh sửa danh mục' : 'Thêm danh mục',
+                      showBackButton: true,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

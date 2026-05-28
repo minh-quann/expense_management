@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
 
 /// Custom number pad for PIN entry with biometric button support
 class LockNumberPad extends StatelessWidget {
@@ -73,26 +74,16 @@ class LockNumberPad extends StatelessWidget {
   }
 
   Widget _buildDigitButton(BuildContext context, String digit, bool isDark) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onDigitPressed(digit);
-        },
-        borderRadius: BorderRadius.circular(36),
-        splashColor: AppColors.primary.withValues(alpha: 0.15),
-        highlightColor: AppColors.primary.withValues(alpha: 0.08),
-        child: Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.black.withValues(alpha: 0.04),
-          ),
-          alignment: Alignment.center,
+    return AppLiquidGlassButton(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onDigitPressed(digit);
+      },
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        width: 72,
+        height: 72,
+        child: Center(
           child: AppText(
             digit,
             fontSize: 28,
@@ -110,26 +101,22 @@ class LockNumberPad extends StatelessWidget {
     VoidCallback? onTap,
     required bool isDark,
   }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap?.call();
-        },
-        borderRadius: BorderRadius.circular(36),
-        splashColor: AppColors.primary.withValues(alpha: 0.15),
-        child: SizedBox(
-          width: 72,
-          height: 72,
-          child: Center(
-            child: Icon(
-              icon,
-              size: icon == Icons.fingerprint ? 36 : 28,
-              color: icon == Icons.fingerprint
-                  ? AppColors.primary
-                  : (isDark ? Colors.white70 : AppColors.gray600),
-            ),
+    return AppLiquidGlassButton(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        width: 72,
+        height: 72,
+        child: Center(
+          child: Icon(
+            icon,
+            size: icon == Icons.fingerprint ? 36 : 28,
+            color: icon == Icons.fingerprint
+                ? AppColors.primary
+                : (isDark ? Colors.white70 : AppColors.gray600),
           ),
         ),
       ),

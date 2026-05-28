@@ -109,7 +109,8 @@ class AppLiquidGlass extends StatelessWidget {
         : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
 
     // Determine the border shape
-    final effectiveShape = shape ?? LiquidRoundedSuperellipse(borderRadius: borderRadius);
+    final effectiveShape =
+        shape ?? LiquidRoundedSuperellipse(borderRadius: borderRadius);
     final borderShape = effectiveShape is LiquidOval
         ? const OvalBorder(
             side: BorderSide(
@@ -119,17 +120,12 @@ class AppLiquidGlass extends StatelessWidget {
           )
         : RoundedSuperellipseBorder(
             borderRadius: BorderRadius.circular(borderRadius),
-            side: const BorderSide(
-              color: Color(0x17FFFFFF),
-              width: 1,
-            ),
+            side: const BorderSide(color: Color(0x17FFFFFF), width: 1),
           );
 
     Widget innerChild = Container(
       padding: padding,
-      decoration: isDark
-          ? ShapeDecoration(shape: borderShape)
-          : null,
+      decoration: isDark ? ShapeDecoration(shape: borderShape) : null,
       child: child,
     );
 
@@ -138,32 +134,51 @@ class AppLiquidGlass extends StatelessWidget {
         glowColor: isDark ? Colors.white24 : Colors.black12,
         child: innerChild,
       );
+
+      // Clip the touch/glow effect to match the glass shape and prevent square borders on press
+      if (effectiveShape is LiquidOval) {
+        innerChild = ClipOval(child: innerChild);
+      } else {
+        innerChild = ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: innerChild,
+        );
+      }
+    }
+
+    Widget glassWidget = LiquidGlassLayer(
+      settings: LiquidGlassSettings(
+        refractiveIndex: refractiveIndex,
+        thickness: thickness,
+        blur: blur,
+        saturation: saturation,
+        lightIntensity:
+            lightIntensity ??
+            (isDark
+                ? 0.3
+                : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
+        ambientStrength: ambientStrength ?? (isDark ? 0.3 : 0.5),
+        lightAngle: math.pi / 4,
+        glassColor: glassColor ?? defaultGlassColor,
+      ),
+      child: LiquidGlass.grouped(shape: effectiveShape, child: innerChild),
+    );
+
+    // Ensure the backdrop filter and glass background are clipped to the shape to prevent square corners
+    if (effectiveShape is LiquidOval) {
+      glassWidget = ClipOval(child: glassWidget);
+    } else {
+      glassWidget = ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: glassWidget,
+      );
     }
 
     return Container(
       margin: margin,
       height: height,
       width: width,
-      child: LiquidGlassLayer(
-        settings: LiquidGlassSettings(
-          refractiveIndex: refractiveIndex,
-          thickness: thickness,
-          blur: blur,
-          saturation: saturation,
-          lightIntensity:
-              lightIntensity ??
-              (isDark
-                  ? 0.3
-                  : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
-          ambientStrength: ambientStrength ?? (isDark ? 0.3 : 0.5),
-          lightAngle: math.pi / 4,
-          glassColor: glassColor ?? defaultGlassColor,
-        ),
-        child: LiquidGlass.grouped(
-          shape: effectiveShape,
-          child: innerChild,
-        ),
-      ),
+      child: glassWidget,
     );
   }
 }
@@ -181,8 +196,8 @@ class AppLiquidGlassIndicator extends StatefulWidget {
     this.isDark,
     this.borderRadius = 100.0,
     this.refractiveIndex = 1.4,
-    this.thickness = 25.0,
-    this.blur = 10.0,
+    this.thickness = 30.0,
+    this.blur = 3.0,
     this.saturation = 1.5,
     this.blend = 10.0,
     this.lightIntensity,
@@ -409,8 +424,7 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
               snapToEnd: true,
               duration: Duration(milliseconds: 300),
             ),
-            value:
-                _isDown || (alignment.x - targetAlignment).abs() > 0.30
+            value: _isDown || (alignment.x - targetAlignment).abs() > 0.30
                 ? 1.0
                 : 0.0,
             builder: (context, thickness, stackChild) {
@@ -457,15 +471,15 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
                         settings: LiquidGlassSettings(
                           visibility: thickness,
                           glassColor: Color.from(
-                            alpha: 0.1,
+                            alpha: 0,
                             red: 1,
                             green: 1,
                             blue: 1,
                           ),
                           saturation: 1.5,
                           refractiveIndex: 1.15,
-                          thickness: 20,
-                          lightIntensity: 2,
+                          thickness: 25,
+                          lightIntensity: 0.5,
                           chromaticAberration: 0.5,
                           blur: 0,
                         ),
@@ -648,11 +662,12 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton> {
       child: Container(
         margin: widget.margin,
         child: LiquidStretch(
-          interactionScale: 1.06,
+          interactionScale: 1.4,
           stretch: 0.5,
-          resistance: 0.08,
+          resistance: 0.07,
           child: AppLiquidGlass(
-            shape: const LiquidOval(), // Use LiquidOval to guarantee a perfect circle/ellipse
+            shape:
+                const LiquidOval(), // Use LiquidOval to guarantee a perfect circle/ellipse
             padding: widget.padding,
             showGlow: true, // Enable GlassGlow for buttons
             child: widget.child,

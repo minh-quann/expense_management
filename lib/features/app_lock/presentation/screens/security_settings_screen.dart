@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
@@ -10,6 +11,8 @@ import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_
 import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
 import 'package:expense_management/shared/widgets/app_toast.dart';
 import 'package:expense_management/shared/widgets/app_liquid_glass_switch.dart';
+import 'package:expense_management/shared/widgets/sf_symbols.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 
 /// Settings screen for managing app lock (PIN + Biometric)
 class SecuritySettingsScreen extends StatelessWidget {
@@ -60,9 +63,13 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
-    final bgColor = isDark ? const Color(0xFF000000) : Colors.white;
-    final cardColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF7F7F9);
+    final bgColor = AppColors.background(context);
+    final cardColor = isDark
+        ? const Color(0xFF1C1C1E)
+        : const Color(0xFFF7F7F9);
     final textColor = isDark ? Colors.white : AppColors.gray900;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final headerHeight = statusBarHeight + 64.0;
 
     return BlocListener<AppLockBloc, AppLockState>(
       listener: (context, state) {
@@ -90,186 +97,238 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
       },
       child: Scaffold(
         backgroundColor: bgColor,
-        appBar: AppBar(
-          backgroundColor: bgColor,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor, size: 20),
-            onPressed: () => Navigator.pop(context),
-          ),
-          centerTitle: true,
-          title: AppText(
-            'Bảo mật',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header icon
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primary.withValues(alpha: 0.15),
-                        AppColors.purple500.withValues(alpha: 0.1),
-                      ],
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.shield_outlined,
-                    size: 40,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: AppText(
-                  'Bảo vệ ứng dụng của bạn',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: AppText(
-                  'Thiết lập mã PIN và sinh trắc học',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.gray500,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // PIN Lock Toggle
-              _buildSettingCard(
-                context,
-                cardColor: cardColor,
-                textColor: textColor,
-                icon: Icons.lock_outline_rounded,
-                iconColor: AppColors.primary,
-                title: 'Khóa bằng mã PIN',
-                subtitle: _isLockEnabled
-                    ? 'Ứng dụng sẽ yêu cầu mã PIN khi mở'
-                    : 'Tắt - không yêu cầu mã PIN',
-                trailing: AppLiquidGlassSwitch(
-                  value: _isLockEnabled,
-                  onChanged: (value) {
-                    if (value) {
-                      _showPinSetupScreen(context);
-                    } else {
-                      _showDisableVerification(context);
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Biometric Toggle
-              AnimatedOpacity(
-                opacity: _isLockEnabled ? 1.0 : 0.5,
-                duration: const Duration(milliseconds: 200),
-                child: _buildSettingCard(
-                  context,
-                  cardColor: cardColor,
-                  textColor: textColor,
-                  icon: Icons.fingerprint,
-                  iconColor: AppColors.green600,
-                  title: 'Vân tay / Face ID',
-                  subtitle: _isBiometricAvailable
-                      ? (_isBiometricEnabled
-                          ? 'Đang bật - mở khóa nhanh bằng sinh trắc học'
-                          : 'Tắt - chỉ sử dụng mã PIN')
-                      : 'Thiết bị không hỗ trợ sinh trắc học',
-                  trailing: IgnorePointer(
-                    ignoring: !(_isLockEnabled && _isBiometricAvailable),
-                    child: AppLiquidGlassSwitch(
-                      value: _isBiometricEnabled,
-                      onChanged: (value) {
-                        context.read<AppLockBloc>().add(ToggleBiometric(value));
-                        setState(() => _isBiometricEnabled = value);
-                      },
-                      activeColor: AppColors.green600,
-                    ),
-                  ),
-                ),
-              ),
-
-              if (_isLockEnabled) ...[
-                const SizedBox(height: 12),
-
-                // Change PIN
-                _buildSettingCard(
-                  context,
-                  cardColor: cardColor,
-                  textColor: textColor,
-                  icon: Icons.dialpad_rounded,
-                  iconColor: AppColors.orange500,
-                  title: 'Đổi mã PIN',
-                  subtitle: 'Thay đổi mã PIN hiện tại',
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.gray400,
-                  ),
-                  onTap: () => _showChangePinFlow(context),
-                ),
-              ],
-
-              const SizedBox(height: 32),
-
-              // Info section
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: ShapeDecoration(
-                  color: AppColors.blue50,
-                  shape: RoundedSuperellipseBorder(
-                    side: const BorderSide(
-                      color: AppColors.blue200,
-                      width: 1,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Row(
+        body: Stack(
+          children: [
+            // 1. Content
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(24, headerHeight + 16, 24, 16),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.info_outline_rounded,
-                      color: AppColors.blue600,
-                      size: 20,
+                    // Header icon
+                    Center(
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.15),
+                              AppColors.purple500.withValues(alpha: 0.1),
+                            ],
+                          ),
+                        ),
+                        child: const Icon(
+                          SFSymbols.lock_shield_fill,
+                          size: 40,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    const SizedBox(height: 16),
+                    Center(
                       child: AppText(
-                        'Mã PIN được lưu trữ an toàn trên thiết bị của bạn. '
-                        'Nếu quên mã PIN, bạn cần đăng xuất và đăng nhập lại.',
+                        'Bảo vệ ứng dụng của bạn',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: AppText(
+                        'Thiết lập mã PIN và sinh trắc học',
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.blue800,
+                        color: AppColors.gray500,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // PIN Lock
+                    _buildSettingCard(
+                      context,
+                      cardColor: cardColor,
+                      textColor: textColor,
+                      icon: SFSymbols.lock_fill,
+                      iconColor: AppColors.primary,
+                      title: 'Khóa bằng mã PIN',
+                      subtitle: _isLockEnabled
+                          ? 'Ứng dụng sẽ yêu cầu mã PIN khi mở'
+                          : 'Tắt - không yêu cầu mã PIN',
+                      trailing: const Icon(
+                        SFSymbols.chevron_right,
+                        color: AppColors.gray400,
+                        size: 20,
+                      ),
+                      onTap: () {
+                        if (_isLockEnabled) {
+                          _showDisableVerification(context);
+                        } else {
+                          _showPinSetupScreen(context);
+                        }
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Biometric Toggle
+                    AnimatedOpacity(
+                      opacity: _isLockEnabled ? 1.0 : 0.5,
+                      duration: const Duration(milliseconds: 200),
+                      child: _buildSettingCard(
+                        context,
+                        cardColor: cardColor,
+                        textColor: textColor,
+                        icon: SFSymbols.lock_shield_fill,
+                        iconColor: AppColors.green600,
+                        title: 'Vân tay / Face ID',
+                        subtitle: _isBiometricAvailable
+                            ? (_isBiometricEnabled
+                                  ? 'Đang bật - mở khóa nhanh bằng sinh trắc học'
+                                  : 'Tắt - chỉ sử dụng mã PIN')
+                            : 'Thiết bị không hỗ trợ sinh trắc học',
+                        trailing: IgnorePointer(
+                          ignoring: !(_isLockEnabled && _isBiometricAvailable),
+                          child: AppLiquidGlassSwitch(
+                            value: _isBiometricEnabled,
+                            onChanged: (value) {
+                              context.read<AppLockBloc>().add(ToggleBiometric(value));
+                              setState(() => _isBiometricEnabled = value);
+                            },
+                            activeColor: AppColors.green600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    if (_isLockEnabled) ...[
+                      const SizedBox(height: 12),
+
+                      // Change PIN
+                      _buildSettingCard(
+                        context,
+                        cardColor: cardColor,
+                        textColor: textColor,
+                        icon: SFSymbols.lock_fill,
+                        iconColor: AppColors.orange500,
+                        title: 'Đổi mã PIN',
+                        subtitle: 'Thay đổi mã PIN hiện tại',
+                        trailing: const Icon(
+                          SFSymbols.chevron_right,
+                          color: AppColors.gray400,
+                          size: 20,
+                        ),
+                        onTap: () => _showChangePinFlow(context),
+                      ),
+                    ],
+
+                    const SizedBox(height: 32),
+
+                    // Info section
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: ShapeDecoration(
+                        color: AppColors.blue50,
+                        shape: RoundedSuperellipseBorder(
+                          side: const BorderSide(color: AppColors.blue200, width: 1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.info_outline_rounded,
+                            color: AppColors.blue600,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AppText(
+                              'Mã PIN được lưu trữ an toàn trên thiết bị của bạn. '
+                              'Nếu quên mã PIN, bạn cần đăng xuất và đăng nhập lại.',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.blue800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // 2. Transparent Header with Gradient Blur (Pinned at top)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: headerHeight,
+              child: Stack(
+                children: [
+                  // 2.1. Fading Blur Layer
+                  Positioned.fill(
+                    child: ShaderMask(
+                      shaderCallback: (rect) {
+                        return const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.black, Colors.transparent],
+                          stops: [0.35, 1.0],
+                        ).createShader(rect);
+                      },
+                      blendMode: BlendMode.dstIn,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.05),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 2.2. Fading Background Color Layer
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            bgColor,
+                            bgColor.withValues(alpha: 0.8),
+                            bgColor.withValues(alpha: 0.0),
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // 2.3. Actual Header Widgets
+                  Positioned.fill(
+                    child: Container(
+                      padding: EdgeInsets.only(top: statusBarHeight),
+                      alignment: Alignment.center,
+                      child: ScreenHeader(
+                        title: 'Bảo mật',
+                        showBackButton: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

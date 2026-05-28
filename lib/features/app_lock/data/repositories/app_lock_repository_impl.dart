@@ -101,6 +101,10 @@ class AppLockRepositoryImpl implements AppLockRepository {
     if (!AuthTokenManager.isLoggedIn()) {
       return false;
     }
+    final pin = await _secureStorage.read(key: _pinKey);
+    if (pin == null || pin.isEmpty) {
+      return false;
+    }
     final value = await _secureStorage.read(key: _lockEnabledKey);
     return value == 'true';
   }

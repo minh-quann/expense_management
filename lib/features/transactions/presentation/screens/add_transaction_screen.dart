@@ -50,9 +50,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = AuthTokenManager.getUserId();
-    context.read<WalletBloc>().add(LoadWalletsEvent(userId));
-    context.read<CategoryBloc>().add(LoadCategories(userId));
+    // Delay loading to prevent transition animation lag
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        final userId = AuthTokenManager.getUserId();
+        context.read<WalletBloc>().add(LoadWalletsEvent(userId));
+        context.read<CategoryBloc>().add(LoadCategories(userId));
+      }
+    });
   }
 
   @override

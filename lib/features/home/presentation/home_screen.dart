@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
@@ -15,69 +16,170 @@ import 'package:go_router/go_router.dart';
 
 import 'package:expense_management/shared/widgets/screen_header.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final headerHeight = statusBarHeight + 64.0;
+
     return Scaffold(
       backgroundColor: AppColors.background(context),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ScreenHeader(
-              title: AppLocalizations.of(context)!.home_title,
-              leading: ScreenHeader.circleButton(
-                context: context,
-                onTap: () {
-                  // TODO: Mở màn hình thông báo
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary(context), size: 24),
-                    Positioned(
-                      right: 2,
-                      top: 2,
+      body: Stack(
+        children: [
+          // 1. Scrollable Content (Under the header)
+          Positioned.fill(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              padding: EdgeInsets.only(
+                top: headerHeight + 16,
+                left: 24,
+                right: 24,
+                bottom: 100,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildBalanceCard(context),
+                  const SizedBox(height: 32),
+                  _buildTransactionsHeader(context),
+                  const SizedBox(height: 16),
+                  _buildTransactionsList(context),
+                ],
+              ),
+            ),
+          ),
+
+          // 2. Transparent Header with Gradient Blur (Pinned at top)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: headerHeight,
+            child: Stack(
+              children: [
+                // 2.1. Fading Blur Layer (Using ShaderMask with BackdropFilter)
+                Positioned.fill(
+                  child: ShaderMask(
+                    shaderCallback: (rect) {
+                      return const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black, Colors.transparent],
+                        stops: [
+                          0.35,
+                          1.0,
+                        ], // Full blur on top 35%, then fades out towards the bottom
+                      ).createShader(rect);
+                    },
+                    blendMode: BlendMode.dstIn,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                       child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: AppColors.notificationDot,
-                          shape: BoxShape.circle,
+                        color: Colors.black.withValues(
+                          alpha: 0.05,
+                        ), // Light tint to ensure backdrop filter compiles nicely
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2.2. Fading Background Color Layer (Transition to transparent)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.background(context),
+                          AppColors.background(context).withValues(alpha: 0.8),
+                          AppColors.background(context).withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.45, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2.3. Actual Header Widgets
+                Positioned.fill(
+                  child: Container(
+                    padding: EdgeInsets.only(top: statusBarHeight),
+                    alignment: Alignment.center,
+                    child: ScreenHeader(
+                      title: AppLocalizations.of(context)!.home_title,
+                      onTitleTap: () {
+                        _scrollController.animateTo(
+                          0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOutCubic,
+                        );
+                      },
+                      leading: ScreenHeader.circleButton(
+                        context: context,
+                        onTap: () {
+                          // TODO: Mở màn hình thông báo
+                        },
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Icon(
+                              Icons.notifications_none_rounded,
+                              color: AppColors.textPrimary(context),
+                              size: 24,
+                            ),
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.notificationDot,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      trailing: ScreenHeader.circleButton(
+                        context: context,
+                        onTap: () => context.push('/add-transaction'),
+                        child: Icon(
+                          Icons.add_rounded,
+                          color: AppColors.textPrimary(context),
+                          size: 24,
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              trailing: ScreenHeader.circleButton(
-                context: context,
-                onTap: () => context.push('/add-transaction'),
-                child: Icon(Icons.add_rounded, color: AppColors.textPrimary(context), size: 24),
-              ),
+              ],
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildBalanceCard(context),
-                    const SizedBox(height: 32),
-                    _buildTransactionsHeader(context),
-                    const SizedBox(height: 16),
-                    _buildTransactionsList(context),
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -117,9 +219,18 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      AppText(AppLocalizations.of(context)?.home_total_balance ?? 'Tổng số dư', color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
+                      AppText(
+                        AppLocalizations.of(context)?.home_total_balance ??
+                            'Tổng số dư',
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                      ),
                       const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white.withValues(alpha: 0.9), size: 16),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        size: 16,
+                      ),
                     ],
                   ),
                   const Icon(Icons.more_horiz, color: Colors.white),
@@ -137,11 +248,12 @@ class HomeScreen extends StatelessWidget {
                 builder: (context, txState) {
                   double totalIncome = 0;
                   double totalExpense = 0;
-                  
+
                   if (txState is TransactionLoaded) {
                     final now = DateTime.now();
                     for (var tx in txState.transactions) {
-                      if (tx.date.month == now.month && tx.date.year == now.year) {
+                      if (tx.date.month == now.month &&
+                          tx.date.year == now.year) {
                         if (tx.type == TransactionType.income) {
                           totalIncome += tx.amount;
                         } else if (tx.type == TransactionType.expense) {
@@ -156,13 +268,17 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       _buildIncomeExpenseItem(
                         icon: Icons.arrow_downward_rounded,
-                        label: AppLocalizations.of(context)?.home_income ?? 'Thu nhập',
+                        label:
+                            AppLocalizations.of(context)?.home_income ??
+                            'Thu nhập',
                         amount: CurrencyFormatter.format(context, totalIncome),
                         isIncome: true,
                       ),
                       _buildIncomeExpenseItem(
                         icon: Icons.arrow_upward_rounded,
-                        label: AppLocalizations.of(context)?.home_expenses ?? 'Chi tiêu',
+                        label:
+                            AppLocalizations.of(context)?.home_expenses ??
+                            'Chi tiêu',
                         amount: CurrencyFormatter.format(context, totalExpense),
                         isIncome: false,
                       ),
@@ -197,7 +313,11 @@ class HomeScreen extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppText(label, color: Colors.white.withValues(alpha: 0.9), fontSize: 13),
+            AppText(
+              label,
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 13,
+            ),
             const SizedBox(height: 4),
             AppText(
               amount,
@@ -236,13 +356,16 @@ class HomeScreen extends StatelessWidget {
         if (state is TransactionLoading) {
           return const Center(child: CircularProgressIndicator());
         } else if (state is TransactionLoaded) {
-          final recentTx = state.transactions.take(5).toList();
-          
+          final recentTx = state.transactions.take(15).toList();
+
           if (recentTx.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: AppText('Chưa có giao dịch nào', color: AppColors.textSecondary(context)),
+                child: AppText(
+                  'Chưa có giao dịch nào',
+                  color: AppColors.textSecondary(context),
+                ),
               ),
             );
           }
@@ -251,7 +374,10 @@ class HomeScreen extends StatelessWidget {
             children: recentTx.map((tx) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 20),
-                child: TransactionItemBuilder.buildItem(context: context, tx: tx),
+                child: TransactionItemBuilder.buildItem(
+                  context: context,
+                  tx: tx,
+                ),
               );
             }).toList(),
           );

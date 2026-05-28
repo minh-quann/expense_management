@@ -115,7 +115,7 @@ class _LockScreenState extends State<LockScreen> with SingleTickerProviderStateM
             systemNavigationBarColor: Colors.transparent,
           ),
           child: Scaffold(
-            backgroundColor: isDark ? const Color(0xFF000000) : Colors.white,
+            backgroundColor: AppColors.background(context),
             body: SafeArea(
               child: Stack(
                 children: [

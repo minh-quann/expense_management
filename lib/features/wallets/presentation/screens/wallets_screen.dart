@@ -13,6 +13,7 @@ import 'package:expense_management/features/wallets/domain/entities/wallet.dart'
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
+import 'package:expense_management/shared/widgets/screen_header.dart';
 
 class WalletsScreen extends StatefulWidget {
   const WalletsScreen({super.key});
@@ -35,8 +36,13 @@ class _WalletsScreenState extends State<WalletsScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = AuthTokenManager.getUserId();
-    context.read<WalletBloc>().add(LoadWalletsEvent(userId));
+    // Delay loading to prevent transition animation lag
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        final userId = AuthTokenManager.getUserId();
+        context.read<WalletBloc>().add(LoadWalletsEvent(userId));
+      }
+    });
   }
 
   @override
@@ -52,130 +58,150 @@ class _WalletsScreenState extends State<WalletsScreen> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: AppColors.textPrimary(context),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, size: 28),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.search, size: 28),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: BlocBuilder<WalletBloc, WalletState>(
-        builder: (context, state) {
-          if (state is WalletLoading) {
-            return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-          } else if (state is WalletLoaded) {
-            final double totalBalance = state.wallets
-                .where((w) => !w.excludeFromTotal)
-                .fold(0, (sum, w) => sum + w.balance);
-            
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: Column(
+          children: [
+            ScreenHeader(
+              title: AppLocalizations.of(context)!.wallets_title,
+              showBackButton: true,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header - Total Balance
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AppText(AppLocalizations.of(context)!.wallets_total_assets, fontSize: 20, fontWeight: FontWeight.w500, color: AppColors.textPrimary(context)),
-                        const SizedBox(height: 4),
-                        AppText(
-                          CurrencyFormatter.format(context, totalBalance),
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary(context),
-                        ),
-                      ],
+                  ScreenHeader.circleButton(
+                    context: context,
+                    onTap: () {},
+                    child: Icon(
+                      Icons.notifications_none_rounded,
+                      color: AppColors.textPrimary(context),
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  
-                  // Horizontal Card Carousel
-                  SizedBox(
-                    height: 200,
-                    child: state.wallets.isEmpty 
-                      ? _buildEmptyWalletCard(context)
-                      : PageView.builder(
-                          controller: _pageController,
-                          onPageChanged: (int page) {
-                            setState(() {
-                              _currentPage = page;
-                            });
-                          },
-                          itemCount: state.wallets.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == state.wallets.length) {
-                              return _buildAddWalletCard(context);
-                            }
-                            final wallet = state.wallets[index];
-                            final gradient = _cardGradients[index % _cardGradients.length];
-                            return _buildWalletCard(context, wallet, gradient);
-                          },
-                        ),
-                  ),
-                  
-                  // Page Indicators
-                  if (state.wallets.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          state.wallets.length + 1,
-                          (index) => Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            width: _currentPage == index ? 24 : 8,
-                            height: 4,
-                            decoration: ShapeDecoration(
-                              color: _currentPage == index 
-                                  ? AppColors.textPrimary(context).withValues(alpha: 0.8) 
-                                  : AppColors.textSecondary(context).withValues(alpha: 0.4),
-                              shape: RoundedSuperellipseBorder(
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Recent Transactions Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        AppText('GIAO DỊCH GẦN ĐÂY', fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary(context)),
-                        AppText('Xem tất cả', fontSize: 13, color: AppColors.textSecondary(context)),
-                      ],
+                  const SizedBox(width: 8),
+                  ScreenHeader.circleButton(
+                    context: context,
+                    onTap: () {},
+                    child: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.textPrimary(context),
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  
-                  // Real Transactions from Firebase
-                  _buildRealTransactionsList(context),
-                  
-                  const SizedBox(height: 32),
                 ],
               ),
-            );
-          } else if (state is WalletError) {
-            return Center(child: AppText(state.message, color: AppColors.error));
-          }
-          return const SizedBox.shrink();
-        },
+            ),
+            Expanded(
+              child: BlocBuilder<WalletBloc, WalletState>(
+                builder: (context, state) {
+                  if (state is WalletLoading) {
+                    return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                  } else if (state is WalletLoaded) {
+                    final double totalBalance = state.wallets
+                        .where((w) => !w.excludeFromTotal)
+                        .fold(0, (sum, w) => sum + w.balance);
+                    
+                    return SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header - Total Balance
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppText(AppLocalizations.of(context)!.wallets_total_assets, fontSize: 20, fontWeight: FontWeight.w500, color: AppColors.textPrimary(context)),
+                                const SizedBox(height: 4),
+                                AppText(
+                                  CurrencyFormatter.format(context, totalBalance),
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary(context),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          
+                          // Horizontal Card Carousel
+                          SizedBox(
+                            height: 200,
+                            child: state.wallets.isEmpty 
+                              ? _buildEmptyWalletCard(context)
+                              : PageView.builder(
+                                  controller: _pageController,
+                                  onPageChanged: (int page) {
+                                    setState(() {
+                                      _currentPage = page;
+                                    });
+                                  },
+                                  itemCount: state.wallets.length + 1,
+                                  itemBuilder: (context, index) {
+                                    if (index == state.wallets.length) {
+                                      return _buildAddWalletCard(context);
+                                    }
+                                    final wallet = state.wallets[index];
+                                    final gradient = _cardGradients[index % _cardGradients.length];
+                                    return _buildWalletCard(context, wallet, gradient);
+                                  },
+                                ),
+                          ),
+                          
+                          // Page Indicators
+                          if (state.wallets.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 16.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  state.wallets.length + 1,
+                                  (index) => Container(
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    width: _currentPage == index ? 24 : 8,
+                                    height: 4,
+                                    decoration: ShapeDecoration(
+                                      color: _currentPage == index 
+                                          ? AppColors.textPrimary(context).withValues(alpha: 0.8) 
+                                          : AppColors.textSecondary(context).withValues(alpha: 0.4),
+                                      shape: RoundedSuperellipseBorder(
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          
+                          const SizedBox(height: 32),
+                          
+                          // Recent Transactions Header
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                AppText('GIAO DỊCH GẦN ĐÂY', fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary(context)),
+                                AppText('Xem tất cả', fontSize: 13, color: AppColors.textSecondary(context)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // Real Transactions from Firebase
+                          _buildRealTransactionsList(context),
+                          
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    );
+                  } else if (state is WalletError) {
+                    return Center(child: AppText(state.message, color: AppColors.error));
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
