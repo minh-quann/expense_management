@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
+import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
 
 /// Reusable screen header widget used across the entire app.
 ///
@@ -48,19 +49,11 @@ class ScreenHeader extends StatelessWidget {
     required Widget child,
     VoidCallback? onTap,
   }) {
-    return GestureDetector(
+    return AppLiquidGlassButton(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: AppColors.isDark(context)
-              ? Colors.white.withValues(alpha: 0.05)
-              : const Color(0xFFF8F8F8),
-          shape: BoxShape.circle,
-        ),
-        child: child,
-      ),
+      borderRadius: 100, // High border radius to achieve a circle shape using superellipse
+      padding: const EdgeInsets.all(10),
+      child: child,
     );
   }
 

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -124,12 +126,42 @@ class _AppShellState extends State<AppShell> {
     return Expanded(
       child: Builder(
         builder: (context) {
-          final activeIndex = IndicatorStateScope.of(context);
-          final isSelected = activeIndex == index;
+          final scope = IndicatorStateScope.of(context);
+          final double activeFactor;
+
+          if (scope != null) {
+            final alignmentX = scope.alignmentX;
+            final thickness = scope.thickness;
+            final count = scope.count;
+
+            final pillCenter =
+                ((alignmentX + 1) / 2) * (1.0 - 1.0 / count) + 0.5 / count;
+            final iconCenter = (index + 0.5) / count;
+            final dist = (pillCenter - iconCenter).abs();
+
+            // Effective radius of active tint zone, expands to match physical size when zoomed
+            final activeRadius = (0.5 / count) + (thickness * 0.06);
+
+            if (dist < activeRadius) {
+              final factor = 1.0 - (dist / activeRadius);
+              // Use sine curve for smooth, organic color blending
+              activeFactor = math.sin(factor * math.pi / 2);
+            } else {
+              activeFactor = 0.0;
+            }
+          } else {
+            activeFactor = (index == widget.navigationShell.currentIndex)
+                ? 1.0
+                : 0.0;
+          }
+
+          final isSelected = activeFactor > 0.5;
           final isDark = AppColors.isDark(context);
-          final color = isSelected
-              ? AppColors.primary
-              : (isDark ? const Color(0xFF8E8E93) : const Color(0xFF3C3C43));
+          final inactiveColor = isDark
+              ? const Color(0xFF8E8E93)
+              : const Color(0xFF3C3C43);
+          final activeColor = AppColors.primary;
+          final color = Color.lerp(inactiveColor, activeColor, activeFactor)!;
 
           return GestureDetector(
             onTap: () => _onTap(context, index),
@@ -139,11 +171,7 @@ class _AppShellState extends State<AppShell> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    isSelected ? activeIcon : icon,
-                    color: color,
-                    size: 24,
-                  ),
+                  Icon(isSelected ? activeIcon : icon, color: color, size: 24),
                   const SizedBox(height: 2),
                   AppText(
                     label,

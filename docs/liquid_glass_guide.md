@@ -91,6 +91,7 @@ AppLiquidGlassIndicator(
 
 ### Ví dụ 1: Thanh Bottom Navigation Bar (`app_shell.dart`)
 ```dart
+// Khởi tạo thanh điều hướng dùng chung
 SizedBox(
   height: 64,
   child: AppLiquidGlassIndicator(
@@ -103,14 +104,61 @@ SizedBox(
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _buildNavItem(context, 0, SFSymbols.house, SFSymbols.house_fill, 'Trang chủ'),
-        _buildNavItem(context, 1, SFSymbols.list_clipboard, SFSymbols.list_clipboard_fill, 'Giao dịch'),
-        _buildNavItem(context, 2, SFSymbols.chart_bar, SFSymbols.chart_bar_fill, 'Thống kê'),
-        _buildNavItem(context, 3, SFSymbols.person, SFSymbols.person_fill, 'Tài khoản'),
+        _buildNavItem(0, SFSymbols.house, SFSymbols.house_fill, 'Trang chủ'),
+        _buildNavItem(1, SFSymbols.list_clipboard, SFSymbols.list_clipboard_fill, 'Giao dịch'),
+        _buildNavItem(2, SFSymbols.chart_bar, SFSymbols.chart_bar_fill, 'Thống kê'),
+        _buildNavItem(3, SFSymbols.person, SFSymbols.person_fill, 'Tài khoản'),
       ],
     ),
   ),
 )
+
+// Thiết kế Nav Item lắng nghe activeIndex cục bộ từ IndicatorStateScope
+Widget _buildNavItem(
+  int index,
+  IconData icon,
+  IconData activeIcon,
+  String label,
+) {
+  return Expanded(
+    child: Builder(
+      builder: (context) {
+        // Đọc trạng thái active/hover trực tiếp từ scope con bên dưới IndicatorStateScope
+        final activeIndex = IndicatorStateScope.of(context);
+        final isSelected = activeIndex == index;
+        final isDark = AppColors.isDark(context);
+        final color = isSelected
+            ? AppColors.primary
+            : (isDark ? const Color(0xFF8E8E93) : const Color(0xFF3C3C43));
+
+        return GestureDetector(
+          onTap: () => _onTap(context, index),
+          behavior: HitTestBehavior.opaque,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isSelected ? activeIcon : icon,
+                  color: color,
+                  size: 24,
+                ),
+                const SizedBox(height: 2),
+                AppText(
+                  label,
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
 ```
 
 ### Ví dụ 2: Thanh Toggle Bar chọn loại giao dịch (`animated_toggle_bar.dart`)
@@ -187,4 +235,20 @@ AppLiquidGlassSwitch(
 - `width` / `height`: Kích thước của thanh trượt Switch (mặc định là 56.0 x 32.0).
 - `activeColor`: Màu sắc của nền kính khi Switch ở trạng thái ON (mặc định sử dụng màu `AppColors.primary`).
 - `inactiveColor`: Màu sắc của nền kính khi Switch ở trạng thái OFF (mặc định tự động thích ứng với Light/Dark Mode).
+
+---
+
+## 8. Quản lý trạng thái và tối ưu hóa hiệu năng với `IndicatorStateScope`
+
+Khi di chuyển viên thuốc điều hướng bằng kéo thả, để các icon đổi màu xanh theo thời gian thực mà không làm chậm ứng dụng hoặc gây crash do rebuild dồn dập ở lớp cha:
+
+1. **Không sử dụng `setState` ở cha khi kéo thả**: `AppLiquidGlassIndicator` tự động theo dõi vị trí kéo và cập nhật tab đang được hover cục bộ bằng một biến `_activeSlot` bên trong State của nó.
+2. **Sử dụng `IndicatorStateScope` (InheritedWidget)**: Viên thuốc tự bọc danh sách các con bằng `IndicatorStateScope` để truyền `activeIndex` hiện tại xuống sâu trong widget tree.
+3. **Sử dụng `Builder` ở tab con**: Các tab con cần được bao bọc bằng widget `Builder`. Nhờ vậy, `BuildContext` của hàm builder sẽ nằm bên dưới `IndicatorStateScope` và có thể đăng ký lắng nghe trạng thái đổi màu thông qua:
+   ```dart
+   final activeIndex = IndicatorStateScope.of(context);
+   final isSelected = activeIndex == index;
+   ```
+4. **Hiệu quả**: Khi kéo ngón tay qua lại, **chỉ có duy nhất tab con đang thay đổi trạng thái tự rebuild độc lập**, toàn bộ màn hình cha (bao gồm body và Bloc) được giữ tĩnh 100%, tăng tối đa FPS và đảm bảo an toàn tuyệt đối cho ứng dụng.
+
 

@@ -5,6 +5,32 @@ import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 
+/// Creates a jelly transform matrix based on velocity for organic squash and stretch effect.
+/// Ported from the liquid_glass_renderer library example.
+Matrix4 _buildJellyTransform({
+  required Offset velocity,
+  double maxDistortion = 0.7,
+  double velocityScale = 1000.0,
+}) {
+  final speed = velocity.distance;
+  final direction = speed > 0 ? velocity / speed : Offset.zero;
+  final distortionFactor =
+      (speed / velocityScale).clamp(0.0, 1.0) * maxDistortion;
+
+  if (distortionFactor == 0) return Matrix4.identity();
+
+  // Squash in direction of movement, stretch perpendicular
+  final squashX = 1.0 - (direction.dx.abs() * distortionFactor * 0.5);
+  final squashY = 1.0 - (direction.dy.abs() * distortionFactor * 0.5);
+  final stretchX = 1.0 + (direction.dy.abs() * distortionFactor * 0.3);
+  final stretchY = 1.0 + (direction.dx.abs() * distortionFactor * 0.3);
+
+  final matrix = Matrix4.identity();
+  // ignore: deprecated_member_use
+  matrix.scale(squashX * stretchX, squashY * stretchY);
+  return matrix;
+}
+
 /// A reusable glassmorphic container that applies the Liquid Glass effect.
 /// It wraps a child widget with [LiquidGlassLayer] and [LiquidGlass.grouped]
 /// to render high-end refraction, blur, and lighting highlights.
@@ -25,6 +51,7 @@ class AppLiquidGlass extends StatelessWidget {
     this.ambientStrength,
     this.glassColor,
     this.shape,
+    this.showGlow = false,
   });
 
   /// The widget inside the glass container.
@@ -69,6 +96,9 @@ class AppLiquidGlass extends StatelessWidget {
   /// Custom shape for the glass container. Defaults to [LiquidRoundedSuperellipse].
   final LiquidShape? shape;
 
+  /// Whether to show the interactive glow effect when tapped (requires [HitTestBehavior.opaque] or a gesture detector).
+  final bool showGlow;
+
   @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
@@ -77,6 +107,38 @@ class AppLiquidGlass extends StatelessWidget {
     final defaultGlassColor = isDark
         ? const Color(0xFF2C2C2E).withValues(alpha: 0.45)
         : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
+
+    // Determine the border shape
+    final effectiveShape = shape ?? LiquidRoundedSuperellipse(borderRadius: borderRadius);
+    final borderShape = effectiveShape is LiquidOval
+        ? const OvalBorder(
+            side: BorderSide(
+              color: Color(0x17FFFFFF), // White with 9% alpha
+              width: 1,
+            ),
+          )
+        : RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            side: const BorderSide(
+              color: Color(0x17FFFFFF),
+              width: 1,
+            ),
+          );
+
+    Widget innerChild = Container(
+      padding: padding,
+      decoration: isDark
+          ? ShapeDecoration(shape: borderShape)
+          : null,
+      child: child,
+    );
+
+    if (showGlow) {
+      innerChild = GlassGlow(
+        glowColor: isDark ? Colors.white24 : Colors.black12,
+        child: innerChild,
+      );
+    }
 
     return Container(
       margin: margin,
@@ -98,25 +160,8 @@ class AppLiquidGlass extends StatelessWidget {
           glassColor: glassColor ?? defaultGlassColor,
         ),
         child: LiquidGlass.grouped(
-          clipBehavior: Clip.none,
-          shape: shape ?? LiquidRoundedSuperellipse(borderRadius: borderRadius),
-          child: Container(
-            padding: padding,
-            decoration: isDark
-                ? ShapeDecoration(
-                    shape: RoundedSuperellipseBorder(
-                      borderRadius: BorderRadius.circular(borderRadius),
-                      side: BorderSide(
-                        color: Colors.white.withValues(
-                          alpha: 0.09,
-                        ), // Even grey border like Telegram
-                        width: 1, // Slightly thicker border
-                      ),
-                    ),
-                  )
-                : null,
-            child: child,
-          ),
+          shape: effectiveShape,
+          child: innerChild,
         ),
       ),
     );
@@ -204,11 +249,10 @@ class AppLiquidGlassIndicator extends StatefulWidget {
 }
 
 class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
-  // Use ValueNotifier to drive animation without triggering full widget rebuild
-  late final ValueNotifier<double> _xAlignNotifier;
-  late final ValueNotifier<bool> _isDownNotifier;
-  late final ValueNotifier<bool> _isDraggingNotifier;
-  late int _activeSlot;
+  bool _isDown = false;
+  bool _isDragging = false;
+
+  late double xAlign = _computeXAlign(widget.selectedIndex);
 
   /// Map index directly to alignment range -1..1
   double _computeXAlign(int index) {
@@ -218,46 +262,11 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _activeSlot = widget.selectedIndex;
-    _xAlignNotifier = ValueNotifier(_computeXAlign(widget.selectedIndex));
-    _isDownNotifier = ValueNotifier(false);
-    _isDraggingNotifier = ValueNotifier(false);
-    _xAlignNotifier.addListener(_handleAlignChange);
-  }
-
-  @override
-  void dispose() {
-    _xAlignNotifier.removeListener(_handleAlignChange);
-    _xAlignNotifier.dispose();
-    _isDownNotifier.dispose();
-    _isDraggingNotifier.dispose();
-    super.dispose();
-  }
-
-  void _handleAlignChange() {
-    // Only update hover index when user is actively interacting
-    if (!_isDownNotifier.value && !_isDraggingNotifier.value) return;
-    final currentRelativeX = (_xAlignNotifier.value + 1) / 2;
-    final targetSlot = (currentRelativeX * (widget.count - 1)).round().clamp(
-      0,
-      widget.count - 1,
-    );
-    if (_activeSlot != targetSlot) {
-      setState(() {
-        _activeSlot = targetSlot;
-      });
-      widget.onHoverChanged?.call(targetSlot);
-    }
-  }
-
-  @override
   void didUpdateWidget(covariant AppLiquidGlassIndicator oldWidget) {
-    if (oldWidget.selectedIndex != widget.selectedIndex) {
-      _xAlignNotifier.value = _computeXAlign(widget.selectedIndex);
+    if (oldWidget.selectedIndex != widget.selectedIndex ||
+        oldWidget.count != widget.count) {
       setState(() {
-        _activeSlot = widget.selectedIndex;
+        xAlign = _computeXAlign(widget.selectedIndex);
       });
     }
     super.didUpdateWidget(oldWidget);
@@ -293,76 +302,78 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
   }
 
   void _onDragDown(DragDownDetails details) {
-    // Update ValueNotifiers instead of calling setState
-    _isDownNotifier.value = true;
-    _xAlignNotifier.value = _getAlignmentFromGlobalPosition(
-      details.globalPosition,
-    );
+    setState(() {
+      _isDown = true;
+      xAlign = _getAlignmentFromGlobalPosition(details.globalPosition);
+    });
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    // Update ValueNotifiers instead of calling setState
-    _isDraggingNotifier.value = true;
-    _xAlignNotifier.value = _getAlignmentFromGlobalPosition(
-      details.globalPosition,
+    setState(() {
+      _isDragging = true;
+      xAlign = _getAlignmentFromGlobalPosition(details.globalPosition);
+    });
+
+    // Notify hover change during drag
+    final currentRelativeX = (xAlign + 1) / 2;
+    final targetSlot = (currentRelativeX * (widget.count - 1)).round().clamp(
+      0,
+      widget.count - 1,
     );
+    widget.onHoverChanged?.call(targetSlot);
   }
 
   void _onDragEnd(DragEndDetails details) {
-    _isDraggingNotifier.value = false;
-    _isDownNotifier.value = false;
+    setState(() {
+      _isDragging = false;
+      _isDown = false;
+    });
 
     final box = context.findRenderObject() as RenderBox;
-    final currentRelativeX =
-        (_xAlignNotifier.value + 1) / 2; // Convert from -1..1 to 0..1
+    final currentRelativeX = (xAlign + 1) / 2;
+    final tabWidth = 1.0 / widget.count;
 
     final indicatorWidth = 1.0 / widget.count;
     final draggableRange = 1.0 - indicatorWidth;
     final velocityX =
         (details.velocity.pixelsPerSecond.dx / box.size.width) / draggableRange;
 
-    int targetSlot;
+    int targetTabIndex;
 
     if (currentRelativeX < 0) {
-      targetSlot = 0;
+      targetTabIndex = 0;
     } else if (currentRelativeX > 1) {
-      targetSlot = widget.count - 1;
+      targetTabIndex = widget.count - 1;
     } else {
       const velocityThreshold = 0.5;
       if (velocityX.abs() > velocityThreshold) {
         final projectedX = (currentRelativeX + velocityX * 0.3).clamp(0.0, 1.0);
-        targetSlot = (projectedX * (widget.count - 1)).round().clamp(0, widget.count - 1);
+        targetTabIndex = (projectedX / tabWidth).round().clamp(
+          0,
+          widget.count - 1,
+        );
       } else {
-        targetSlot = (currentRelativeX * (widget.count - 1)).round().clamp(
+        targetTabIndex = (currentRelativeX / tabWidth).round().clamp(
           0,
           widget.count - 1,
         );
       }
     }
 
-    final navIndex = targetSlot;
-    _xAlignNotifier.value = _computeXAlign(navIndex);
-
-    setState(() {
-      _activeSlot = navIndex;
-    });
-
-    // Reset hover to indicate drag finished
+    xAlign = _computeXAlign(targetTabIndex);
     widget.onHoverChanged?.call(null);
 
-    if (navIndex != widget.selectedIndex) {
-      widget.onChanged(navIndex);
+    if (targetTabIndex != widget.selectedIndex) {
+      widget.onChanged(targetTabIndex);
     }
   }
 
   void _onDragCancel() {
-    _isDraggingNotifier.value = false;
-    _isDownNotifier.value = false;
-    _xAlignNotifier.value = _computeXAlign(widget.selectedIndex);
     setState(() {
-      _activeSlot = widget.selectedIndex;
+      _isDragging = false;
+      _isDown = false;
+      xAlign = _computeXAlign(widget.selectedIndex);
     });
-    // Reset hover back to null to indicate drag finished
     widget.onHoverChanged?.call(null);
   }
 
@@ -373,144 +384,127 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
         ? Colors.white.withValues(alpha: 0.1)
         : Colors.black.withValues(alpha: 0.08);
 
-    final targetAlignment = _computeXAlign(widget.selectedIndex);
-
     final defaultGlassColor = dark
         ? const Color(0xFF2C2C2E).withValues(alpha: 0.45)
         : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
 
-    // Use ListenableBuilder to only rebuild the motion subtree when notifiers change,
-    // avoiding full widget tree rebuild from setState
     Widget mainStack = GestureDetector(
       onHorizontalDragDown: _onDragDown,
       onHorizontalDragUpdate: _onDragUpdate,
       onHorizontalDragEnd: _onDragEnd,
       onHorizontalDragCancel: _onDragCancel,
-      child: ListenableBuilder(
-        listenable: Listenable.merge([
-          _xAlignNotifier,
-          _isDownNotifier,
-          _isDraggingNotifier,
-        ]),
-        builder: (context, child) {
-          final isDragging = _isDraggingNotifier.value;
-          final isDown = _isDownNotifier.value;
+      child: VelocityMotionBuilder(
+        converter: SingleMotionConverter(),
+        value: xAlign,
+        motion: _isDragging
+            ? const Motion.interactiveSpring(snapToEnd: true)
+            : const Motion.bouncySpring(snapToEnd: true),
+        builder: (context, value, velocity, child) {
+          final alignment = Alignment(value, 0);
 
-          return VelocityMotionBuilder(
-            converter: SingleMotionConverter(),
-            value: _xAlignNotifier.value,
-            motion: isDragging
-                ? const Motion.interactiveSpring(snapToEnd: true)
-                : const Motion.snappySpring(snapToEnd: true),
-            builder: (context, value, velocity, builderChild) {
-              final alignment = Alignment(value, 0);
+          final targetAlignment = _computeXAlign(widget.selectedIndex);
 
-              return SingleMotionBuilder(
-                motion: const Motion.snappySpring(
-                  snapToEnd: true,
-                  duration: Duration(milliseconds: 200),
-                ),
-                value:
-                    isDown ||
-                        isDragging ||
-                        ((value - targetAlignment).abs() +
-                                velocity.abs() * 0.15) >
-                            0.05
-                    ? 1.0
-                    : 0.0,
-                builder: (context, thickness, stackChild) {
-                  // Compute normal pill color with alpha baked in
-                  // to avoid expensive Opacity widget
-                  final normalAlpha = thickness < 0.2
-                      ? (1.0 - (thickness / 0.2)).clamp(0.0, 1.0)
-                      : 0.0;
-                  final fadedIndicatorColor = indicatorColor.withValues(
-                    alpha: indicatorColor.a * normalAlpha,
-                  );
-
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // Normal state pill - always in tree, fade via color alpha
-                      _IndicatorTransform(
-                        velocity: velocity,
-                        tabCount: widget.count,
-                        alignment: alignment,
-                        thickness: thickness,
+          return SingleMotionBuilder(
+            motion: const Motion.snappySpring(
+              snapToEnd: true,
+              duration: Duration(milliseconds: 300),
+            ),
+            value:
+                _isDown || (alignment.x - targetAlignment).abs() > 0.30
+                ? 1.0
+                : 0.0,
+            builder: (context, thickness, stackChild) {
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Normal state pill - fade out when glass pill is active
+                  if (thickness < 1)
+                    _IndicatorTransform(
+                      velocity: velocity,
+                      tabCount: widget.count,
+                      alignment: alignment,
+                      thickness: thickness,
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 120),
+                        opacity: thickness <= 0.2 ? 1 : 0,
                         child: DecoratedBox(
-                          decoration: ShapeDecoration(
-                            color: fadedIndicatorColor,
-                            shape: RoundedSuperellipseBorder(
-                              borderRadius: BorderRadius.circular(64),
-                            ),
+                          decoration: BoxDecoration(
+                            color: indicatorColor,
+                            borderRadius: BorderRadius.circular(64),
                           ),
                           child: const SizedBox.expand(),
                         ),
                       ),
-                      // Background/Child scales slightly when active
-                      Transform.scale(
-                        scale: 1.0 + (thickness * 0.03), // Grow by 4%
-                        child: stackChild!,
-                      ),
-                      // Active glass pill - always in tree, visibility via LiquidGlassSettings.visibility
-                      _IndicatorTransform(
-                        velocity: velocity,
-                        tabCount: widget.count,
-                        alignment: alignment,
-                        thickness: thickness,
-                        child: LiquidGlass.withOwnLayer(
-                          settings: LiquidGlassSettings(
-                            visibility: thickness,
-                            glassColor: AppColors.primary,
-                            saturation: 1,
-                            refractiveIndex: 1.2,
-                            thickness: 48,
-                            lightIntensity: 1.5,
-                            chromaticAberration: 0.15,
-                            blur: 0,
-                          ),
-                          shape: LiquidRoundedSuperellipse(
-                            borderRadius: widget.borderRadius,
-                          ),
-                          child: const SizedBox.expand(),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-                child: LiquidGlass.grouped(
-                  clipBehavior: Clip.none,
-                  shape: LiquidRoundedSuperellipse(
-                    borderRadius: widget.borderRadius,
-                  ),
-                  child: Container(
-                    padding: widget.padding,
-                    margin: widget.margin,
-                    decoration: dark
-                        ? ShapeDecoration(
-                            shape: RoundedSuperellipseBorder(
-                              borderRadius: BorderRadius.circular(
-                                widget.borderRadius,
-                              ),
-                              side: BorderSide(
-                                color: Colors.white.withValues(
-                                  alpha: 0.09,
-                                ), // Even grey border like Telegram
-                                width: 1.2, // Slightly thicker border
-                              ),
-                            ),
-                          )
-                        : null,
+                    ),
+                  // Background/Child - slight scale up on press like iOS native
+                  Transform.scale(
+                    scale: 1 + (thickness * 0.02),
                     child: IndicatorStateScope(
-                      activeIndex: _activeSlot,
-                      child: widget.child,
+                      alignmentX: value,
+                      thickness: thickness,
+                      count: widget.count,
+                      child: stackChild!,
                     ),
                   ),
-                ),
+                  // Active glass pill - visibility controlled by thickness
+                  if (thickness > 0)
+                    _IndicatorTransform(
+                      velocity: velocity,
+                      tabCount: widget.count,
+                      alignment: alignment,
+                      thickness: thickness,
+                      child: LiquidGlass.withOwnLayer(
+                        settings: LiquidGlassSettings(
+                          visibility: thickness,
+                          glassColor: Color.from(
+                            alpha: 0.1,
+                            red: 1,
+                            green: 1,
+                            blue: 1,
+                          ),
+                          saturation: 1.5,
+                          refractiveIndex: 1.15,
+                          thickness: 20,
+                          lightIntensity: 2,
+                          chromaticAberration: 0.5,
+                          blur: 0,
+                        ),
+                        shape: LiquidRoundedSuperellipse(
+                          borderRadius: widget.borderRadius,
+                        ),
+                        child: GlassGlow(child: const SizedBox.expand()),
+                      ),
+                    ),
+                ],
               );
             },
+            child: LiquidGlass.grouped(
+              clipBehavior: Clip.none,
+              shape: LiquidRoundedSuperellipse(
+                borderRadius: widget.borderRadius,
+              ),
+              child: Container(
+                padding: widget.padding,
+                margin: widget.margin,
+                decoration: dark
+                    ? ShapeDecoration(
+                        shape: RoundedSuperellipseBorder(
+                          borderRadius: BorderRadius.circular(
+                            widget.borderRadius,
+                          ),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.09),
+                            width: 1.2,
+                          ),
+                        ),
+                      )
+                    : null,
+                child: widget.child,
+              ),
+            ),
           );
         },
+        child: widget.child,
       ),
     );
 
@@ -521,11 +515,7 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
           thickness: widget.thickness,
           blur: widget.blur,
           saturation: widget.saturation,
-          lightIntensity:
-              widget.lightIntensity ??
-              (dark
-                  ? 0.3
-                  : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
+          lightIntensity: widget.lightIntensity ?? (dark ? 0.3 : 1.0),
           ambientStrength: widget.ambientStrength ?? (dark ? 0.3 : 0.5),
           lightAngle: math.pi / 4,
           glassColor: widget.glassColor ?? defaultGlassColor,
@@ -553,51 +543,15 @@ class _IndicatorTransform extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
-    final double marginValue = isDark ? 5.0 : 4.0;
+    // Fixed margin matching library example
+    const double marginValue = 4.0;
 
-    // --- Asymmetric leading/trailing edge stretch (iOS 26 liquid glass) ---
-    // The leading edge (direction of movement) extends further,
-    // the trailing edge lags behind, creating the signature liquid "blob" feel.
-    const double maxStretchPx = 18.0;
-    const double velocityNormalize = 8.0;
-
-    // Smooth cubic ease-out mapping from velocity to stretch amount
-    final rawFactor = (velocity.abs() / velocityNormalize).clamp(0.0, 1.0);
-    final easedStretch = (1.0 - math.pow(1.0 - rawFactor, 3.0)) * maxStretchPx;
-
-    // Leading edge stretches more, trailing edge stretches less
-    final double leadingStretch = easedStretch * 1.0; // full stretch forward
-    final double trailingStretch = easedStretch * 0.3; // subtle drag backward
-
-    // Determine direction: positive velocity = moving right
-    final double leftExtra;
-    final double rightExtra;
-    if (velocity > 0) {
-      // Moving right: right edge leads, left edge trails
-      rightExtra = leadingStretch;
-      leftExtra = trailingStretch;
-    } else if (velocity < 0) {
-      // Moving left: left edge leads, right edge trails
-      leftExtra = leadingStretch;
-      rightExtra = trailingStretch;
-    } else {
-      leftExtra = 0;
-      rightExtra = 0;
-    }
-
-    // Expand pill outward when active + asymmetric stretch
-    final baseExpand = thickness * 16.0;
-    final rect = RelativeRect.fromLTRB(
-      -(baseExpand + leftExtra),
-      -baseExpand,
-      -(baseExpand + rightExtra),
-      -baseExpand,
+    // Zoom expansion: lerp from no expansion to -14px outward based on thickness
+    final rect = RelativeRect.lerp(
+      RelativeRect.fill,
+      const RelativeRect.fromLTRB(-14, -14, -14, -14),
+      thickness,
     );
-
-    // Subtle vertical squeeze during fast horizontal movement (liquid blob feel)
-    final double verticalSqueeze =
-        1.0 - (rawFactor * 0.06); // max 6% squeeze at full speed
 
     return Positioned.fill(
       left: marginValue,
@@ -611,10 +565,23 @@ class _IndicatorTransform extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Positioned.fromRelativeRect(
-              rect: rect,
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.diagonal3Values(1.0, verticalSqueeze, 1.0),
+              rect: rect!,
+              child: SingleMotionBuilder(
+                motion: const Motion.bouncySpring(
+                  duration: Duration(milliseconds: 600),
+                ),
+                value: velocity,
+                builder: (context, velocity, child) {
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: _buildJellyTransform(
+                      velocity: Offset(velocity, 0),
+                      maxDistortion: 0.8,
+                      velocityScale: 10,
+                    ),
+                    child: child,
+                  );
+                },
                 child: child,
               ),
             ),
@@ -625,23 +592,73 @@ class _IndicatorTransform extends StatelessWidget {
   }
 }
 
-/// InheritedWidget to propagate the currently active (or hovered) tab index down the widget tree.
+/// InheritedWidget to propagate the current alignment, thickness, and count of the indicator down the widget tree.
 class IndicatorStateScope extends InheritedWidget {
-  final int activeIndex;
+  final double alignmentX;
+  final double thickness;
+  final int count;
 
   const IndicatorStateScope({
     super.key,
-    required this.activeIndex,
+    required this.alignmentX,
+    required this.thickness,
+    required this.count,
     required super.child,
   });
 
-  static int of(BuildContext context) {
-    final scope = context.dependOnInheritedWidgetOfExactType<IndicatorStateScope>();
-    return scope?.activeIndex ?? 0;
+  static IndicatorStateScope? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<IndicatorStateScope>();
   }
 
   @override
   bool updateShouldNotify(IndicatorStateScope oldWidget) {
-    return oldWidget.activeIndex != activeIndex;
+    return oldWidget.alignmentX != alignmentX ||
+        oldWidget.thickness != thickness ||
+        oldWidget.count != count;
+  }
+}
+
+/// A premium interactive glassmorphic button that wobbles and distorts like a jelly drop of water when tapped.
+class AppLiquidGlassButton extends StatefulWidget {
+  const AppLiquidGlassButton({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.borderRadius = 100.0,
+    this.padding = const EdgeInsets.all(10),
+    this.margin,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final double borderRadius;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? margin;
+
+  @override
+  State<AppLiquidGlassButton> createState() => _AppLiquidGlassButtonState();
+}
+
+class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton> {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: widget.margin,
+        child: LiquidStretch(
+          interactionScale: 1.06,
+          stretch: 0.5,
+          resistance: 0.08,
+          child: AppLiquidGlass(
+            shape: const LiquidOval(), // Use LiquidOval to guarantee a perfect circle/ellipse
+            padding: widget.padding,
+            showGlow: true, // Enable GlassGlow for buttons
+            child: widget.child,
+          ),
+        ),
+      ),
+    );
   }
 }
