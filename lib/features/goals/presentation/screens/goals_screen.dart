@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
@@ -11,6 +10,7 @@ import 'package:expense_management/features/goals/presentation/bloc/goal_state.d
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:expense_management/features/goals/presentation/screens/add_goal_screen.dart';
 import 'package:expense_management/shared/widgets/screen_header.dart';
+import 'package:expense_management/shared/widgets/fading_blur_layer.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -102,25 +102,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
             height: headerHeight,
             child: Stack(
               children: [
-                // 2.1. Fading Blur Layer
                 Positioned.fill(
-                  child: ShaderMask(
-                    shaderCallback: (rect) {
-                      return const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.black, Colors.transparent],
-                        stops: [0.35, 1.0],
-                      ).createShader(rect);
-                    },
-                    blendMode: BlendMode.dstIn,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.05),
-                      ),
-                    ),
-                  ),
+                  child: const FadingBlurLayer(stops: [0.35, 1.0]),
                 ),
 
                 // 2.2. Fading Background Color Layer

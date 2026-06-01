@@ -282,6 +282,7 @@ class ProfileView extends StatelessWidget {
                                   iconBgColor: const Color(0xFF249689),
                                   title: l10n.profile_settings,
                                   textColor: textColor,
+                                  onTap: () => context.push('/settings'),
                                 ),
                                 _menuDivider(isDark),
                                 _buildMenuItem(

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
@@ -13,6 +12,7 @@ import 'package:expense_management/shared/widgets/app_toast.dart';
 import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass_switch.dart';
 import 'package:expense_management/shared/widgets/sf_symbols.dart';
 import 'package:expense_management/shared/widgets/screen_header.dart';
+import 'package:expense_management/shared/widgets/fading_blur_layer.dart';
 
 /// Settings screen for managing app lock (PIN + Biometric)
 class SecuritySettingsScreen extends StatelessWidget {
@@ -277,23 +277,7 @@ class _SecuritySettingsViewState extends State<_SecuritySettingsView> {
                 children: [
                   // 2.1. Fading Blur Layer
                   Positioned.fill(
-                    child: ShaderMask(
-                      shaderCallback: (rect) {
-                        return const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.black, Colors.transparent],
-                          stops: [0.35, 1.0],
-                        ).createShader(rect);
-                      },
-                      blendMode: BlendMode.dstIn,
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.05),
-                        ),
-                      ),
-                    ),
+                    child: const FadingBlurLayer(stops: [0.35, 1.0]),
                   ),
 
                   // 2.2. Fading Background Color Layer

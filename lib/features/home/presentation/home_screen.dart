@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
@@ -11,9 +10,9 @@ import 'package:expense_management/features/transactions/domain/entities/transac
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/utils/currency_formatter.dart';
 import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
+import 'package:expense_management/shared/widgets/fading_blur_layer.dart';
 
 import 'package:go_router/go_router.dart';
-
 import 'package:expense_management/shared/widgets/screen_header.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -80,28 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // 2.1. Fading Blur Layer (Using ShaderMask with BackdropFilter)
                 Positioned.fill(
-                  child: ShaderMask(
-                    shaderCallback: (rect) {
-                      return const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.black, Colors.transparent],
-                        stops: [
-                          0.35,
-                          1.0,
-                        ], // Full blur on top 35%, then fades out towards the bottom
-                      ).createShader(rect);
-                    },
-                    blendMode: BlendMode.dstIn,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        color: Colors.black.withValues(
-                          alpha: 0.05,
-                        ), // Light tint to ensure backdrop filter compiles nicely
-                      ),
-                    ),
-                  ),
+                  child: const FadingBlurLayer(stops: [0.35, 1.0]),
                 ),
 
                 // 2.2. Fading Background Color Layer (Transition to transparent)

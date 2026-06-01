@@ -18,6 +18,7 @@ import 'package:expense_management/features/budgets/presentation/bloc/budget_blo
 import 'package:expense_management/features/goals/presentation/bloc/goal_bloc.dart';
 import 'package:expense_management/features/recurring/presentation/bloc/recurring_bloc.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
+import 'package:expense_management/core/utils/app_settings_manager.dart';
 import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
 import 'package:expense_management/features/app_lock/presentation/widgets/app_lock_wrapper.dart';
@@ -30,6 +31,7 @@ void main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   await AuthTokenManager.init();
+  await AppSettingsManager.init();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -38,45 +40,55 @@ void main() async {
   // Initialize Dependency Injection
   await initInjection();
 
-  // Pre-warm glass shaders to avoid first-frame white flash
-  await LiquidGlassWidgets.initialize();
+  // Pre-warm glass shaders only when liquid glass is enabled
+  if (!AppSettingsManager.isLiquidGlassDisabled()) {
+    await LiquidGlassWidgets.initialize();
+  }
 
   runApp(
-    LiquidGlassWidgets.wrap(
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<AppLockBloc>(
-            create: (context) => getIt<AppLockBloc>(),
-          ),
-          BlocProvider<AuthBloc>(
-            create: (context) => getIt<AuthBloc>(),
-          ),
-          BlocProvider<LocaleCubit>(
-            create: (context) => LocaleCubit(),
-          ),
-          BlocProvider<WalletBloc>(
-            create: (context) => getIt<WalletBloc>(),
-          ),
-          BlocProvider<TransactionBloc>(
-            create: (context) => getIt<TransactionBloc>(),
-          ),
-          BlocProvider<CategoryBloc>(
-            create: (context) => getIt<CategoryBloc>(),
-          ),
-          BlocProvider<BudgetBloc>(
-            create: (context) => getIt<BudgetBloc>(),
-          ),
-          BlocProvider<GoalBloc>(
-            create: (context) => getIt<GoalBloc>(),
-          ),
-          BlocProvider<RecurringBloc>(
-            create: (context) => getIt<RecurringBloc>(),
-          ),
-          BlocProvider<StatsBloc>(
-            create: (context) => getIt<StatsBloc>(),
-          ),
-        ],
-        child: const MyApp(),
+    MultiBlocProvider(
+      providers: [
+        BlocProvider<AppLockBloc>(
+          create: (context) => getIt<AppLockBloc>(),
+        ),
+        BlocProvider<AuthBloc>(
+          create: (context) => getIt<AuthBloc>(),
+        ),
+        BlocProvider<LocaleCubit>(
+          create: (context) => LocaleCubit(),
+        ),
+        BlocProvider<WalletBloc>(
+          create: (context) => getIt<WalletBloc>(),
+        ),
+        BlocProvider<TransactionBloc>(
+          create: (context) => getIt<TransactionBloc>(),
+        ),
+        BlocProvider<CategoryBloc>(
+          create: (context) => getIt<CategoryBloc>(),
+        ),
+        BlocProvider<BudgetBloc>(
+          create: (context) => getIt<BudgetBloc>(),
+        ),
+        BlocProvider<GoalBloc>(
+          create: (context) => getIt<GoalBloc>(),
+        ),
+        BlocProvider<RecurringBloc>(
+          create: (context) => getIt<RecurringBloc>(),
+        ),
+        BlocProvider<StatsBloc>(
+          create: (context) => getIt<StatsBloc>(),
+        ),
+      ],
+      child: ValueListenableBuilder<bool>(
+        valueListenable: AppSettingsManager.disableLiquidGlassNotifier,
+        builder: (context, disable, _) {
+          if (disable) {
+            return const MyApp();
+          }
+          return LiquidGlassWidgets.wrap(
+            child: const MyApp(),
+          );
+        },
       ),
     ),
   );

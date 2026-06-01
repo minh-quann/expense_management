@@ -5,6 +5,7 @@ import 'package:expense_management/l10n/app_localizations.dart';
 import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 import 'package:expense_management/shared/widgets/transaction_item_builder.dart';
 import 'package:expense_management/shared/widgets/screen_header.dart';
+import 'package:expense_management/shared/widgets/fading_blur_layer.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
@@ -12,7 +13,6 @@ import 'package:expense_management/features/transactions/presentation/bloc/trans
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:intl/intl.dart';
-import 'dart:ui';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -155,25 +155,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             height: statusBarHeight + 64 + 16 + 44 + 16,
             child: Stack(
               children: [
-                // 2.1. Fading Blur Layer (Backdrop blur)
                 Positioned.fill(
-                  child: ShaderMask(
-                    shaderCallback: (rect) {
-                      return const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.black, Colors.transparent],
-                        stops: [0.65, 1.0], // Full blur on top 65%, then fades out
-                      ).createShader(rect);
-                    },
-                    blendMode: BlendMode.dstIn,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.05),
-                      ),
-                    ),
-                  ),
+                  child: const FadingBlurLayer(stops: [0.65, 1.0]),
                 ),
 
                 // 2.2. Fading Background Color Layer

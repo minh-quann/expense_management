@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
+import 'package:expense_management/core/utils/app_settings_manager.dart';
 
 /// Creates a jelly transform matrix based on velocity for organic squash and stretch effect.
 /// Ported from the liquid_glass_renderer library example.
@@ -114,6 +116,10 @@ class _AppLiquidGlassState extends State<AppLiquidGlass> {
     super.didChangeDependencies();
     _cleanupListeners();
 
+    // Skip route transition tracking when liquid glass is disabled
+    // to avoid unnecessary setState calls and GPU compositing
+    if (AppSettingsManager.disableLiquidGlassNotifier.value) return;
+
     final route = ModalRoute.of(context);
     if (route != null) {
       _animation = route.animation;
@@ -174,96 +180,118 @@ class _AppLiquidGlassState extends State<AppLiquidGlass> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppSettingsManager.disableLiquidGlassNotifier,
+      builder: (context, disableLiquidGlass, _) {
+        final isDark = AppColors.isDark(context);
 
-    // Default translucent glass colors matching system theme
-    final defaultGlassColor = isDark
-        ? const Color(0xFF2C2C2E).withValues(alpha: 0.45)
-        : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
+        // Default translucent glass colors matching system theme
+        final defaultGlassColor = isDark
+            ? const Color(0xFF2C2C2E).withValues(alpha: 0.45)
+            : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
 
-    // Determine the border shape
-    final effectiveShape =
-        widget.shape ??
-        LiquidRoundedSuperellipse(borderRadius: widget.borderRadius);
-    final borderShape = effectiveShape is LiquidOval
-        ? const OvalBorder(
-            side: BorderSide(
-              color: Color(0x17FFFFFF), // White with 9% alpha
-              width: 1,
-            ),
-          )
-        : RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            side: const BorderSide(color: Color(0x17FFFFFF), width: 1),
+        // Determine the border shape
+        final effectiveShape =
+            widget.shape ??
+            LiquidRoundedSuperellipse(borderRadius: widget.borderRadius);
+        final borderShape = effectiveShape is LiquidOval
+            ? const OvalBorder(
+                side: BorderSide(
+                  color: Color(0x17FFFFFF), // White with 9% alpha
+                  width: 1,
+                ),
+              )
+            : RoundedSuperellipseBorder(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                side: const BorderSide(color: Color(0x17FFFFFF), width: 1),
+              );
+
+        Widget innerChild = Container(
+          padding: widget.padding,
+          decoration: isDark ? ShapeDecoration(shape: borderShape) : null,
+          child: widget.child,
+        );
+
+        if (widget.showGlow && !disableLiquidGlass) {
+          innerChild = GlassGlow(
+            glowColor: isDark ? Colors.white24 : Colors.black12,
+            child: innerChild,
           );
 
-    Widget innerChild = Container(
-      padding: widget.padding,
-      decoration: isDark ? ShapeDecoration(shape: borderShape) : null,
-      child: widget.child,
-    );
+          // Clip the touch/glow effect to match the glass shape and prevent square borders on press
+          if (effectiveShape is LiquidOval) {
+            innerChild = ClipOval(child: innerChild);
+          } else {
+            innerChild = ClipRRect(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              child: innerChild,
+            );
+          }
+        }
 
-    if (widget.showGlow) {
-      innerChild = GlassGlow(
-        glowColor: isDark ? Colors.white24 : Colors.black12,
-        child: innerChild,
-      );
+        Widget glassWidget;
+        if (disableLiquidGlass) {
+          final fallbackBgColor = isDark
+              ? const Color(0xFF1C1C1E).withValues(alpha: 0.88)
+              : const Color(0xFFF2F2F7).withValues(alpha: 0.92);
 
-      // Clip the touch/glow effect to match the glass shape and prevent square borders on press
-      if (effectiveShape is LiquidOval) {
-        innerChild = ClipOval(child: innerChild);
-      } else {
-        innerChild = ClipRRect(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-          child: innerChild,
+          glassWidget = Container(
+            decoration: ShapeDecoration(
+              color: widget.glassColor ?? fallbackBgColor,
+              shape: borderShape,
+            ),
+            child: ClipPath(
+              clipper: ShapeBorderClipper(shape: borderShape),
+              child: innerChild,
+            ),
+          );
+        } else {
+          final settings = LiquidGlassSettings(
+            refractiveIndex: widget.refractiveIndex,
+            thickness: widget.thickness,
+            blur: widget.blur,
+            saturation: widget.saturation,
+            lightIntensity: widget.lightIntensity ?? (isDark ? 0.0 : 1.0),
+            ambientStrength: widget.ambientStrength ?? (isDark ? 0.0 : 0.5),
+            lightAngle: math.pi / 4,
+            glassColor: _isTransitioning
+                ? Colors.transparent
+                : (widget.glassColor ?? defaultGlassColor),
+          );
+
+          if (_isTransitioning) {
+            glassWidget = FakeGlass(
+              shape: effectiveShape,
+              settings: settings,
+              child: innerChild,
+            );
+          } else {
+            glassWidget = LiquidGlassLayer(
+              settings: settings,
+              child: LiquidGlass.grouped(shape: effectiveShape, child: innerChild),
+            );
+          }
+
+          // Ensure the backdrop filter and glass background are clipped to the shape to prevent square corners
+          if (effectiveShape is LiquidOval) {
+            glassWidget = ClipOval(child: glassWidget);
+          } else {
+            glassWidget = ClipRRect(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              child: glassWidget,
+            );
+          }
+        }
+
+        // RepaintBoundary isolates this subtree into a separate compositing layer,
+        // allowing the GPU to cache its raster output when the content doesn't change.
+        return Container(
+          margin: widget.margin,
+          height: widget.height,
+          width: widget.width,
+          child: RepaintBoundary(child: glassWidget),
         );
-      }
-    }
-
-    final settings = LiquidGlassSettings(
-      refractiveIndex: widget.refractiveIndex,
-      thickness: widget.thickness,
-      blur: widget.blur,
-      saturation: widget.saturation,
-      lightIntensity: widget.lightIntensity ?? (isDark ? 0.0 : 1.0),
-      ambientStrength: widget.ambientStrength ?? (isDark ? 0.0 : 0.5),
-      lightAngle: math.pi / 4,
-      glassColor: _isTransitioning
-          ? Colors.transparent
-          : (widget.glassColor ?? defaultGlassColor),
-    );
-
-    Widget glassWidget;
-    if (_isTransitioning) {
-      glassWidget = FakeGlass(
-        shape: effectiveShape,
-        settings: settings,
-        child: innerChild,
-      );
-    } else {
-      glassWidget = LiquidGlassLayer(
-        settings: settings,
-        child: LiquidGlass.grouped(shape: effectiveShape, child: innerChild),
-      );
-    }
-
-    // Ensure the backdrop filter and glass background are clipped to the shape to prevent square corners
-    if (effectiveShape is LiquidOval) {
-      glassWidget = ClipOval(child: glassWidget);
-    } else {
-      glassWidget = ClipRRect(
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        child: glassWidget,
-      );
-    }
-
-    // RepaintBoundary isolates this subtree into a separate compositing layer,
-    // allowing the GPU to cache its raster output when the content doesn't change.
-    return Container(
-      margin: widget.margin,
-      height: widget.height,
-      width: widget.width,
-      child: RepaintBoundary(child: glassWidget),
+      },
     );
   }
 }
@@ -479,148 +507,188 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
 
   @override
   Widget build(BuildContext context) {
-    final dark = widget.isDark ?? AppColors.isDark(context);
-    final indicatorColor = dark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.08);
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppSettingsManager.disableLiquidGlassNotifier,
+      builder: (context, disableLiquidGlass, _) {
+        final dark = widget.isDark ?? AppColors.isDark(context);
+        final indicatorColor = dark
+            ? Colors.white.withValues(alpha: 0.1)
+            : Colors.black.withValues(alpha: 0.08);
 
-    final defaultGlassColor = dark
-        ? const Color(0xFF2C2C2E).withValues(alpha: 0.45)
-        : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
+        final defaultGlassColor = dark
+            ? const Color(0xFF2C2C2E).withValues(alpha: 0.45)
+            : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
 
-    Widget mainStack = GestureDetector(
-      onHorizontalDragDown: _onDragDown,
-      onHorizontalDragUpdate: _onDragUpdate,
-      onHorizontalDragEnd: _onDragEnd,
-      onHorizontalDragCancel: _onDragCancel,
-      child: VelocityMotionBuilder(
-        converter: SingleMotionConverter(),
-        value: xAlign,
-        motion: _isDragging
-            ? const Motion.interactiveSpring(snapToEnd: true)
-            : const Motion.bouncySpring(snapToEnd: true),
-        builder: (context, value, velocity, child) {
-          final alignment = Alignment(value, 0);
-
-          final targetAlignment = _computeXAlign(widget.selectedIndex);
-
-          return SingleMotionBuilder(
-            motion: const Motion.snappySpring(
-              snapToEnd: true,
-              duration: Duration(milliseconds: 300),
-            ),
-            value: _isDown || (alignment.x - targetAlignment).abs() > 0.30
-                ? 1.0
-                : 0.0,
-            builder: (context, thickness, stackChild) {
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Normal state pill - fade out when glass pill is active
-                  if (thickness < 1)
-                    _IndicatorTransform(
-                      velocity: velocity,
-                      tabCount: widget.count,
-                      alignment: alignment,
-                      thickness: thickness,
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 120),
-                        opacity: thickness <= 0.2 ? 1 : 0,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: indicatorColor,
-                            borderRadius: BorderRadius.circular(64),
-                          ),
-                          child: const SizedBox.expand(),
-                        ),
-                      ),
-                    ),
-                  // Background/Child - slight scale up on press like iOS native
-                  Transform.scale(
-                    scale: 1 + (thickness * 0.02),
-                    child: IndicatorStateScope(
-                      alignmentX: value,
-                      thickness: thickness,
-                      count: widget.count,
-                      child: stackChild!,
-                    ),
-                  ),
-                  // Active glass pill - visibility controlled by thickness
-                  if (thickness > 0)
-                    _IndicatorTransform(
-                      velocity: velocity,
-                      tabCount: widget.count,
-                      alignment: alignment,
-                      thickness: thickness,
-                      child: LiquidGlass.withOwnLayer(
-                        settings: LiquidGlassSettings(
-                          visibility: thickness,
-                          glassColor: Color.from(
-                            alpha: 0,
-                            red: 1,
-                            green: 1,
-                            blue: 1,
-                          ),
-                          saturation: 1.5,
-                          refractiveIndex: 1.15,
-                          thickness: 25,
-                          lightIntensity: 0.5,
-                          chromaticAberration: 0.5,
-                          blur: 0,
-                        ),
-                        shape: LiquidRoundedSuperellipse(
-                          borderRadius: widget.borderRadius,
-                        ),
-                        child: GlassGlow(child: const SizedBox.expand()),
-                      ),
-                    ),
-                ],
-              );
-            },
-            child: LiquidGlass.grouped(
-              clipBehavior: Clip.none,
-              shape: LiquidRoundedSuperellipse(
-                borderRadius: widget.borderRadius,
-              ),
-              child: Container(
-                padding: widget.padding,
-                margin: widget.margin,
-                decoration: dark
-                    ? ShapeDecoration(
-                        shape: RoundedSuperellipseBorder(
-                          borderRadius: BorderRadius.circular(
-                            widget.borderRadius,
-                          ),
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.09),
-                            width: 1.2,
-                          ),
-                        ),
-                      )
-                    : null,
-                child: widget.child,
-              ),
+        // EARLY RETURN: Completely skip VelocityMotionBuilder/SingleMotionBuilder
+        // spring animations and liquid glass rendering when disabled.
+        // These motor package widgets create GPU tickers that run every frame.
+        if (disableLiquidGlass) {
+          final indicatorBorderShape = RoundedSuperellipseBorder(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            side: BorderSide(
+              color: dark ? Colors.white.withValues(alpha: 0.09) : Colors.black.withValues(alpha: 0.05),
+              width: 1.2,
             ),
           );
-        },
-        child: widget.child,
-      ),
-    );
 
-    return RepaintBoundary(
-      child: LiquidGlassLayer(
-        settings: LiquidGlassSettings(
-          refractiveIndex: widget.refractiveIndex,
-          thickness: widget.thickness,
-          blur: widget.blur,
-          saturation: widget.saturation,
-          lightIntensity: widget.lightIntensity ?? (dark ? 0.3 : 1.0),
-          ambientStrength: widget.ambientStrength ?? (dark ? 0.3 : 0.5),
-          lightAngle: math.pi / 4,
-          glassColor: widget.glassColor ?? defaultGlassColor,
-        ),
-        child: LiquidGlassBlendGroup(blend: widget.blend, child: mainStack),
-      ),
+          final fallbackBgColor = dark
+              ? const Color(0xFF1E1E1E).withValues(alpha: 0.95)
+              : const Color(0xFFF5F5F7).withValues(alpha: 0.95);
+
+          return Container(
+            margin: widget.margin,
+            decoration: ShapeDecoration(
+              color: widget.glassColor ?? fallbackBgColor,
+              shape: indicatorBorderShape,
+            ),
+            child: _LightweightIndicatorStack(
+              selectedIndex: widget.selectedIndex,
+              count: widget.count,
+              borderRadius: widget.borderRadius,
+              isDark: dark,
+              padding: widget.padding,
+              onChanged: widget.onChanged,
+              child: widget.child,
+            ),
+          );
+        }
+
+        // Enabled path: full liquid glass with VelocityMotionBuilder spring animations
+        Widget mainStack = GestureDetector(
+          onHorizontalDragDown: _onDragDown,
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          onHorizontalDragCancel: _onDragCancel,
+          child: VelocityMotionBuilder(
+            converter: SingleMotionConverter(),
+            value: xAlign,
+            motion: _isDragging
+                ? const Motion.interactiveSpring(snapToEnd: true)
+                : const Motion.bouncySpring(snapToEnd: true),
+            builder: (context, value, velocity, child) {
+              final alignment = Alignment(value, 0);
+
+              final targetAlignment = _computeXAlign(widget.selectedIndex);
+
+              return SingleMotionBuilder(
+                motion: const Motion.snappySpring(
+                  snapToEnd: true,
+                  duration: Duration(milliseconds: 300),
+                ),
+                value: _isDown || (alignment.x - targetAlignment).abs() > 0.30
+                    ? 1.0
+                    : 0.0,
+                builder: (context, thickness, stackChild) {
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Normal state pill - fade out when glass pill is active
+                      if (thickness < 1)
+                        _IndicatorTransform(
+                          velocity: velocity,
+                          tabCount: widget.count,
+                          alignment: alignment,
+                          thickness: thickness,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 120),
+                            opacity: thickness <= 0.2 ? 1 : 0,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: indicatorColor,
+                                borderRadius: BorderRadius.circular(64),
+                              ),
+                              child: const SizedBox.expand(),
+                            ),
+                          ),
+                        ),
+                      // Background/Child - slight scale up on press like iOS native
+                      Transform.scale(
+                        scale: 1 + (thickness * 0.02),
+                        child: IndicatorStateScope(
+                          alignmentX: value,
+                          thickness: thickness,
+                          count: widget.count,
+                          child: stackChild!,
+                        ),
+                      ),
+                      // Active glass pill - visibility controlled by thickness
+                      if (thickness > 0)
+                        _IndicatorTransform(
+                          velocity: velocity,
+                          tabCount: widget.count,
+                          alignment: alignment,
+                          thickness: thickness,
+                          child: LiquidGlass.withOwnLayer(
+                            settings: LiquidGlassSettings(
+                              visibility: thickness,
+                              glassColor: Color.from(
+                                alpha: 0,
+                                red: 1,
+                                green: 1,
+                                blue: 1,
+                              ),
+                              saturation: 1.5,
+                              refractiveIndex: 1.15,
+                              thickness: 25,
+                              lightIntensity: 0.5,
+                              chromaticAberration: 0.5,
+                              blur: 0,
+                            ),
+                            shape: LiquidRoundedSuperellipse(
+                              borderRadius: widget.borderRadius,
+                            ),
+                            child: GlassGlow(child: const SizedBox.expand()),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+                child: LiquidGlass.grouped(
+                  clipBehavior: Clip.none,
+                  shape: LiquidRoundedSuperellipse(
+                    borderRadius: widget.borderRadius,
+                  ),
+                  child: Container(
+                    padding: widget.padding,
+                    margin: widget.margin,
+                    decoration: dark
+                        ? ShapeDecoration(
+                            shape: RoundedSuperellipseBorder(
+                              borderRadius: BorderRadius.circular(
+                                widget.borderRadius,
+                              ),
+                              side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.09),
+                                width: 1.2,
+                              ),
+                            ),
+                          )
+                        : null,
+                    child: widget.child,
+                  ),
+                ),
+              );
+            },
+            child: widget.child,
+          ),
+        );
+
+        return RepaintBoundary(
+          child: LiquidGlassLayer(
+            settings: LiquidGlassSettings(
+              refractiveIndex: widget.refractiveIndex,
+              thickness: widget.thickness,
+              blur: widget.blur,
+              saturation: widget.saturation,
+              lightIntensity: widget.lightIntensity ?? (dark ? 0.3 : 1.0),
+              ambientStrength: widget.ambientStrength ?? (dark ? 0.3 : 0.5),
+              lightAngle: math.pi / 4,
+              glassColor: widget.glassColor ?? defaultGlassColor,
+            ),
+            child: LiquidGlassBlendGroup(blend: widget.blend, child: mainStack),
+          ),
+        );
+      },
     );
   }
 }
@@ -716,3 +784,156 @@ class IndicatorStateScope extends InheritedWidget {
         oldWidget.count != count;
   }
 }
+
+/// A lightweight indicator stack that uses a physics-based [SpringSimulation]
+/// instead of continuous spring animations (VelocityMotionBuilder/SingleMotionBuilder)
+/// from the `motor` package. The ticker only runs during active transitions and
+/// stops completely once the spring settles, eliminating idle GPU overhead.
+class _LightweightIndicatorStack extends StatefulWidget {
+  const _LightweightIndicatorStack({
+    required this.selectedIndex,
+    required this.count,
+    required this.borderRadius,
+    required this.isDark,
+    required this.child,
+    required this.onChanged,
+    this.padding,
+  });
+
+  final int selectedIndex;
+  final int count;
+  final double borderRadius;
+  final bool isDark;
+  final Widget child;
+  final ValueChanged<int> onChanged;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  State<_LightweightIndicatorStack> createState() =>
+      _LightweightIndicatorStackState();
+}
+
+class _LightweightIndicatorStackState extends State<_LightweightIndicatorStack>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  SpringSimulation? _simulation;
+  late double _currentX;
+  double _velocity = 0;
+
+  double _computeX(int index) {
+    if (widget.count <= 1) return 0.0;
+    final fraction = index / (widget.count - 1);
+    return (fraction * 2) - 1;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _currentX = _computeX(widget.selectedIndex);
+    // Use an unbounded controller as we drive it manually with SpringSimulation
+    _controller = AnimationController.unbounded(vsync: this);
+    _controller.addListener(_onTick);
+  }
+
+  @override
+  void didUpdateWidget(covariant _LightweightIndicatorStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedIndex != widget.selectedIndex ||
+        oldWidget.count != widget.count) {
+      _animateToIndex(widget.selectedIndex);
+    }
+  }
+
+  void _animateToIndex(int index) {
+    final targetX = _computeX(index);
+    if ((_currentX - targetX).abs() < 0.001) return;
+
+    // Bouncy spring with natural iOS-like feel
+    final spring = SpringDescription.withDampingRatio(
+      mass: 1.0,
+      stiffness: 350,
+      ratio: 0.75, // Slightly underdamped for a subtle bounce
+    );
+
+    _simulation = SpringSimulation(spring, _currentX, targetX, _velocity);
+    _controller.animateWith(_simulation!);
+  }
+
+  void _onTick() {
+    setState(() {
+      _currentX = _controller.value;
+      // Track velocity for seamless chained animations
+      if (_simulation != null) {
+        final t = _controller.lastElapsedDuration?.inMicroseconds;
+        if (t != null) {
+          _velocity = _simulation!.dx(t / Duration.microsecondsPerSecond);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onTick);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = Alignment(_currentX, 0);
+    final indicatorColor = widget.isDark
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.black.withValues(alpha: 0.12);
+
+    return GestureDetector(
+      onTapUp: (details) {
+        final box = context.findRenderObject() as RenderBox;
+        final localX = box.globalToLocal(details.globalPosition).dx;
+        final relativeX = localX / box.size.width;
+        final tappedIndex =
+            (relativeX * widget.count).floor().clamp(0, widget.count - 1);
+        if (tappedIndex != widget.selectedIndex) {
+          widget.onChanged(tappedIndex);
+        }
+      },
+      child: Stack(
+        children: [
+          // Sliding indicator pill with spring physics
+          Positioned.fill(
+            left: 4,
+            right: 4,
+            top: 4,
+            bottom: 4,
+            child: Align(
+              alignment: alignment,
+              child: FractionallySizedBox(
+                widthFactor: 1 / widget.count,
+                child: DecoratedBox(
+                  decoration: ShapeDecoration(
+                    color: indicatorColor,
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                    ),
+                  ),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+          ),
+          // Child content (nav items)
+          IndicatorStateScope(
+            alignmentX: _currentX,
+            thickness: 0,
+            count: widget.count,
+            child: Container(
+              padding: widget.padding,
+              child: widget.child,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

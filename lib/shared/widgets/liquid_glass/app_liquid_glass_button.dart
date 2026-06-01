@@ -5,6 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
+import 'package:expense_management/core/utils/app_settings_manager.dart';
 
 /// A premium interactive glassmorphic button that wobbles and distorts like a jelly drop of water when tapped.
 /// Implemented using [GlassButton.custom] from `liquid_glass_widgets` package,
@@ -74,6 +75,7 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
   bool _isDragging = false;
   bool _hasDragged =
       false; // Flag to differentiate between normal Tap and actual Drag
+  bool _isPressed = false;
 
   Ticker? _springTicker;
   SpringSimulation? _simX;
@@ -83,6 +85,10 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _cleanupRouteListeners();
+
+    // Skip route transition tracking when liquid glass is disabled
+    // to avoid unnecessary setState calls and GPU compositing
+    if (AppSettingsManager.disableLiquidGlassNotifier.value) return;
 
     final route = ModalRoute.of(context);
     if (route != null) {
@@ -193,143 +199,203 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = AppColors.isDark(context);
+    return ValueListenableBuilder<bool>(
+      valueListenable: AppSettingsManager.disableLiquidGlassNotifier,
+      builder: (context, disableLiquidGlass, _) {
+        final isDark = AppColors.isDark(context);
 
-    // Default translucent glass colors matching system theme
-    final defaultGlassColor = isDark
-        ? const Color(0xFFD0D5DD).withValues(alpha: 0.10)
-        : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
+        // Default translucent glass colors matching system theme
+        final defaultGlassColor = isDark
+            ? const Color(0xFFD0D5DD).withValues(alpha: 0.10)
+            : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
 
-    final isCircle =
-        widget.borderRadius >= 100.0 &&
-        widget.width != null &&
-        widget.height != null &&
-        widget.width == widget.height &&
-        !widget.autoSize;
+        final isCircle =
+            widget.borderRadius >= 100.0 &&
+            widget.width != null &&
+            widget.height != null &&
+            widget.width == widget.height &&
+            !widget.autoSize;
 
-    final effectiveShape = isCircle
-        ? const lgw.LiquidOval()
-        : lgw.LiquidRoundedSuperellipse(borderRadius: widget.borderRadius);
+        // Set dimensions based on autoSize flag
+        final double w = widget.autoSize ? double.infinity : (widget.width ?? 56.0);
+        final double h = widget.autoSize
+            ? double.infinity
+            : (widget.height ?? 56.0);
 
-    // Set dimensions based on autoSize flag
-    final double w = widget.autoSize ? double.infinity : (widget.width ?? 56.0);
-    final double h = widget.autoSize
-        ? double.infinity
-        : (widget.height ?? 56.0);
+        if (disableLiquidGlass) {
+          final borderShape = isCircle
+              ? const OvalBorder(
+                  side: BorderSide(
+                    color: Color(0x17FFFFFF), // White with 9% alpha
+                    width: 1,
+                  ),
+                )
+              : RoundedSuperellipseBorder(
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  side: const BorderSide(color: Color(0x17FFFFFF), width: 1),
+                );
 
-    // Use exactly the same settings as AppLiquidGlass to ensure perfect visual match
-    final settings = lgw.LiquidGlassSettings(
-      refractiveIndex: widget.refractiveIndex,
-      thickness: widget.thickness,
-      blur: widget.blur,
-      saturation: 1.5,
-      lightIntensity: isDark ? 0.0 : 1.0,
-      ambientStrength: isDark ? 0.0 : 0.5,
-      lightAngle: math.pi / 4,
-      glassColor: widget.glassColor ?? defaultGlassColor,
-    );
+          final fallbackBgColor = isDark
+              ? const Color(0xFF1C1C1E).withValues(alpha: 0.88)
+              : const Color(0xFFF2F2F7).withValues(alpha: 0.92);
 
-    Widget button = lgw.GlassButton.custom(
-      onTap: widget.onTap ?? () {},
-      enabled: true,
-      width: w,
-      height: h,
-      shape: effectiveShape,
-      settings: settings,
-      useOwnLayer: widget.useOwnLayer, // Use parameter
-      quality: _isTransitioning
-          ? lgw.GlassQuality.minimal
-          : lgw.GlassQuality.premium,
-      glowColor: Colors
-          .transparent, // Disable radial interactive glow to avoid grey spot on dark background
-      interactionScale: widget.interactionScale,
-      stretch:
-          0.0, // Disable internal library stretch to use our custom bounce spring
-      resistance: widget.resistance,
-      child: Padding(padding: widget.padding, child: widget.child),
-    );
-
-    if (widget.autoSize) {
-      button = IntrinsicWidth(child: IntrinsicHeight(child: button));
-    }
-
-    Widget interactiveButton = Listener(
-      behavior: HitTestBehavior.opaque,
-      onPointerDown: (event) {
-        _springTicker?.stop();
-        if (mounted) {
-          setState(() {
-            _isDragging = true;
-            _hasDragged = false;
-            _rawDragOffset = Offset.zero;
-            _stretchOffset = Offset.zero;
-            _lastTimestamp = DateTime.now().microsecondsSinceEpoch;
-            _velocity = Offset.zero;
-          });
-        }
-      },
-      onPointerMove: (event) {
-        if (!_isDragging) return;
-        final now = DateTime.now().microsecondsSinceEpoch;
-        final dt = (now - _lastTimestamp) / Duration.microsecondsPerSecond;
-        if (dt > 0) {
-          // Calculate drag velocity in pixels/second
-          _velocity = event.delta / dt;
-        }
-        _lastTimestamp = now;
-
-        _rawDragOffset += event.delta;
-
-        // Threshold of 4.0 pixels to determine if a real drag gesture is occurring
-        if (!_hasDragged && _rawDragOffset.distance > 4.0) {
-          _hasDragged = true;
-        }
-
-        if (_hasDragged) {
-          if (mounted) {
-            setState(() {
-              // Apply resistance and custom stretch multiplier to determine stretch pixels
-              _stretchOffset =
-                  _applyResistance(_rawDragOffset, widget.resistance) *
-                  widget.stretch;
-            });
-          }
-        }
-      },
-      onPointerUp: (event) {
-        if (!_isDragging) return;
-        _isDragging = false;
-
-        if (_hasDragged) {
-          // Calculate resisted velocity for smoother transition into spring
-          final startVelocity =
-              _applyResistance(_velocity, widget.resistance) * widget.stretch;
-
-          // Clamp extreme velocities to avoid visual glitching
-          final double maxVelocity = 3000.0;
-          final clampedVelocity = Offset(
-            startVelocity.dx.clamp(-maxVelocity, maxVelocity),
-            startVelocity.dy.clamp(-maxVelocity, maxVelocity),
+          Widget buttonChild = Container(
+            width: widget.autoSize ? null : w,
+            height: widget.autoSize ? null : h,
+            padding: widget.padding,
+            decoration: ShapeDecoration(
+              color: widget.glassColor ?? fallbackBgColor,
+              shape: borderShape,
+            ),
+            alignment: Alignment.center,
+            child: widget.child,
           );
 
-          _startSpringAnimation(_stretchOffset, clampedVelocity);
-        } else {
-          // If it was a clean tap without dragging, instantly return to zero with no bounce
-          if (mounted) {
-            setState(() {
-              _stretchOffset = Offset.zero;
-            });
-          }
-        }
-      },
-      onPointerCancel: (event) {
-        if (!_isDragging) return;
-        _isDragging = false;
-        _startSpringAnimation(_stretchOffset, Offset.zero);
-      },
-      child: RawLiquidStretch(stretchPixels: _stretchOffset, child: button),
-    );
+          buttonChild = ClipPath(
+            clipper: ShapeBorderClipper(shape: borderShape),
+            child: buttonChild,
+          );
 
-    return Container(margin: widget.margin, child: interactiveButton);
+          if (widget.autoSize) {
+            buttonChild = IntrinsicWidth(child: IntrinsicHeight(child: buttonChild));
+          }
+
+          return Container(
+            margin: widget.margin,
+            child: GestureDetector(
+              onTap: widget.onTap,
+              onTapDown: (_) => setState(() => _isPressed = true),
+              onTapUp: (_) => setState(() => _isPressed = false),
+              onTapCancel: () => setState(() => _isPressed = false),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedScale(
+                scale: _isPressed ? 0.95 : 1.0,
+                duration: const Duration(milliseconds: 100),
+                child: buttonChild,
+              ),
+            ),
+          );
+        }
+
+        final effectiveShape = isCircle
+            ? const lgw.LiquidOval()
+            : lgw.LiquidRoundedSuperellipse(borderRadius: widget.borderRadius);
+
+        // Use exactly the same settings as AppLiquidGlass to ensure perfect visual match
+        final settings = lgw.LiquidGlassSettings(
+          refractiveIndex: widget.refractiveIndex,
+          thickness: widget.thickness,
+          blur: widget.blur,
+          saturation: 1.5,
+          lightIntensity: isDark ? 0.0 : 1.0,
+          ambientStrength: isDark ? 0.0 : 0.5,
+          lightAngle: math.pi / 4,
+          glassColor: widget.glassColor ?? defaultGlassColor,
+        );
+
+        Widget button = lgw.GlassButton.custom(
+          onTap: widget.onTap ?? () {},
+          enabled: true,
+          width: w,
+          height: h,
+          shape: effectiveShape,
+          settings: settings,
+          useOwnLayer: widget.useOwnLayer, // Use parameter
+          quality: _isTransitioning
+              ? lgw.GlassQuality.minimal
+              : lgw.GlassQuality.premium,
+          glowColor: Colors
+              .transparent, // Disable radial interactive glow to avoid grey spot on dark background
+          interactionScale: widget.interactionScale,
+          stretch:
+              0.0, // Disable internal library stretch to use our custom bounce spring
+          resistance: widget.resistance,
+          child: Padding(padding: widget.padding, child: widget.child),
+        );
+
+        if (widget.autoSize) {
+          button = IntrinsicWidth(child: IntrinsicHeight(child: button));
+        }
+
+        Widget interactiveButton = Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: (event) {
+            _springTicker?.stop();
+            if (mounted) {
+              setState(() {
+                _isDragging = true;
+                _hasDragged = false;
+                _rawDragOffset = Offset.zero;
+                _stretchOffset = Offset.zero;
+                _lastTimestamp = DateTime.now().microsecondsSinceEpoch;
+                _velocity = Offset.zero;
+              });
+            }
+          },
+          onPointerMove: (event) {
+            if (!_isDragging) return;
+            final now = DateTime.now().microsecondsSinceEpoch;
+            final dt = (now - _lastTimestamp) / Duration.microsecondsPerSecond;
+            if (dt > 0) {
+              // Calculate drag velocity in pixels/second
+              _velocity = event.delta / dt;
+            }
+            _lastTimestamp = now;
+
+            _rawDragOffset += event.delta;
+
+            // Threshold of 4.0 pixels to determine if a real drag gesture is occurring
+            if (!_hasDragged && _rawDragOffset.distance > 4.0) {
+              _hasDragged = true;
+            }
+
+            if (_hasDragged) {
+              if (mounted) {
+                setState(() {
+                  // Apply resistance and custom stretch multiplier to determine stretch pixels
+                  _stretchOffset =
+                      _applyResistance(_rawDragOffset, widget.resistance) *
+                      widget.stretch;
+                });
+              }
+            }
+          },
+          onPointerUp: (event) {
+            if (!_isDragging) return;
+            _isDragging = false;
+
+            if (_hasDragged) {
+              // Calculate resisted velocity for smoother transition into spring
+              final startVelocity =
+                  _applyResistance(_velocity, widget.resistance) * widget.stretch;
+
+              // Clamp extreme velocities to avoid visual glitching
+              final double maxVelocity = 3000.0;
+              final clampedVelocity = Offset(
+                startVelocity.dx.clamp(-maxVelocity, maxVelocity),
+                startVelocity.dy.clamp(-maxVelocity, maxVelocity),
+              );
+
+              _startSpringAnimation(_stretchOffset, clampedVelocity);
+            } else {
+              // If it was a clean tap without dragging, instantly return to zero with no bounce
+              if (mounted) {
+                setState(() {
+                  _stretchOffset = Offset.zero;
+                });
+              }
+            }
+          },
+          onPointerCancel: (event) {
+            if (!_isDragging) return;
+            _isDragging = false;
+            _startSpringAnimation(_stretchOffset, Offset.zero);
+          },
+          child: RawLiquidStretch(stretchPixels: _stretchOffset, child: button),
+        );
+
+        return Container(margin: widget.margin, child: interactiveButton);
+      },
+    );
   }
 }

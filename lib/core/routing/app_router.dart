@@ -6,6 +6,7 @@ import 'package:expense_management/features/auth/presentation/screens/login_scre
 import 'package:expense_management/features/auth/presentation/screens/otp_screen.dart';
 import 'package:expense_management/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:expense_management/core/routing/app_shell.dart';
+import 'package:expense_management/core/routing/animated_branch_container.dart';
 import 'package:expense_management/features/stats/presentation/screens/stats_screen.dart';
 import 'package:expense_management/features/transactions/presentation/screens/transactions_screen.dart';
 import 'package:expense_management/features/settings/presentation/screens/profile_screen.dart';
@@ -18,6 +19,7 @@ import 'package:expense_management/features/categories/presentation/screens/cate
 import 'package:expense_management/features/categories/presentation/screens/add_category_screen.dart';
 import 'package:expense_management/features/categories/domain/entities/category.dart';
 import 'package:expense_management/features/app_lock/presentation/screens/security_settings_screen.dart';
+import 'package:expense_management/features/settings/presentation/screens/general_settings_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -25,9 +27,15 @@ final GoRouter appRouter = GoRouter(
   initialLocation: AuthTokenManager.isLoggedIn() ? '/' : '/login',
   navigatorKey: _rootNavigatorKey,
   routes: [
-    StatefulShellRoute.indexedStack(
+    StatefulShellRoute(
       builder: (context, state, navigationShell) {
         return AppShell(navigationShell: navigationShell);
+      },
+      navigatorContainerBuilder: (context, navigationShell, children) {
+        return AnimatedBranchContainer(
+          currentIndex: navigationShell.currentIndex,
+          children: children,
+        );
       },
       branches: [
         StatefulShellBranch(
@@ -130,6 +138,13 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         return const SecuritySettingsScreen();
+      },
+    ),
+    GoRoute(
+      path: '/settings',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        return const GeneralSettingsScreen();
       },
     ),
   ],
