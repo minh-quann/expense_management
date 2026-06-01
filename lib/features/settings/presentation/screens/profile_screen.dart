@@ -17,6 +17,7 @@ import 'package:expense_management/features/settings/presentation/bloc/profile_b
 import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_state.dart';
 import 'package:expense_management/features/settings/presentation/screens/edit_profile_screen.dart';
+import 'package:expense_management/features/settings/presentation/screens/test_screen.dart';
 import 'package:expense_management/features/app_lock/data/services/app_lock_service.dart';
 import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_bloc.dart';
@@ -335,6 +336,13 @@ class ProfileView extends StatelessWidget {
                               title: l10n.profile_title,
                               leading: ScreenHeader.circleButton(
                                 context: context,
+                                onTap: () {
+                                  Navigator.of(context, rootNavigator: true).push(
+                                    MaterialPageRoute(
+                                      builder: (ctx) => const TestScreen(),
+                                    ),
+                                  );
+                                },
                                 child: SvgPicture.asset(
                                   'assets/icons/profile/grid.svg',
                                   width: 20,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
-import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 
 class AnimatedToggleBar extends StatefulWidget {

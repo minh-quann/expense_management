@@ -10,7 +10,7 @@ import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_
 import 'package:expense_management/features/app_lock/presentation/bloc/app_lock_state.dart';
 import 'package:expense_management/features/app_lock/presentation/screens/lock_screen.dart';
 import 'package:expense_management/shared/widgets/app_toast.dart';
-import 'package:expense_management/shared/widgets/app_liquid_glass_switch.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass_switch.dart';
 import 'package:expense_management/shared/widgets/sf_symbols.dart';
 import 'package:expense_management/shared/widgets/screen_header.dart';
 

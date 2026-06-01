@@ -12,6 +12,7 @@ import 'package:expense_management/features/transactions/presentation/bloc/trans
 import 'package:expense_management/features/transactions/domain/entities/transaction.dart';
 import 'package:expense_management/core/utils/auth_token_manager.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -22,6 +23,7 @@ class TransactionsScreen extends StatefulWidget {
 
 class _TransactionsScreenState extends State<TransactionsScreen> {
   int _selectedFilterIndex = 0;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -58,79 +60,168 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+
     return Scaffold(
       backgroundColor: AppColors.background(context),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 16),
-            _buildFilters(context),
-            const SizedBox(height: 24),
-            Expanded(
-              child: BlocBuilder<TransactionBloc, TransactionState>(
-                builder: (context, state) {
-                  if (state is TransactionLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is TransactionLoaded) {
-                    List<AppTransaction> filtered = state.transactions;
-                    if (_selectedFilterIndex == 1) {
-                      filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
-                    } else if (_selectedFilterIndex == 2) {
-                      filtered = filtered.where((t) => t.type == TransactionType.income).toList();
-                    }
+      body: Stack(
+        children: [
+          // 1. Scrollable Transactions List (scrolls underneath floating header)
+          Positioned.fill(
+            child: BlocBuilder<TransactionBloc, TransactionState>(
+              builder: (context, state) {
+                if (state is TransactionLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is TransactionLoaded) {
+                  List<AppTransaction> filtered = state.transactions;
+                  if (_selectedFilterIndex == 1) {
+                    filtered = filtered.where((t) => t.type == TransactionType.expense).toList();
+                  } else if (_selectedFilterIndex == 2) {
+                    filtered = filtered.where((t) => t.type == TransactionType.income).toList();
+                  }
 
-                    if (filtered.isEmpty) {
-                      return const Center(child: AppText('Chưa có giao dịch nào'));
-                    }
+                  if (_searchQuery.isNotEmpty) {
+                    final query = _searchQuery.toLowerCase();
+                    filtered = filtered.where((t) {
+                      final noteMatch = t.note?.toLowerCase().contains(query) ?? false;
+                      final categoryMatch = t.categoryName?.toLowerCase().contains(query) ?? false;
+                      return noteMatch || categoryMatch;
+                    }).toList();
+                  }
 
-                    final grouped = _groupTransactionsByDate(filtered);
-                    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
-
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          for (var date in sortedDates) ...[
-                            _buildDateGroup(
-                              context,
-                              _formatDateLabel(date),
-                              grouped[date]!.map((tx) {
-                                return TransactionItemBuilder.buildItem(
-                                  context: context,
-                                  tx: tx,
-                                );
-                              }).toList(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          const SizedBox(height: 120),
-                        ],
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: statusBarHeight + 180),
+                        child: const AppText('Chưa có giao dịch nào'),
                       ),
                     );
                   }
-                  if (state is TransactionError) {
-                    return Center(child: Padding(padding: const EdgeInsets.all(16.0), child: AppText(state.message, color: Colors.red)));
-                  }
-                  return const Center(child: AppText('Lỗi tải giao dịch'));
-                },
-              ),
+
+                  final grouped = _groupTransactionsByDate(filtered);
+                  final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      top: statusBarHeight + 64 + 16 + 44 + 24, // Chừa chỗ cho Header và Filters khi chưa scroll
+                      bottom: 120,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (var date in sortedDates) ...[
+                          _buildDateGroup(
+                            context,
+                            _formatDateLabel(date),
+                            grouped[date]!.map((tx) {
+                              return TransactionItemBuilder.buildItem(
+                                context: context,
+                                tx: tx,
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ],
+                    ),
+                  );
+                }
+                if (state is TransactionError) {
+                  return Center(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: statusBarHeight + 180),
+                      child: AppText(state.message, color: Colors.red),
+                    ),
+                  );
+                }
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: statusBarHeight + 180),
+                    child: const AppText('Lỗi tải giao dịch'),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+
+          // 2. Floating Header & Filter Panel (Placed at the top of Stack)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            // Combined height of status bar + header + filters + spacing + fading padding
+            height: statusBarHeight + 64 + 16 + 44 + 16,
+            child: Stack(
+              children: [
+                // 2.1. Fading Blur Layer (Backdrop blur)
+                Positioned.fill(
+                  child: ShaderMask(
+                    shaderCallback: (rect) {
+                      return const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black, Colors.transparent],
+                        stops: [0.65, 1.0], // Full blur on top 65%, then fades out
+                      ).createShader(rect);
+                    },
+                    blendMode: BlendMode.dstIn,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2.2. Fading Background Color Layer
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.background(context),
+                          AppColors.background(context).withValues(alpha: 0.8),
+                          AppColors.background(context).withValues(alpha: 0.0),
+                        ],
+                        stops: const [0.0, 0.7, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2.3. Actual Widgets (Header + Filters)
+                Positioned.fill(
+                  child: Column(
+                    children: [
+                      SizedBox(height: statusBarHeight),
+                      _buildHeader(context),
+                      const SizedBox(height: 16),
+                      _buildFilters(context),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
+
   Widget _buildHeader(BuildContext context) {
     return ScreenHeader(
       title: AppLocalizations.of(context)!.transactions_title,
-      trailing: ScreenHeader.circleButton(
-        context: context,
-        child: Icon(Icons.search_rounded, color: AppColors.textPrimary(context), size: 24),
-      ),
+      onSearchChanged: (query) {
+        setState(() {
+          _searchQuery = query;
+        });
+      },
     );
   }
 

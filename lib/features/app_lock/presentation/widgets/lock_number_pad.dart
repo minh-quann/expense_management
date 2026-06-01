@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
-import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass_button.dart';
 
 /// Custom number pad for PIN entry with biometric button support
 class LockNumberPad extends StatelessWidget {
@@ -80,6 +80,8 @@ class LockNumberPad extends StatelessWidget {
         onDigitPressed(digit);
       },
       padding: EdgeInsets.zero,
+      width: 72,
+      height: 72,
       child: SizedBox(
         width: 72,
         height: 72,
@@ -107,6 +109,8 @@ class LockNumberPad extends StatelessWidget {
         onTap?.call();
       },
       padding: EdgeInsets.zero,
+      width: 72,
+      height: 72,
       child: SizedBox(
         width: 72,
         height: 72,

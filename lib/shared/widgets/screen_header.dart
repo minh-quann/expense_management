@@ -1,10 +1,12 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:motor/motor.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
-import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
-import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass_button.dart';
 
 /// Reusable screen header widget used across the entire app.
 ///
@@ -36,7 +38,7 @@ class ScreenHeader extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
 
   final bool useLiquidGlassTitle;
-  
+
   /// Callback when the title is tapped.
   final VoidCallback? onTitleTap;
 
@@ -67,11 +69,16 @@ class ScreenHeader extends StatefulWidget {
     required BuildContext context,
     required Widget child,
     VoidCallback? onTap,
+    bool useOwnLayer = true,
   }) {
     return AppLiquidGlassButton(
       onTap: onTap,
-      borderRadius: 100, // High border radius to achieve a circle shape using superellipse
+      borderRadius:
+          22.0, // Match search bar border radius to prevent geometry shape changes in GPU shaders
       padding: EdgeInsets.zero,
+      width: 44,
+      height: 44,
+      useOwnLayer: useOwnLayer,
       child: SizedBox(
         width: 44,
         height: 44,
@@ -79,10 +86,7 @@ class ScreenHeader extends StatefulWidget {
           child: SizedBox(
             width: 24,
             height: 24,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: child,
-            ),
+            child: FittedBox(fit: BoxFit.contain, child: child),
           ),
         ),
       ),
@@ -96,27 +100,39 @@ class ScreenHeader extends StatefulWidget {
 class _ScreenHeaderState extends State<ScreenHeader> {
   bool _isSearching = false;
   late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = AppColors.isDark(context);
+
+    // Default translucent glass colors matching system theme
+    final defaultGlassColor = isDark
+        ? const Color(0xFFD0D5DD).withValues(alpha: 0.10)
+        : const Color(0xFFF8F8F8).withValues(alpha: 0.45);
+
     // Determine leading widget
     Widget leadingWidget;
     if (widget.showBackButton) {
       leadingWidget = ScreenHeader.circleButton(
         context: context,
         onTap: widget.onBack ?? () => Navigator.pop(context),
+        useOwnLayer:
+            true, // Use own glass layer to ensure background renders correctly under transition animations
         child: Icon(
           CupertinoIcons.chevron_back,
           color: AppColors.textPrimary(context),
@@ -136,31 +152,21 @@ class _ScreenHeaderState extends State<ScreenHeader> {
     );
 
     if (widget.useLiquidGlassTitle) {
-      titleWidget = AppLiquidGlass(
+      titleWidget = AppLiquidGlassButton(
+        onTap: widget.onTitleTap ?? () {},
         borderRadius: 100.0,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        refractiveIndex: 1.15,
-        thickness: 20,
-        blur: 8,
-        showGlow: true,
+        autoSize:
+            true, // Enable IntrinsicWidth and IntrinsicHeight inside the button
+        useOwnLayer: false, // Grouped mode to blend with search bar
         child: titleWidget,
-      );
-
-      // Always wrap with GestureDetector and LiquidStretch for interactivity feedback (spring stretch effect)
-      titleWidget = GestureDetector(
-        onTap: widget.onTitleTap ?? () {},
-        behavior: HitTestBehavior.opaque,
-        child: LiquidStretch(
-          interactionScale: 1.2,
-          stretch: 0.3,
-          resistance: 0.08,
-          child: titleWidget,
-        ),
       );
     }
 
     final width = MediaQuery.of(context).size.width;
-    final paddingHorizontal = widget.padding?.horizontal ?? 48.0; // horizontal is 24 on each side by default, so 48 total
+    final paddingHorizontal =
+        widget.padding?.horizontal ??
+        48.0; // horizontal is 24 on each side by default, so 48 total
     final availableWidth = width - paddingHorizontal;
 
     // Determine trailing/search widget
@@ -168,18 +174,26 @@ class _ScreenHeaderState extends State<ScreenHeader> {
     if (widget.onSearchChanged != null && widget.trailing == null) {
       searchOrTrailingWidget = VelocityMotionBuilder(
         converter: SingleMotionConverter(),
-        motion: const Motion.bouncySpring(
+        motion: const Motion.snappySpring(
           snapToEnd: true,
+          duration: Duration(milliseconds: 350),
         ),
         value: _isSearching ? availableWidth : 44.0,
-        builder: (context, animWidth, velocity, childWidget) {
+        builder: (context, animWidth, velocity, _) {
           // Calculate vertical squash and stretch deformation based on velocity
           final double velocityDouble = velocity;
           final distortion = (velocityDouble / 1500.0).clamp(-0.2, 0.2);
           final double scaleY = 1.0 - distortion;
 
-          // Clamp width to prevent it from expanding beyond the 24px screen margin and losing border radius
-          final double clampedWidth = animWidth.clamp(0.0, availableWidth);
+          // Clamp width to prevent it from expanding beyond the available width
+          final double clampedWidth = animWidth.clamp(44.0, availableWidth);
+
+          // Check if we are currently searching or animating to avoid overlapping shader layers
+          final isAnimatingOrSearching = _isSearching || clampedWidth > 44.5;
+          final double range = availableWidth - 44.0;
+          final double progress = range > 0
+              ? ((clampedWidth - 44.0) / range).clamp(0.0, 1.0)
+              : 0.0;
 
           return Transform(
             alignment: Alignment.centerRight,
@@ -187,132 +201,226 @@ class _ScreenHeaderState extends State<ScreenHeader> {
             child: SizedBox(
               width: clampedWidth,
               height: 44,
-              child: childWidget,
-            ),
-          );
-        },
-        child: _isSearching
-            ? ClipRect(
-                child: AppLiquidGlass(
-                  borderRadius: 22.0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  refractiveIndex: 1.15,
-                  thickness: 15,
-                  blur: 8,
-                  showGlow: false,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      physics: const NeverScrollableScrollPhysics(),
-                      child: SizedBox(
-                        width: availableWidth - 28, // Subtract padding (14 on each side)
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search_rounded,
-                              color: AppColors.textPrimary(context).withValues(alpha: 0.6),
-                              size: 20,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // 1. Expandable Search Bar content - active during search or transition animation
+                  if (isAnimatingOrSearching)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      right: 54.0 * progress,
+                      child: ClipRect(
+                        child: LiquidGlassLayer(
+                          settings: LiquidGlassSettings(
+                            refractiveIndex: 1.15,
+                            thickness: 15.0,
+                            blur: 8.0,
+                            saturation: 1.5,
+                            lightIntensity: isDark ? 0.0 : 1.0,
+                            ambientStrength: isDark ? 0.0 : 0.5,
+                            lightAngle: math.pi / 4,
+                            glassColor: defaultGlassColor,
+                          ),
+                          child: LiquidGlass.grouped(
+                            shape: const LiquidRoundedSuperellipse(
+                              borderRadius: 22.0,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                autofocus: true,
-                                style: TextStyle(
-                                  color: AppColors.textPrimary(context),
-                                  fontSize: 15,
-                                  decoration: TextDecoration.none,
-                                ),
-                                decoration: InputDecoration(
-                                  hintText: widget.searchPlaceholder ?? 'Tìm kiếm...',
-                                  hintStyle: TextStyle(
-                                    color: AppColors.textPrimary(context).withValues(alpha: 0.4),
-                                    fontSize: 15,
+                            child: Stack(
+                              children: [
+                                // Smoothly transition search icon size, opacity, and position to prevent flickering
+                                Positioned(
+                                  left: 10.0 + (4.0 * progress),
+                                  top: (44.0 - (24.0 - 4.0 * progress)) / 2,
+                                  child: Icon(
+                                    Icons.search_rounded,
+                                    color: AppColors.textPrimary(context)
+                                        .withValues(
+                                          alpha:
+                                              1.0 -
+                                              (0.4 *
+                                                  progress), // from 1.0 to 0.6
+                                        ),
+                                    size:
+                                        24.0 -
+                                        (4.0 * progress), // from 24 to 20
                                   ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
                                 ),
-                                onChanged: widget.onSearchChanged,
-                              ),
+                                if (progress > 0.1)
+                                  Positioned(
+                                    left: 42.0,
+                                    right: 16.0,
+                                    top: 0,
+                                    bottom: 0,
+                                    child: Center(
+                                      child: Opacity(
+                                        opacity: ((progress - 0.1) / 0.9).clamp(
+                                          0.0,
+                                          1.0,
+                                        ),
+                                        child: TextField(
+                                          controller: _searchController,
+                                          focusNode: _searchFocusNode,
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary(
+                                              context,
+                                            ),
+                                            fontSize: 15,
+                                            decoration: TextDecoration.none,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                widget.searchPlaceholder ??
+                                                'Tìm kiếm...',
+                                            hintStyle: TextStyle(
+                                              color: AppColors.textPrimary(
+                                                context,
+                                              ).withValues(alpha: 0.4),
+                                              fontSize: 15,
+                                            ),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                          onChanged: widget.onSearchChanged,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isSearching = false;
-                                  _searchController.clear();
-                                  widget.onSearchChanged?.call('');
-                                });
-                              },
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: AppColors.textPrimary(context),
-                                size: 20,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              )
-            : ScreenHeader.circleButton(
-                context: context,
-                onTap: () {
-                  setState(() {
-                    _isSearching = true;
-                  });
-                },
-                child: Icon(
-                  Icons.search_rounded,
-                  color: AppColors.textPrimary(context),
-                  size: 24,
-                ),
+
+                  // 2. Separate Cancel Button on the right
+                  if (progress > 0.2)
+                    Positioned(
+                      right: 0,
+                      width: 44,
+                      height: 44,
+                      child: Opacity(
+                        opacity: ((progress - 0.2) / 0.8).clamp(0.0, 1.0),
+                        child: ScreenHeader.circleButton(
+                          context: context,
+                          onTap: () {
+                            _searchFocusNode.unfocus();
+                            setState(() {
+                              _isSearching = false;
+                              _searchController.clear();
+                              widget.onSearchChanged?.call('');
+                            });
+                          },
+                          useOwnLayer: true,
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            color: AppColors.textPrimary(context),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // 3. Circular Search Button - only active when fully collapsed
+                  if (!isAnimatingOrSearching)
+                    Positioned(
+                      right: 0,
+                      width: 44,
+                      height: 44,
+                      child: ScreenHeader.circleButton(
+                        context: context,
+                        onTap: () {
+                          setState(() {
+                            _isSearching = true;
+                          });
+                          // Delayed keyboard focus prevents frame drops during expansion animation
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            if (_isSearching && mounted) {
+                              _searchFocusNode.requestFocus();
+                            }
+                          });
+                        },
+                        useOwnLayer:
+                            true, // Use own glass layer to ensure background renders correctly outside layout builder context
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: AppColors.textPrimary(context),
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                ],
               ),
+            ),
+          );
+        },
       );
     } else {
       searchOrTrailingWidget = widget.trailing ?? const SizedBox(width: 44);
     }
 
+    // Create a shared settings for the entire header glass layer
+    final sharedSettings = lgw.LiquidGlassSettings(
+      refractiveIndex: 1.15,
+      thickness: 15.0,
+      blur: 8.0,
+      saturation: 1.5,
+      lightIntensity: isDark ? 0.0 : 1.0,
+      ambientStrength: isDark ? 0.0 : 0.5,
+      lightAngle: math.pi / 4,
+      glassColor: defaultGlassColor,
+    );
+
+    Widget headerContent = Stack(
+      alignment: Alignment.center,
+      children: [
+        // Leading widget (scales down and fades out during search)
+        Positioned(
+          left: 0,
+          child: AnimatedScale(
+            scale: _isSearching ? 0.0 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeIn,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 150),
+              opacity: _isSearching ? 0.0 : 1.0,
+              child: IgnorePointer(
+                ignoring: _isSearching,
+                child: leadingWidget,
+              ),
+            ),
+          ),
+        ),
+
+        // Title widget (scales down and fades out during search)
+        AnimatedScale(
+          scale: _isSearching ? 0.0 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeIn,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: _isSearching ? 0.0 : 1.0,
+            child: IgnorePointer(ignoring: _isSearching, child: titleWidget),
+          ),
+        ),
+
+        // Trailing / Search widget (expanding from right to left)
+        Positioned(right: 0, child: searchOrTrailingWidget),
+      ],
+    );
+
+    // Wrap the entire header content with a shared AdaptiveLiquidGlassLayer and LiquidGlassBlendGroup
     return SizedBox(
       width: double.infinity,
       height: 64,
       child: Padding(
         padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Leading widget (fades out during search)
-            Positioned(
-              left: 0,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 250),
-                opacity: _isSearching ? 0.0 : 1.0,
-                child: IgnorePointer(
-                  ignoring: _isSearching,
-                  child: leadingWidget,
-                ),
-              ),
-            ),
-
-            // Title widget (fades out during search)
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 250),
-              opacity: _isSearching ? 0.0 : 1.0,
-              child: IgnorePointer(
-                ignoring: _isSearching,
-                child: titleWidget,
-              ),
-            ),
-
-            // Trailing / Search widget (expanding from right to left)
-            Positioned(
-              right: 0,
-              child: searchOrTrailingWidget,
-            ),
-          ],
+        child: lgw.AdaptiveLiquidGlassLayer(
+          settings: sharedSettings,
+          blendAmount: 14.0, // High blend radius for organic liquid merging
+          child: lgw.LiquidGlassBlendGroup(blend: 14.0, child: headerContent),
         ),
       ),
     );

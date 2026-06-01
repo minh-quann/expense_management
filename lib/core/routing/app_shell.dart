@@ -12,7 +12,7 @@ import 'package:expense_management/features/wallets/presentation/bloc/wallet_eve
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_bloc.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_event.dart';
 import 'package:expense_management/features/transactions/presentation/bloc/transaction_state.dart';
-import 'package:expense_management/shared/widgets/app_liquid_glass.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
 
 class AppShell extends StatefulWidget {

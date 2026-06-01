@@ -34,7 +34,8 @@ Matrix4 _buildJellyTransform({
 /// A reusable glassmorphic container that applies the Liquid Glass effect.
 /// It wraps a child widget with [LiquidGlassLayer] and [LiquidGlass.grouped]
 /// to render high-end refraction, blur, and lighting highlights.
-class AppLiquidGlass extends StatelessWidget {
+/// Wrapped in [RepaintBoundary] for GPU raster caching to minimize repaints.
+class AppLiquidGlass extends StatefulWidget {
   const AppLiquidGlass({
     super.key,
     required this.child,
@@ -100,6 +101,78 @@ class AppLiquidGlass extends StatelessWidget {
   final bool showGlow;
 
   @override
+  State<AppLiquidGlass> createState() => _AppLiquidGlassState();
+}
+
+class _AppLiquidGlassState extends State<AppLiquidGlass> {
+  bool _isTransitioning = false;
+  Animation<double>? _animation;
+  Animation<double>? _secondaryAnimation;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _cleanupListeners();
+
+    final route = ModalRoute.of(context);
+    if (route != null) {
+      _animation = route.animation;
+      _secondaryAnimation = route.secondaryAnimation;
+
+      _animation?.addStatusListener(_handleStatusChange);
+      _secondaryAnimation?.addStatusListener(_handleStatusChange);
+
+      final isRouteTransitioning = _checkIfTransitioning(route);
+      if (_isTransitioning != isRouteTransitioning) {
+        _isTransitioning = isRouteTransitioning;
+      }
+    }
+  }
+
+  bool _checkIfTransitioning(ModalRoute<dynamic> route) {
+    final animStatus = route.animation?.status;
+    final secAnimStatus = route.secondaryAnimation?.status;
+
+    final isPrimaryTransitioning =
+        animStatus == AnimationStatus.forward ||
+        animStatus == AnimationStatus.reverse;
+    final isSecondaryTransitioning =
+        secAnimStatus == AnimationStatus.forward ||
+        secAnimStatus == AnimationStatus.reverse;
+
+    return isPrimaryTransitioning || isSecondaryTransitioning;
+  }
+
+  void _handleStatusChange(AnimationStatus status) {
+    final route = ModalRoute.of(context);
+    if (route == null) return;
+
+    final isRouteTransitioning = _checkIfTransitioning(route);
+    if (_isTransitioning != isRouteTransitioning) {
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _isTransitioning = isRouteTransitioning;
+            });
+          }
+        });
+      }
+    }
+  }
+
+  void _cleanupListeners() {
+    _animation?.removeStatusListener(_handleStatusChange);
+    _secondaryAnimation?.removeStatusListener(_handleStatusChange);
+  }
+
+  @override
+  void dispose() {
+    _cleanupListeners();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = AppColors.isDark(context);
 
@@ -110,7 +183,8 @@ class AppLiquidGlass extends StatelessWidget {
 
     // Determine the border shape
     final effectiveShape =
-        shape ?? LiquidRoundedSuperellipse(borderRadius: borderRadius);
+        widget.shape ??
+        LiquidRoundedSuperellipse(borderRadius: widget.borderRadius);
     final borderShape = effectiveShape is LiquidOval
         ? const OvalBorder(
             side: BorderSide(
@@ -119,17 +193,17 @@ class AppLiquidGlass extends StatelessWidget {
             ),
           )
         : RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(widget.borderRadius),
             side: const BorderSide(color: Color(0x17FFFFFF), width: 1),
           );
 
     Widget innerChild = Container(
-      padding: padding,
+      padding: widget.padding,
       decoration: isDark ? ShapeDecoration(shape: borderShape) : null,
-      child: child,
+      child: widget.child,
     );
 
-    if (showGlow) {
+    if (widget.showGlow) {
       innerChild = GlassGlow(
         glowColor: isDark ? Colors.white24 : Colors.black12,
         child: innerChild,
@@ -140,45 +214,56 @@ class AppLiquidGlass extends StatelessWidget {
         innerChild = ClipOval(child: innerChild);
       } else {
         innerChild = ClipRRect(
-          borderRadius: BorderRadius.circular(borderRadius),
+          borderRadius: BorderRadius.circular(widget.borderRadius),
           child: innerChild,
         );
       }
     }
 
-    Widget glassWidget = LiquidGlassLayer(
-      settings: LiquidGlassSettings(
-        refractiveIndex: refractiveIndex,
-        thickness: thickness,
-        blur: blur,
-        saturation: saturation,
-        lightIntensity:
-            lightIntensity ??
-            (isDark
-                ? 0.3
-                : 1.0), // Keep light intensity low in dark mode to not overpower the flat border
-        ambientStrength: ambientStrength ?? (isDark ? 0.3 : 0.5),
-        lightAngle: math.pi / 4,
-        glassColor: glassColor ?? defaultGlassColor,
-      ),
-      child: LiquidGlass.grouped(shape: effectiveShape, child: innerChild),
+    final settings = LiquidGlassSettings(
+      refractiveIndex: widget.refractiveIndex,
+      thickness: widget.thickness,
+      blur: widget.blur,
+      saturation: widget.saturation,
+      lightIntensity: widget.lightIntensity ?? (isDark ? 0.0 : 1.0),
+      ambientStrength: widget.ambientStrength ?? (isDark ? 0.0 : 0.5),
+      lightAngle: math.pi / 4,
+      glassColor: _isTransitioning
+          ? Colors.transparent
+          : (widget.glassColor ?? defaultGlassColor),
     );
+
+    Widget glassWidget;
+    if (_isTransitioning) {
+      glassWidget = FakeGlass(
+        shape: effectiveShape,
+        settings: settings,
+        child: innerChild,
+      );
+    } else {
+      glassWidget = LiquidGlassLayer(
+        settings: settings,
+        child: LiquidGlass.grouped(shape: effectiveShape, child: innerChild),
+      );
+    }
 
     // Ensure the backdrop filter and glass background are clipped to the shape to prevent square corners
     if (effectiveShape is LiquidOval) {
       glassWidget = ClipOval(child: glassWidget);
     } else {
       glassWidget = ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(widget.borderRadius),
         child: glassWidget,
       );
     }
 
+    // RepaintBoundary isolates this subtree into a separate compositing layer,
+    // allowing the GPU to cache its raster output when the content doesn't change.
     return Container(
-      margin: margin,
-      height: height,
-      width: width,
-      child: glassWidget,
+      margin: widget.margin,
+      height: widget.height,
+      width: widget.width,
+      child: RepaintBoundary(child: glassWidget),
     );
   }
 }
@@ -195,7 +280,7 @@ class AppLiquidGlassIndicator extends StatefulWidget {
     this.onHoverChanged,
     this.isDark,
     this.borderRadius = 100.0,
-    this.refractiveIndex = 1.4,
+    this.refractiveIndex = 1.2,
     this.thickness = 30.0,
     this.blur = 3.0,
     this.saturation = 1.5,
@@ -629,51 +714,5 @@ class IndicatorStateScope extends InheritedWidget {
     return oldWidget.alignmentX != alignmentX ||
         oldWidget.thickness != thickness ||
         oldWidget.count != count;
-  }
-}
-
-/// A premium interactive glassmorphic button that wobbles and distorts like a jelly drop of water when tapped.
-class AppLiquidGlassButton extends StatefulWidget {
-  const AppLiquidGlassButton({
-    super.key,
-    required this.child,
-    this.onTap,
-    this.borderRadius = 100.0,
-    this.padding = const EdgeInsets.all(10),
-    this.margin,
-  });
-
-  final Widget child;
-  final VoidCallback? onTap;
-  final double borderRadius;
-  final EdgeInsetsGeometry padding;
-  final EdgeInsetsGeometry? margin;
-
-  @override
-  State<AppLiquidGlassButton> createState() => _AppLiquidGlassButtonState();
-}
-
-class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton> {
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: widget.margin,
-        child: LiquidStretch(
-          interactionScale: 1.4,
-          stretch: 0.5,
-          resistance: 0.07,
-          child: AppLiquidGlass(
-            shape:
-                const LiquidOval(), // Use LiquidOval to guarantee a perfect circle/ellipse
-            padding: widget.padding,
-            showGlow: true, // Enable GlassGlow for buttons
-            child: widget.child,
-          ),
-        ),
-      ),
-    );
   }
 }
