@@ -70,10 +70,12 @@ class ScreenHeader extends StatefulWidget {
     required BuildContext context,
     required Widget child,
     VoidCallback? onTap,
+    VoidCallback? onLongPress,
     bool useOwnLayer = true,
   }) {
     return AppLiquidGlassButton(
       onTap: onTap,
+      onLongPress: onLongPress,
       borderRadius:
           22.0, // Match search bar border radius to prevent geometry shape changes in GPU shaders
       padding: EdgeInsets.zero,

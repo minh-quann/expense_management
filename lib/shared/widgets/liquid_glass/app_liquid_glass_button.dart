@@ -15,6 +15,7 @@ class AppLiquidGlassButton extends StatefulWidget {
     super.key,
     required this.child,
     this.onTap,
+    this.onLongPress,
     this.borderRadius = 100.0,
     this.padding = const EdgeInsets.all(10),
     this.margin,
@@ -36,6 +37,7 @@ class AppLiquidGlassButton extends StatefulWidget {
 
   final Widget child;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
@@ -264,6 +266,7 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
             margin: widget.margin,
             child: GestureDetector(
               onTap: widget.onTap,
+              onLongPress: widget.onLongPress,
               onTapDown: (_) => setState(() => _isPressed = true),
               onTapUp: (_) => setState(() => _isPressed = false),
               onTapCancel: () => setState(() => _isPressed = false),
@@ -391,7 +394,11 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
             _isDragging = false;
             _startSpringAnimation(_stretchOffset, Offset.zero);
           },
-          child: RawLiquidStretch(stretchPixels: _stretchOffset, child: button),
+          child: GestureDetector(
+            onLongPress: widget.onLongPress,
+            behavior: HitTestBehavior.opaque,
+            child: RawLiquidStretch(stretchPixels: _stretchOffset, child: button),
+          ),
         );
 
         return Container(margin: widget.margin, child: interactiveButton);

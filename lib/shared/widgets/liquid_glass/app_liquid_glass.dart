@@ -22,9 +22,9 @@ Matrix4 _buildJellyTransform({
   if (distortionFactor == 0) return Matrix4.identity();
 
   // Squash in direction of movement, stretch perpendicular
-  final squashX = 1.0 - (direction.dx.abs() * distortionFactor * 0.5);
+  final squashX = 1.0 - (direction.dx.abs() * distortionFactor * 0.3);
   final squashY = 1.0 - (direction.dy.abs() * distortionFactor * 0.5);
-  final stretchX = 1.0 + (direction.dy.abs() * distortionFactor * 0.3);
+  final stretchX = 1.0 + (direction.dy.abs() * distortionFactor * 0.5);
   final stretchY = 1.0 + (direction.dx.abs() * distortionFactor * 0.3);
 
   final matrix = Matrix4.identity();
@@ -268,7 +268,10 @@ class _AppLiquidGlassState extends State<AppLiquidGlass> {
           } else {
             glassWidget = LiquidGlassLayer(
               settings: settings,
-              child: LiquidGlass.grouped(shape: effectiveShape, child: innerChild),
+              child: LiquidGlass.grouped(
+                shape: effectiveShape,
+                child: innerChild,
+              ),
             );
           }
 
@@ -526,7 +529,9 @@ class _AppLiquidGlassIndicatorState extends State<AppLiquidGlassIndicator> {
           final indicatorBorderShape = RoundedSuperellipseBorder(
             borderRadius: BorderRadius.circular(widget.borderRadius),
             side: BorderSide(
-              color: dark ? Colors.white.withValues(alpha: 0.09) : Colors.black.withValues(alpha: 0.05),
+              color: dark
+                  ? Colors.white.withValues(alpha: 0.09)
+                  : Colors.black.withValues(alpha: 0.05),
               width: 1.2,
             ),
           );
@@ -743,8 +748,8 @@ class _IndicatorTransform extends StatelessWidget {
                     alignment: Alignment.center,
                     transform: _buildJellyTransform(
                       velocity: Offset(velocity, 0),
-                      maxDistortion: 0.8,
-                      velocityScale: 10,
+                      maxDistortion: 0.7,
+                      velocityScale: 8,
                     ),
                     child: child,
                   );
@@ -891,8 +896,10 @@ class _LightweightIndicatorStackState extends State<_LightweightIndicatorStack>
         final box = context.findRenderObject() as RenderBox;
         final localX = box.globalToLocal(details.globalPosition).dx;
         final relativeX = localX / box.size.width;
-        final tappedIndex =
-            (relativeX * widget.count).floor().clamp(0, widget.count - 1);
+        final tappedIndex = (relativeX * widget.count).floor().clamp(
+          0,
+          widget.count - 1,
+        );
         if (tappedIndex != widget.selectedIndex) {
           widget.onChanged(tappedIndex);
         }
@@ -926,14 +933,10 @@ class _LightweightIndicatorStackState extends State<_LightweightIndicatorStack>
             alignmentX: _currentX,
             thickness: 0,
             count: widget.count,
-            child: Container(
-              padding: widget.padding,
-              child: widget.child,
-            ),
+            child: Container(padding: widget.padding, child: widget.child),
           ),
         ],
       ),
     );
   }
 }
-

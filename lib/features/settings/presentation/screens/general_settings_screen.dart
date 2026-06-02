@@ -8,6 +8,9 @@ import 'package:expense_management/shared/widgets/screen_header.dart';
 import 'package:expense_management/shared/widgets/fading_blur_layer.dart';
 import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:restart_app/restart_app.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:expense_management/core/theme/theme_cubit.dart';
+import 'package:expense_management/shared/widgets/animated_toggle_bar.dart';
 
 /// Screen for general app settings (e.g. navigation animations, theme preferences)
 class GeneralSettingsScreen extends StatefulWidget {
@@ -228,6 +231,84 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
 
                   const SizedBox(height: 32),
 
+                  // Theme Mode Selection Bento Card
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: ShapeDecoration(
+                      color: cardColor,
+                      shape: RoundedSuperellipseBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: ShapeDecoration(
+                                color: Colors.amber.withValues(alpha: 0.12),
+                                shape: RoundedSuperellipseBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.palette_rounded,
+                                color: Colors.amber,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AppText(
+                                    'Giao diện ứng dụng',
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: textColor,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  AppText(
+                                    'Sáng, tối hoặc tự động theo hệ thống',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.gray500,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        BlocBuilder<ThemeCubit, ThemeMode>(
+                          builder: (context, themeMode) {
+                            final selectedIndex = _getThemeIndex(themeMode);
+                            return AnimatedToggleBar(
+                              options: const ['Sáng', 'Tối', 'Hệ thống'],
+                              selectedIndex: selectedIndex,
+                              onChanged: (index) {
+                                final mode = _getThemeModeFromIndex(index);
+                                if (mode == ThemeMode.light) {
+                                  context.read<ThemeCubit>().setLight();
+                                } else if (mode == ThemeMode.dark) {
+                                  context.read<ThemeCubit>().setDark();
+                                } else {
+                                  context.read<ThemeCubit>().setSystem();
+                                }
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
                   // Tab Transition Animation Toggle Card
                   _buildSettingCard(
                     context,
@@ -353,6 +434,29 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
         ],
       ),
     );
+  }
+
+  int _getThemeIndex(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 0;
+      case ThemeMode.dark:
+        return 1;
+      case ThemeMode.system:
+        return 2;
+    }
+  }
+
+  ThemeMode _getThemeModeFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return ThemeMode.light;
+      case 1:
+        return ThemeMode.dark;
+      case 2:
+      default:
+        return ThemeMode.system;
+    }
   }
 
   Widget _buildSettingCard(

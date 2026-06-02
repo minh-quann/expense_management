@@ -9,6 +9,7 @@ import 'package:expense_management/firebase_options.dart';
 import 'package:expense_management/injection.dart';
 import 'package:expense_management/core/routing/app_router.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
+import 'package:expense_management/core/theme/theme_cubit.dart';
 import 'package:expense_management/core/localization/locale_cubit.dart';
 import 'package:expense_management/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:expense_management/features/wallets/presentation/bloc/wallet_bloc.dart';
@@ -78,6 +79,9 @@ void main() async {
         BlocProvider<StatsBloc>(
           create: (context) => getIt<StatsBloc>(),
         ),
+        BlocProvider<ThemeCubit>(
+          create: (context) => ThemeCubit(),
+        ),
       ],
       child: ValueListenableBuilder<bool>(
         valueListenable: AppSettingsManager.disableLiquidGlassNotifier,
@@ -101,66 +105,70 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<LocaleCubit, Locale>(
       builder: (context, locale) {
-        return ToastificationWrapper(
-          child: MaterialApp.router(
-            title: 'Expense Management',
-            debugShowCheckedModeBanner: false,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            locale: locale,
-            theme: ThemeData(
-              brightness: Brightness.light,
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: AppColors.primary,
-                brightness: Brightness.light,
-              ),
-              useMaterial3: true,
-              scaffoldBackgroundColor: AppColors.appBackgroundLight,
-              fontFamily: 'GoogleSansFlex',
-              appBarTheme: const AppBarTheme(
-                systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
-                  statusBarIconBrightness: Brightness.dark, // Black status bar icons for Android
-                  statusBarBrightness: Brightness.light,    // Black status bar text/icons for iOS
+        return BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (context, themeMode) {
+            return ToastificationWrapper(
+              child: MaterialApp.router(
+                title: 'Expense Management',
+                debugShowCheckedModeBanner: false,
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                locale: locale,
+                theme: ThemeData(
+                  brightness: Brightness.light,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: AppColors.primary,
+                    brightness: Brightness.light,
+                  ),
+                  useMaterial3: true,
+                  scaffoldBackgroundColor: AppColors.appBackgroundLight,
+                  fontFamily: 'GoogleSansFlex',
+                  appBarTheme: const AppBarTheme(
+                    systemOverlayStyle: SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarIconBrightness: Brightness.dark, // Black status bar icons for Android
+                      statusBarBrightness: Brightness.light,    // Black status bar text/icons for iOS
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            darkTheme: ThemeData(
-              brightness: Brightness.dark,
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: AppColors.primary,
-                brightness: Brightness.dark,
-              ),
-              useMaterial3: true,
-              scaffoldBackgroundColor: const Color(0xFF121212),
-              fontFamily: 'GoogleSansFlex',
-              appBarTheme: const AppBarTheme(
-                systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
-                  statusBarIconBrightness: Brightness.light, // White status bar icons for Android
-                  statusBarBrightness: Brightness.dark,     // White status bar text/icons for iOS
+                darkTheme: ThemeData(
+                  brightness: Brightness.dark,
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: AppColors.primary,
+                    brightness: Brightness.dark,
+                  ),
+                  useMaterial3: true,
+                  scaffoldBackgroundColor: const Color(0xFF121212),
+                  fontFamily: 'GoogleSansFlex',
+                  appBarTheme: const AppBarTheme(
+                    systemOverlayStyle: SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarIconBrightness: Brightness.light, // White status bar icons for Android
+                      statusBarBrightness: Brightness.dark,     // White status bar text/icons for iOS
+                    ),
+                  ),
                 ),
+                themeMode: themeMode,
+                routerConfig: appRouter,
+                builder: (context, child) {
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  return AnnotatedRegion<SystemUiOverlayStyle>(
+                    value: SystemUiOverlayStyle(
+                      statusBarColor: Colors.transparent,
+                      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+                      systemNavigationBarColor: Colors.transparent,
+                      systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+                      systemNavigationBarDividerColor: Colors.transparent,
+                    ),
+                    child: AppLockWrapper(
+                      child: child ?? const SizedBox(),
+                    ),
+                  );
+                },
               ),
-            ),
-            themeMode: ThemeMode.system, // Always respect system for dark mode
-            routerConfig: appRouter,
-            builder: (context, child) {
-              final isDark = Theme.of(context).brightness == Brightness.dark;
-              return AnnotatedRegion<SystemUiOverlayStyle>(
-                value: SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
-                  statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-                  statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-                  systemNavigationBarColor: Colors.transparent,
-                  systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-                  systemNavigationBarDividerColor: Colors.transparent,
-                ),
-                child: AppLockWrapper(
-                  child: child ?? const SizedBox(),
-                ),
-              );
-            },
-          ),
+            );
+          },
         );
       },
     );

@@ -1,23 +1,38 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:expense_management/core/utils/app_settings_manager.dart';
 
 /// Manages the app theme mode (light, dark, system)
 class ThemeCubit extends Cubit<ThemeMode> {
-  ThemeCubit() : super(ThemeMode.system);
+  ThemeCubit() : super(AppSettingsManager.getThemeMode());
 
-  void setLight() => emit(ThemeMode.light);
-  void setDark() => emit(ThemeMode.dark);
-  void setSystem() => emit(ThemeMode.system);
+  void setLight() {
+    AppSettingsManager.setThemeMode(ThemeMode.light);
+    emit(ThemeMode.light);
+  }
+
+  void setDark() {
+    AppSettingsManager.setThemeMode(ThemeMode.dark);
+    emit(ThemeMode.dark);
+  }
+
+  void setSystem() {
+    AppSettingsManager.setThemeMode(ThemeMode.system);
+    emit(ThemeMode.system);
+  }
 
   /// Cycle through: system -> light -> dark -> system
   void toggle() {
     switch (state) {
       case ThemeMode.system:
-        emit(ThemeMode.light);
+        setLight();
+        break;
       case ThemeMode.light:
-        emit(ThemeMode.dark);
+        setDark();
+        break;
       case ThemeMode.dark:
-        emit(ThemeMode.system);
+        setSystem();
+        break;
     }
   }
 }

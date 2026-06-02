@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass_menu.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -335,21 +336,61 @@ class ProfileView extends StatelessWidget {
                             alignment: Alignment.center,
                             child: ScreenHeader(
                               title: l10n.profile_title,
-                              leading: ScreenHeader.circleButton(
-                                context: context,
-                                onTap: () {
-                                  Navigator.of(context, rootNavigator: true).push(
-                                    MaterialPageRoute(
-                                      builder: (ctx) => const TestScreen(),
+                              leading: AppLiquidGlassMenu(
+                                menuWidth: 220,
+                                triggerBuilder: (context, toggleMenu) {
+                                  return ScreenHeader.circleButton(
+                                    context: context,
+                                    onTap: toggleMenu,
+                                    onLongPress: toggleMenu,
+                                    child: SvgPicture.asset(
+                                      'assets/icons/profile/grid.svg',
+                                      width: 20,
+                                      height: 20,
+                                      colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
                                     ),
                                   );
                                 },
-                                child: SvgPicture.asset(
-                                  'assets/icons/profile/grid.svg',
-                                  width: 20,
-                                  height: 20,
-                                  colorFilter: ColorFilter.mode(textColor, BlendMode.srcIn),
-                                ),
+                                items: [
+                                  AppLiquidGlassMenuItem(
+                                    title: 'Tải lại dữ liệu',
+                                    icon: const Icon(Icons.refresh_rounded),
+                                    onTap: () {
+                                      context.read<ProfileBloc>().add(FetchProfileEvent());
+                                      AppToast.success(context, 'Đã tải lại dữ liệu tài khoản');
+                                    },
+                                  ),
+                                  AppLiquidGlassMenuItem(
+                                    title: 'Cài đặt giao diện',
+                                    icon: const Icon(Icons.color_lens_outlined),
+                                    onTap: () {
+                                      Navigator.of(context, rootNavigator: true).push(
+                                        MaterialPageRoute(
+                                          builder: (ctx) => const TestScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  AppLiquidGlassMenuItem(
+                                    title: 'Xóa toàn bộ',
+                                    icon: const Icon(Icons.delete_sweep_rounded),
+                                    isDestructive: true,
+                                    onTap: () async {
+                                      final confirmed = await AppConfirmModal.show(
+                                        context: context,
+                                        icon: Icons.delete_sweep_rounded,
+                                        title: 'Xóa toàn bộ dữ liệu',
+                                        message: 'Bạn có chắc chắn muốn xóa toàn bộ dữ liệu giao dịch? Thao tác này sẽ xóa vĩnh viễn và không thể khôi phục.',
+                                        confirmLabel: 'Xóa toàn bộ',
+                                        cancelLabel: 'Hủy',
+                                        isDestructive: true,
+                                      );
+                                      if (confirmed && context.mounted) {
+                                        AppToast.success(context, 'Đã xóa toàn bộ dữ liệu giao dịch thành công (giả lập)');
+                                      }
+                                    },
+                                  ),
+                                ],
                               ),
                               trailing: ScreenHeader.circleButton(
                                 context: context,

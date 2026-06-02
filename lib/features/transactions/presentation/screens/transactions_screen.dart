@@ -228,17 +228,38 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   Widget _buildDateGroup(BuildContext context, String dateLabel, List<Widget> items) {
+    final cardColor = AppColors.surface(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppText(
-          dateLabel,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textPrimary(context),
+        Padding(
+          padding: const EdgeInsets.only(left: 4.0, bottom: 12.0),
+          child: AppText(
+            dateLabel,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary(context),
+          ),
         ),
-        const SizedBox(height: 16),
-        ...items.expand((item) => [item, const SizedBox(height: 20)]),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: ShapeDecoration(
+            color: cardColor,
+            shape: RoundedSuperellipseBorder(
+              borderRadius: BorderRadius.circular(26),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < items.length; i++) ...[
+                items[i],
+                if (i < items.length - 1) const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }
