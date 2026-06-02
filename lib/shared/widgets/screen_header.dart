@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:motor/motor.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lgw;
 import 'package:expense_management/core/theme/app_colors.dart';
@@ -229,12 +228,10 @@ class _ScreenHeaderState extends State<ScreenHeader> {
         // Determine trailing/search widget
         Widget searchOrTrailingWidget;
         if (widget.onSearchChanged != null && widget.trailing == null) {
-          searchOrTrailingWidget = VelocityMotionBuilder(
-            converter: SingleMotionConverter(),
-            motion: const Motion.snappySpring(
-              snapToEnd: true,
-              duration: Duration(milliseconds: 350),
-            ),
+          searchOrTrailingWidget = lgw.VelocitySpringBuilder(
+            active: _isSearching,
+            springWhenActive: lgw.GlassSpring.interactive(),
+            springWhenReleased: lgw.GlassSpring.bouncy(),
             value: _isSearching ? availableWidth : 44.0,
             builder: (context, animWidth, velocity, _) {
               // Calculate vertical squash and stretch deformation based on velocity
@@ -291,9 +288,9 @@ class _ScreenHeaderState extends State<ScreenHeader> {
                                   )
                                 : LiquidGlassLayer(
                                     settings: LiquidGlassSettings(
-                                      refractiveIndex: 1.15,
-                                      thickness: 15.0,
-                                      blur: 8.0,
+                                      refractiveIndex: 1.2,
+                                      thickness: 30.0,
+                                      blur: 1.0,
                                       saturation: 1.5,
                                       lightIntensity: isDark ? 0.0 : 1.0,
                                       ambientStrength: isDark ? 0.0 : 0.5,
@@ -321,11 +318,16 @@ class _ScreenHeaderState extends State<ScreenHeader> {
                             child: ScreenHeader.circleButton(
                               context: context,
                               onTap: () {
-                                _searchFocusNode.unfocus();
                                 setState(() {
                                   _isSearching = false;
                                   _searchController.clear();
-                                  widget.onSearchChanged?.call('');
+                                });
+                                // Delayed keyboard focus and list rebuild prevents frame drops during retract animation
+                                Future.delayed(const Duration(milliseconds: 250), () {
+                                  if (mounted && !_isSearching) {
+                                    _searchFocusNode.unfocus();
+                                    widget.onSearchChanged?.call('');
+                                  }
                                 });
                               },
                               useOwnLayer: true,
@@ -378,9 +380,9 @@ class _ScreenHeaderState extends State<ScreenHeader> {
 
         // Create a shared settings for the entire header glass layer
         final sharedSettings = lgw.LiquidGlassSettings(
-          refractiveIndex: 1.15,
-          thickness: 15.0,
-          blur: 8.0,
+          refractiveIndex: 1.2,
+          thickness: 30.0,
+          blur: 1.0,
           saturation: 1.5,
           lightIntensity: isDark ? 0.0 : 1.0,
           ambientStrength: isDark ? 0.0 : 0.5,

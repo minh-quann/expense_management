@@ -21,11 +21,14 @@ import 'package:expense_management/features/categories/domain/entities/category.
 import 'package:expense_management/features/app_lock/presentation/screens/security_settings_screen.dart';
 import 'package:expense_management/features/settings/presentation/screens/general_settings_screen.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+/// Global navigator key exposed for Toast overlay access.
+/// Toast must use Navigator's overlay (not Toastification's overlay)
+/// so that LiquidGlass shader can capture the scene behind it.
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   initialLocation: AuthTokenManager.isLoggedIn() ? '/' : '/login',
-  navigatorKey: _rootNavigatorKey,
+  navigatorKey: rootNavigatorKey,
   routes: [
     StatefulShellRoute(
       builder: (context, state, navigationShell) {
@@ -74,37 +77,37 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/add-transaction',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const AddTransactionScreen(),
     ),
     GoRoute(
       path: '/wallets',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const WalletsScreen(),
     ),
     GoRoute(
       path: '/budgets',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const BudgetsScreen(),
     ),
     GoRoute(
       path: '/goals',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const GoalsScreen(),
     ),
     GoRoute(
       path: '/recurring',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const RecurringScreen(),
     ),
     GoRoute(
       path: '/categories',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) => const CategoriesScreen(),
     ),
     GoRoute(
       path: '/add_category',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (context, state) {
         final category = state.extra as AppCategory?;
         return AddCategoryScreen(category: category);
@@ -112,14 +115,14 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/login',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         return const LoginScreen();
       },
       routes: [
         GoRoute(
           path: 'phone',
-          parentNavigatorKey: _rootNavigatorKey,
+          parentNavigatorKey: rootNavigatorKey,
           builder: (BuildContext context, GoRouterState state) {
             return const OtpScreen();
           },
@@ -128,21 +131,21 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/forgot-password',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         return const ForgotPasswordScreen();
       },
     ),
     GoRoute(
       path: '/security',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         return const SecuritySettingsScreen();
       },
     ),
     GoRoute(
       path: '/settings',
-      parentNavigatorKey: _rootNavigatorKey,
+      parentNavigatorKey: rootNavigatorKey,
       builder: (BuildContext context, GoRouterState state) {
         return const GeneralSettingsScreen();
       },

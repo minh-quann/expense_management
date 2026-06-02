@@ -316,13 +316,13 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                     textColor: textColor,
                     icon: Icons.animation_rounded,
                     iconColor: AppColors.primary,
-                    title: 'Tắt hiệu ứng chuyển trang',
+                    title: 'Hiệu ứng chuyển trang',
                     subtitle: _disableTabAnimation
                         ? 'Đã tắt - các trang chính sẽ chuyển ngay lập tức'
                         : 'Đang bật - hiệu ứng fade-through mượt mà',
                     trailing: AppLiquidGlassSwitch(
-                      value: _disableTabAnimation,
-                      onChanged: _toggleTabAnimation,
+                      value: !_disableTabAnimation,
+                      onChanged: (value) => _toggleTabAnimation(!value),
                       activeColor: AppColors.primary,
                     ),
                   ),

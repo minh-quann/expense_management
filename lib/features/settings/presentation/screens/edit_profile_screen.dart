@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_management/core/theme/app_colors.dart';
 import 'package:expense_management/shared/widgets/app_text.dart';
-import 'package:expense_management/shared/widgets/superellipse_input_border.dart';
 import 'package:expense_management/shared/widgets/app_button.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_bloc.dart';
 import 'package:expense_management/features/settings/presentation/bloc/profile_event.dart';
@@ -11,6 +10,8 @@ import 'package:expense_management/features/settings/domain/entities/user_profil
 import 'package:expense_management/shared/widgets/app_toast.dart';
 import 'package:expense_management/shared/widgets/screen_header.dart';
 import 'package:expense_management/shared/widgets/fading_blur_layer.dart';
+import 'package:expense_management/shared/widgets/app_text_field.dart';
+import 'package:expense_management/shared/widgets/liquid_glass/app_liquid_glass_menu.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile profile;
@@ -98,47 +99,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               const SizedBox(height: 20),
 
                               // Display Name input
-                              _buildLabel('Tên hiển thị', isDark),
-                              const SizedBox(height: 8),
-                              _buildTextField(_nameController, 'Nhập tên hiển thị của bạn', isDark),
+                              AppTextField(
+                                label: 'Tên hiển thị',
+                                controller: _nameController,
+                                hintText: 'Nhập tên hiển thị của bạn',
+                              ),
                               const SizedBox(height: 20),
 
                               // Email (Read-only)
-                              _buildLabel('Email (Không thể thay đổi)', isDark),
-                              const SizedBox(height: 8),
-                              _buildReadOnlyTextField(widget.profile.email, isDark),
+                              AppTextField(
+                                label: 'Email (Không thể thay đổi)',
+                                controller: TextEditingController(text: widget.profile.email),
+                                readOnly: true,
+                              ),
                               const SizedBox(height: 20),
 
                               // Phone Number input
-                              _buildLabel('Số điện thoại', isDark),
-                              const SizedBox(height: 8),
-                              _buildTextField(_phoneController, 'Nhập số điện thoại của bạn', isDark, keyboardType: TextInputType.phone),
+                              AppTextField(
+                                label: 'Số điện thoại',
+                                controller: _phoneController,
+                                hintText: 'Nhập số điện thoại của bạn',
+                                keyboardType: TextInputType.phone,
+                              ),
                               const SizedBox(height: 20),
 
                               // Address input
-                              _buildLabel('Địa chỉ', isDark),
-                              const SizedBox(height: 8),
-                              _buildTextField(_addressController, 'Nhập địa chỉ của bạn', isDark),
+                              AppTextField(
+                                label: 'Địa chỉ',
+                                controller: _addressController,
+                                hintText: 'Nhập địa chỉ của bạn',
+                              ),
                               const SizedBox(height: 20),
 
                               // Gender dropdown
                               _buildLabel('Giới tính', isDark),
                               const SizedBox(height: 8),
-                              _buildDropdown<String>(
-                                value: _selectedGender,
-                                items: _genders.map((g) {
-                                  return DropdownMenuItem<String>(
-                                    value: g['value'],
-                                    child: AppText(g['label']!, fontWeight: FontWeight.w500),
+                              _buildLiquidDropdown(
+                                valueLabel: _genders.firstWhere((g) => g['value'] == _selectedGender, orElse: () => _genders.first)['label'] ?? '',
+                                menuItems: _genders.map((g) {
+                                  return AppLiquidGlassMenuItem(
+                                    title: g['label']!,
+                                    isSelected: _selectedGender == g['value'],
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedGender = g['value']!;
+                                      });
+                                    },
                                   );
                                 }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      _selectedGender = val;
-                                    });
-                                  }
-                                },
                                 isDark: isDark,
                                 textColor: textColor,
                               ),
@@ -147,21 +155,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               // Preferred currency dropdown
                               _buildLabel('Đơn vị tiền tệ chính', isDark),
                               const SizedBox(height: 8),
-                              _buildDropdown<String>(
-                                value: _selectedCurrency,
-                                items: _currencies.map((currency) {
-                                  return DropdownMenuItem<String>(
-                                    value: currency,
-                                    child: AppText(currency, fontWeight: FontWeight.w500),
+                              _buildLiquidDropdown(
+                                valueLabel: _selectedCurrency,
+                                menuItems: _currencies.map((currency) {
+                                  return AppLiquidGlassMenuItem(
+                                    title: currency,
+                                    isSelected: _selectedCurrency == currency,
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedCurrency = currency;
+                                      });
+                                    },
                                   );
                                 }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      _selectedCurrency = val;
-                                    });
-                                  }
-                                },
                                 isDark: isDark,
                                 textColor: textColor,
                               ),
@@ -260,98 +266,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hintText,
-    bool isDark, {
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: TextStyle(
-        color: isDark ? Colors.white : const Color(0xFF1C1C1E),
-        fontFamily: 'Inter',
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(
-          color: Colors.grey,
-          fontFamily: 'Inter',
-        ),
-        filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF7F7F9),
-        border: SuperellipseInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border(context)),
-        ),
-        enabledBorder: SuperellipseInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border(context)),
-        ),
-        focusedBorder: SuperellipseInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.primary),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
-    );
-  }
-
-  Widget _buildReadOnlyTextField(String value, bool isDark) {
-    return TextField(
-      controller: TextEditingController(text: value),
-      enabled: false,
-      style: TextStyle(
-        color: isDark ? Colors.grey[500] : Colors.grey[600],
-        fontFamily: 'Inter',
-      ),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: isDark ? Colors.white.withValues(alpha: 0.02) : const Color(0xFFEFEFEF),
-        border: SuperellipseInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border(context).withValues(alpha: 0.5)),
-        ),
-        disabledBorder: SuperellipseInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.border(context).withValues(alpha: 0.5)),
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      ),
-    );
-  }
-
-  Widget _buildDropdown<T>({
-    required T value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
+  Widget _buildLiquidDropdown({
+    required String valueLabel,
+    required List<AppLiquidGlassMenuItem> menuItems,
     required bool isDark,
     required Color textColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: ShapeDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF7F7F9),
-        shape: RoundedSuperellipseBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isExpanded: true,
-          dropdownColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          style: TextStyle(
-            color: textColor,
-            fontFamily: 'Inter',
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-          items: items,
-          onChanged: onChanged,
-        ),
-      ),
+    return Builder(
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        return AppLiquidGlassMenu(
+          menuWidth: screenWidth - 48.0, // Match trigger width exactly
+          items: menuItems,
+          triggerBuilder: (context, toggleMenu) {
+            return GestureDetector(
+              onTapDown: (_) => toggleMenu(), // Open immediately on press down for seamless drag
+              onTap: () {}, // Consume tap to prevent double triggering if needed
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                decoration: ShapeDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF7F7F9),
+                  shape: RoundedSuperellipseBorder(
+                    borderRadius: BorderRadius.circular(100),
+                    side: BorderSide(color: AppColors.border(context)),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppText(
+                      valueLabel,
+                      fontSize: 16,
+                      color: textColor,
+                    ),
+                    Icon(
+                      Icons.arrow_drop_down,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

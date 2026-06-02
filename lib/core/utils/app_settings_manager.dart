@@ -34,7 +34,7 @@ class AppSettingsManager {
 
   /// Check if tab animation is disabled.
   static bool isTabAnimationDisabled() {
-    return _prefs?.getBool(_disableTabAnimationKey) ?? false;
+    return _prefs?.getBool(_disableTabAnimationKey) ?? true;
   }
 
   /// Set whether liquid glass effect is disabled.

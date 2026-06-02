@@ -33,6 +33,8 @@ class AppLiquidGlassButton extends StatefulWidget {
     this.useOwnLayer =
         true, // Whether to create its own glass rendering context layer
     this.glassColor, // Optional custom glass tint color
+    this.forcePremium =
+        false, // Force premium quality even during route transitions
   });
 
   final Widget child;
@@ -58,6 +60,7 @@ class AppLiquidGlassButton extends StatefulWidget {
 
   final bool useOwnLayer;
   final Color? glassColor;
+  final bool forcePremium;
 
   @override
   State<AppLiquidGlassButton> createState() => _AppLiquidGlassButtonState();
@@ -155,6 +158,8 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
 
   // Start bouncy spring animation to return the stretch back to zero
   void _startSpringAnimation(Offset startOffset, Offset startVelocity) {
+    if (!mounted) return;
+
     _springTicker?.stop();
     _springTicker?.dispose();
 
@@ -219,7 +224,9 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
             !widget.autoSize;
 
         // Set dimensions based on autoSize flag
-        final double w = widget.autoSize ? double.infinity : (widget.width ?? 56.0);
+        final double w = widget.autoSize
+            ? double.infinity
+            : (widget.width ?? 56.0);
         final double h = widget.autoSize
             ? double.infinity
             : (widget.height ?? 56.0);
@@ -259,7 +266,9 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
           );
 
           if (widget.autoSize) {
-            buttonChild = IntrinsicWidth(child: IntrinsicHeight(child: buttonChild));
+            buttonChild = IntrinsicWidth(
+              child: IntrinsicHeight(child: buttonChild),
+            );
           }
 
           return Container(
@@ -304,7 +313,7 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
           shape: effectiveShape,
           settings: settings,
           useOwnLayer: widget.useOwnLayer, // Use parameter
-          quality: _isTransitioning
+          quality: (_isTransitioning && !widget.forcePremium)
               ? lgw.GlassQuality.minimal
               : lgw.GlassQuality.premium,
           glowColor: Colors
@@ -370,7 +379,8 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
             if (_hasDragged) {
               // Calculate resisted velocity for smoother transition into spring
               final startVelocity =
-                  _applyResistance(_velocity, widget.resistance) * widget.stretch;
+                  _applyResistance(_velocity, widget.resistance) *
+                  widget.stretch;
 
               // Clamp extreme velocities to avoid visual glitching
               final double maxVelocity = 3000.0;
@@ -397,7 +407,10 @@ class _AppLiquidGlassButtonState extends State<AppLiquidGlassButton>
           child: GestureDetector(
             onLongPress: widget.onLongPress,
             behavior: HitTestBehavior.opaque,
-            child: RawLiquidStretch(stretchPixels: _stretchOffset, child: button),
+            child: RawLiquidStretch(
+              stretchPixels: _stretchOffset,
+              child: button,
+            ),
           ),
         );
 

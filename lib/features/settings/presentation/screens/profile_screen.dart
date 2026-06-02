@@ -72,7 +72,6 @@ class ProfileView extends StatelessWidget {
           // Reset app lock state on logout so it doesn't display overlay on login screen
           context.read<AppLockBloc>().add(CheckAppLockStatus());
           context.go('/login');
-          // Show toast after navigation — pass null since ProfileScreen context is disposed
           AppToast.success(null, 'Đăng xuất thành công!');
         }
       },
