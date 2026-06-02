@@ -19,6 +19,12 @@ Dự án Frontend của ứng dụng quản lý chi tiêu cá nhân được ph�
   - Hỗ trợ chế độ Sáng/Tối (Light/Dark Mode) tự động theo hệ thống.
   - Đa ngôn ngữ (Localization) với Tiếng Việt và Tiếng Anh.
   - Giao diện sử dụng font chữ cao cấp **Google Sans Flex**.
+  - 🔮 **Premium Liquid Glass UI System**: Hệ thống giao diện Kính lỏng đẳng cấp mang hơi hướng tương lai, kết hợp sức mạnh của Shader khúc xạ ánh sáng và mô phỏng Vật lý thời gian thực (Spring Physics):
+    - 🧊 **[AppLiquidGlass](docs/app_liquid_glass_guide.md)**: Container nền tảng xử lý khúc xạ quang học, đổ bóng và làm mờ Gaussian. Tích hợp thuật toán tối ưu hoá GPU (Auto-tuning) khi chuyển trang.
+    - 🕹️ **[AppLiquidGlassButton](docs/app_liquid_glass_button_guide.md)**: Nút bấm tương tác vật lý. Cho phép người dùng kéo giãn, biến dạng (Squash & Stretch) bề mặt kính và nảy lên đàn hồi chân thực.
+    - 🪄 **[AppLiquidGlassMenu](docs/app_liquid_glass_menu_guide.md)**: Context Menu tràn viền với tính năng độc quyền **Vuốt 1 chạm liền mạch (Global Seamless Drag)**. Mọi thao tác nhấn giữ, kéo chọn và thả tay diễn ra mượt mà không độ trễ.
+    - 🎚️ **[AppLiquidGlassSwitch](docs/app_liquid_glass_switch_guide.md)**: Công tắc thủy tinh tối giản, tự động chuyển sắc theo Dark/Light Theme kèm rung phản hồi xúc giác (Haptics).
+    - 📚 *Tham khảo [Tài liệu Kiến trúc Liquid Glass](docs/liquid_glass_guide.md)*
 
 ---
 
